@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { fmtKRW, fmtInt, toCSV } from '@/lib/format';
 
 export default function SalesAnalyticsPage() {
   const defaultTenant = useMemo(() => process.env.NEXT_PUBLIC_TENANT_ID || '', []);
