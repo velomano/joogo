@@ -16,7 +16,7 @@ A comprehensive Warehouse Management System (WMS) and Order Management System (O
 ### Prerequisites
 
 - Node.js >= 20.0.0
-- pnpm >= 8.0.0
+- pnpm >= 8.0.0 (또는 npm 최신)
 - Supabase CLI (optional, for local development)
 
 ### 1. Clone and Install
@@ -24,7 +24,7 @@ A comprehensive Warehouse Management System (WMS) and Order Management System (O
 ```bash
 git clone <repository-url>
 cd joogo-wms-oms
-pnpm install
+pnpm install # 또는 npm i
 ```
 
 ### 2. Environment Setup
@@ -96,15 +96,24 @@ In your Supabase dashboard:
 
 ```bash
 # Start all services (MCP providers + web admin)
-pnpm dev:all
+pnpm dev:all # 또는 npm run dev:all
 
 # Or start individually:
-pnpm dev:providers  # Start MCP providers
-pnpm dev:web        # Start Next.js app
+pnpm dev:providers  # Start MCP providers (npm run dev:providers)
+pnpm dev:web        # Start Next.js app (npm run dev:web)
 pnpm dev:db         # Start local Supabase (if using CLI)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to access the web admin.
+Open http://localhost:3000 to access the web admin.
+
+## 🔎 Health Check
+
+- Aggregated: `curl http://localhost:3000/api/health`
+- Individual services:
+  - Files: `curl http://localhost:7301/health`
+  - Catalog: `curl http://localhost:7302/health`
+  - Orders: `curl http://localhost:7303/health`
+  - Shipping: `curl http://localhost:7304/health`
 
 ## 📁 Project Structure
 
@@ -170,6 +179,13 @@ joogo-wms-oms/
 - **Multi-tenant isolation** via `tenant_id`
 - **Service role keys** for MCP providers only
 - **Bearer token authentication** for MCP APIs
+
+## 📚 문서 운영 규칙
+- **프로젝트 안내**: README.md
+- **버전별 기록**: CHANGELOG.md
+- **아키텍처/구조**: docs/ARCHITECTURE.md
+- **로드맵**: docs/ROADMAP.md
+- **운영/트러블슈팅**: docs/RUNBOOK.md
 
 ## 🧪 Testing the System
 
