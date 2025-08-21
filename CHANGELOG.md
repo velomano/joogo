@@ -9,6 +9,21 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - 집계 헬스 API (`apps/web-admin/src/app/api/health/route.ts`): 각 프로바이더 `/health` 호출 집계, `Authorization: Bearer DEV_TOKEN` 포함
 - GitHub Issues 초안 3건(#2 CSV↔스캔앱 매칭 안정화, #3 멀티테넌트 로그인/권한 기초, #4 헬스체크 API 구현)
 
+## [0.1.2] - 2025-08-21
+### Added
+- Items 업로드/목록/리셋 UI 추가 (`/admin/items`, `/admin/items/upload`)
+- 업로드 API 고도화(`/api/upload`): 서비스키 사용, `core.items` UPSERT(RLS/정책 포함)
+- Analytics 목업/요약: `core.sales` 테이블 + RPC(`generate_mock_sales`, `sales_summary_monthly`, `sales_recent`, `sales_top_sku_days`)
+- Analytics 페이지(`/admin/analytics/sales`): 목업 생성(자동 새로고침), 월별 표/막대차트, Top 5, 최근 50건
+- 자연어 질의 데모(`/admin/ask`, `/api/ask`): "최근 N일 top K sku", "월별 매출 추세"
+
+### Changed
+- 웹 API 런타임을 node로 고정하여 .env 로딩 안정화
+- 헤더/네비에 Items/Analytics/Ask 링크 추가
+
+### Fixed
+- Supabase 함수 시그니처 캐시 이슈 해결: `sales_recent`, `sales_top_sku_days` 재정의 및 pg_notify 리로드 가이드 반영
+
 ### Changed
 - Next.js App Router 기본 구성 정리, `experimental.appDir` 경고 제거
 - README 보강: 실행법(npm/pnpm 병기), 헬스 체크(집계/개별), 문서 운영 규칙

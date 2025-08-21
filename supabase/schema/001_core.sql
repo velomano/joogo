@@ -175,6 +175,47 @@ AS $$
   LIMIT 100;
 $$;
 
+-- RPC: recent raw sales
+DROP FUNCTION IF EXISTS public.sales_recent(UUID, INTEGER);
+CREATE OR REPLACE FUNCTION public.sales_recent(_tenant_id UUID, _limit INTEGER DEFAULT 50)
+RETURNS TABLE (
+  sold_at TIMESTAMPTZ,
+  sku TEXT,
+  qty INTEGER,
+  price NUMERIC(10,2)
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT s.sold_at, s.sku, s.qty, s.price
+  FROM core.sales s
+  WHERE s.tenant_id = _tenant_id
+  ORDER BY s.sold_at DESC
+  LIMIT COALESCE(_limit, 50);
+$$;
+
+-- RPC: top sku by days
+DROP FUNCTION IF EXISTS public.sales_top_sku_days(UUID, INTEGER, INTEGER);
+CREATE OR REPLACE FUNCTION public.sales_top_sku_days(_tenant_id UUID, _days INTEGER, _limit INTEGER)
+RETURNS TABLE (
+  sku TEXT,
+  total_qty BIGINT,
+  revenue NUMERIC(12,2)
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT s.sku,
+         SUM(s.qty) AS total_qty,
+         ROUND(SUM(s.qty * s.price), 2) AS revenue
+  FROM core.sales s
+  WHERE s.tenant_id = _tenant_id
+    AND s.sold_at >= NOW() - MAKE_INTERVAL(days => COALESCE(_days, 30))
+  GROUP BY 1
+  ORDER BY 3 DESC
+  LIMIT COALESCE(_limit, 5);
+$$;
+
 -- Public RPC to reset items by tenant
 CREATE OR REPLACE FUNCTION public.reset_items(_tenant_id UUID)
 RETURNS INTEGER
@@ -224,4 +265,78 @@ CREATE INDEX idx_shipments_tenant_order ON core.shipments(tenant_id, order_id);
 CREATE INDEX idx_stage_products_tenant ON core.stage_products(tenant_id);
 CREATE INDEX idx_stage_orders_tenant ON core.stage_orders(tenant_id);
 CREATE INDEX idx_jobs_tenant_status ON ops.jobs(tenant_id, status);
+
+-- Sales table for analytics/mocking
+CREATE TABLE IF NOT EXISTS core.sales (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+  sku TEXT NOT NULL,
+  sold_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  qty INTEGER NOT NULL,
+  price NUMERIC(10,2) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sales_tenant_soldat ON core.sales(tenant_id, sold_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sales_tenant_sku ON core.sales(tenant_id, sku);
+
+-- RPC: generate mock sales for last _days days using existing products
+DROP FUNCTION IF EXISTS public.generate_mock_sales(UUID, INTEGER);
+CREATE OR REPLACE FUNCTION public.generate_mock_sales(_tenant_id UUID, _days INTEGER)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_count INTEGER := 0;
+  v_day INTEGER;
+  r RECORD;
+  v_qty INTEGER;
+  v_price NUMERIC(10,2);
+BEGIN
+  IF _days IS NULL OR _days < 1 THEN
+    _days := 7;
+  END IF;
+
+  FOR v_day IN 0..(_days-1) LOOP
+    FOR r IN (
+      SELECT p.sku
+      FROM core.products p
+      WHERE p.tenant_id = _tenant_id
+    ) LOOP
+      v_qty := GREATEST(0, FLOOR(random()*10)::INT);
+      IF v_qty > 0 THEN
+        v_price := ROUND( (5 + random()*45)::NUMERIC, 2);
+        INSERT INTO core.sales(tenant_id, sku, sold_at, qty, price)
+        VALUES (_tenant_id, r.sku, now() - make_interval(days => v_day), v_qty, v_price);
+        v_count := v_count + 1;
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  RETURN v_count;
+END;
+$$;
+
+-- RPC: monthly sales summary per sku
+DROP FUNCTION IF EXISTS public.sales_summary_monthly(UUID);
+CREATE OR REPLACE FUNCTION public.sales_summary_monthly(_tenant_id UUID)
+RETURNS TABLE (
+  month TIMESTAMPTZ,
+  sku TEXT,
+  total_qty BIGINT,
+  revenue NUMERIC(12,2)
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT date_trunc('month', s.sold_at) AS month,
+         s.sku,
+         SUM(s.qty) AS total_qty,
+         ROUND(SUM(s.qty * s.price), 2) AS revenue
+  FROM core.sales s
+  WHERE s.tenant_id = _tenant_id
+  GROUP BY 1,2
+  ORDER BY 1 DESC, 4 DESC;
+$$;
 
