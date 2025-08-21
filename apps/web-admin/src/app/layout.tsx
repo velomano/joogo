@@ -21,6 +21,8 @@ export default function RootLayout({
                 <a href="/" className="text-xl font-semibold text-gray-900">Joogo WMS/OMS</a>
                 <a href="/admin/items" className="text-sm text-blue-600 hover:underline">Items</a>
                 <a href="/admin/items/upload" className="text-sm text-blue-600 hover:underline">CSV 업로드</a>
+                <a href="/admin/analytics/sales" className="text-sm text-blue-600 hover:underline">Analytics</a>
+                <a href="/admin/ask" className="text-sm text-blue-600 hover:underline">Ask</a>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
