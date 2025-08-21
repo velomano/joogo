@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, BarChart, Bar } from 'recharts';
-import { fmtKRW, fmtInt } from '@/lib/format';
+import { fmtKRW, fmtInt } from '../../../lib/format';
 
 interface QueryHistory {
   id: string;
@@ -163,7 +163,7 @@ export default function AskPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => fmtInt(value)} />
+                    <Tooltip formatter={(value) => fmtInt(typeof value === 'number' ? value : 0)} />
                     <Legend />
                     <Bar dataKey="매출" fill="#3b82f6" />
                     <Bar dataKey="주문수" fill="#10b981" />
@@ -173,7 +173,7 @@ export default function AskPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => fmtInt(value)} />
+                    <Tooltip formatter={(value) => fmtInt(typeof value === 'number' ? value : 0)} />
                     <Legend />
                     <Line type="monotone" dataKey="매출" stroke="#3b82f6" strokeWidth={2} />
                     <Line type="monotone" dataKey="주문수" stroke="#10b981" strokeWidth={2} />
@@ -201,7 +201,7 @@ export default function AskPage() {
                     <tr key={idx}>
                       {Object.values(row).map((value, vIdx) => (
                         <td key={vIdx} className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                          {typeof value === 'number' ? fmtInt(value) : value}
+                          {typeof value === 'number' ? fmtInt(value) : String(value)}
                         </td>
                       ))}
                     </tr>

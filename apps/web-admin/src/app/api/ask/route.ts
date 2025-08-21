@@ -98,7 +98,7 @@ export async function POST(req: Request) {
       if (/(annual|연간|올해|year|총매출|total)/i.test(question)) {
         const { data, error } = await supabase.rpc('sales_summary_monthly', { _tenant_id: tenantId });
         if (error) throw error;
-        const annualTotal = (data || []).reduce((sum, row) => sum + (row.total_sales || 0), 0);
+        const annualTotal = (data || []).reduce((sum: number, row: any) => sum + (row.total_sales || 0), 0);
         return NextResponse.json({ 
           intent: 'annual_total', 
           type: 'summary',
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         const sku = skuMatch[1];
         const { data, error } = await supabase.rpc('sales_recent', { _tenant_id: tenantId });
         if (error) throw error;
-        const skuData = (data || []).filter(row => row.sku === sku);
+        const skuData = (data || []).filter((row: any) => row.sku === sku);
         return NextResponse.json({ 
           intent: 'sku_trend', 
           type: 'chart',
@@ -149,9 +149,9 @@ export async function POST(req: Request) {
       if (/(summary|요약|개요|overview)/i.test(question)) {
         const { data, error } = await supabase.rpc('sales_recent', { _tenant_id: tenantId });
         if (error) throw error;
-        const totalSales = (data || []).reduce((sum, row) => sum + (row.total_price || 0), 0);
+        const totalSales = (data || []).reduce((sum: number, row: any) => sum + (row.total_price || 0), 0);
         const avgPrice = data && data.length > 0 ? totalSales / data.length : 0;
-        const totalOrders = data ? new Set(data.map(row => row.order_id)).size : 0;
+        const totalOrders = data ? new Set(data.map((row: any) => row.order_id)).size : 0;
         return NextResponse.json({ 
           intent: 'summary', 
           type: 'summary',

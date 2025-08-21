@@ -4,10 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
-## [0.1.1] - 2025-08-21
+## [0.1.3] - 2025-08-21
 ### Added
-- 집계 헬스 API (`apps/web-admin/src/app/api/health/route.ts`): 각 프로바이더 `/health` 호출 집계, `Authorization: Bearer DEV_TOKEN` 포함
-- GitHub Issues 초안 3건(#2 CSV↔스캔앱 매칭 안정화, #3 멀티테넌트 로그인/권한 기초, #4 헬스체크 API 구현)
+- **Sales Analytics Dashboard 고도화**: KRW 통화 포맷, 날짜 범위 필터, SKU 다중선택 필터
+- **차트 시각화**: 월별 매출 추이(LineChart), Top SKU 일별 매출(BarChart), 요약 카드(총매출/전월대비/평균단가)
+- **CSV 다운로드**: 월별 집계, Top SKU, 최근 거래 데이터 각각 CSV 다운로드 기능
+- **Natural Language Query 확장**: 5개 이상의 의도 분류(`top_sku_days`, `monthly_summary`, `annual_total`, `mom_change`, `sku_trend`)
+- **Safe SQL Guard**: SQL 인젝션 방지 및 쿼리 타임아웃 설정
+- **Ask UI 개선**: 응답을 차트/카드로 동적 렌더링, 쿼리 히스토리 및 북마크 기능
+
+### Changed
+- `/api/analytics/sales` API: 날짜 범위, SKU 필터링 지원, 응답 구조 표준화
+- `/api/ask` API: 의도 분류 확장, 안전한 SQL 실행, 차트 데이터 반환
+
+### Fixed
+- 차트 렌더링 문제: Recharts 컴포넌트 타입 안전성 개선
+- 데이터 포맷팅: KRW 통화, 천단위 구분자, 날짜 포맷 통일
 
 ## [0.1.2] - 2025-08-21
 ### Added

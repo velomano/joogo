@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { fmtKRW, fmtInt, toCSV } from '@/lib/format';
+import { addMonths, format, parseISO } from 'date-fns';
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, BarChart, Bar } from 'recharts';
+import { fmtKRW, fmtInt, toCSV } from '../../../../lib/format';
 
 export default function SalesAnalyticsPage() {
   const defaultTenant = useMemo(() => process.env.NEXT_PUBLIC_TENANT_ID || '', []);
@@ -54,6 +56,30 @@ export default function SalesAnalyticsPage() {
     }
   };
 
+  const onReset = async () => {
+    if (!confirm('모든 Mock 데이터를 삭제하시겠습니까?')) return;
+    
+    setLoading(true);
+    setMsg(null);
+    try {
+      // 실제 DELETE API 호출
+      const res = await fetch(`/api/analytics/mock-sales?tenant_id=${tenantId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setMsg(JSON.stringify(json, null, 2));
+        return;
+      }
+      setMsg(JSON.stringify(json, null, 2));
+      await load();
+    } catch (e: any) {
+      setMsg(e?.message || 'failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Sales Analytics (Mock)</h1>
@@ -69,6 +95,7 @@ export default function SalesAnalyticsPage() {
         </div>
         <button onClick={async()=>{await onGenerate(); await load();}} disabled={loading} className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50">{loading?'생성 중...':'목업 생성(자동 새로고침)'}</button>
         <button onClick={load} className="px-3 py-2 border rounded">요약 새로고침</button>
+        <button onClick={onReset} disabled={loading} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50">{loading?'처리 중...':'Mock 데이터 리셋'}</button>
         {lastRefreshed && <span className="text-sm text-gray-500">마지막 갱신 {lastRefreshed} · {rows.length} rows</span>}
       </div>
 

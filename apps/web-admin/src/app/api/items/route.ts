@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase.rpc('list_items', { _tenant_id: tenantId });
     if (error) throw error;
 
-    const rows = (data || []).map(r => ({
+    const rows = (data || []).map((r: any) => ({
       barcode: (r as any).barcode,
       product_name: (r as any).product_name,
       qty: (r as any).qty,
