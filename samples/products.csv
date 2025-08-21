@@ -1,0 +1,7 @@
+sku,barcode,name,option,pack_info,image_url,unit
+PROD-001,1234567890123,Premium Coffee Beans,Dark Roast,250g bag,https://example.com/coffee.jpg,bag
+PROD-002,1234567890124,Organic Tea Leaves,Green Tea,100g tin,https://example.com/tea.jpg,tin
+PROD-003,1234567890125,Artisan Chocolate,70% Dark,100g bar,https://example.com/chocolate.jpg,bar
+PROD-004,1234567890126,Handmade Soap,Lavender,150g bar,https://example.com/soap.jpg,bar
+PROD-005,1234567890127,Natural Honey,Raw,500g jar,https://example.com/honey.jpg,jar
+

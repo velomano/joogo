@@ -1,0 +1,38 @@
+{
+  "name": "joogo-wms-oms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WMS/OMS MVP with MCP providers and Supabase",
+  "scripts": {
+    "dev:db": "supabase start",
+    "db:push": "supabase db reset --linked",
+    "dev:providers": "concurrently -k \"pnpm --filter mcp-files dev\" \"pnpm --filter mcp-catalog dev\" \"pnpm --filter mcp-orders dev\" \"pnpm --filter mcp-shipping dev\"",
+    "dev:web": "pnpm --filter web-admin dev",
+    "dev:all": "concurrently -k \"pnpm dev:providers\" \"pnpm dev:web\"",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.11",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^10.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.0.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.20.4",
+    "turbo": "^1.10.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
