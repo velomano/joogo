@@ -28,6 +28,17 @@ CREATE TABLE core.products (
   UNIQUE(tenant_id, sku)
 );
 
+-- Items table (for CSV upload stabilization)
+CREATE TABLE IF NOT EXISTS core.items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+  barcode TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  qty INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(tenant_id, barcode)
+);
+
 -- Channels table
 CREATE TABLE core.channels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -139,6 +150,73 @@ CREATE TABLE ops.jobs (
 -- Create indexes for better performance
 CREATE INDEX idx_products_tenant_sku ON core.products(tenant_id, sku);
 CREATE INDEX idx_products_barcode ON core.products(barcode);
+CREATE INDEX IF NOT EXISTS idx_items_tenant_barcode ON core.items(tenant_id, barcode);
+
+-- Public view for reading items via REST (public schema only)
+CREATE OR REPLACE VIEW public.items_view AS
+SELECT
+  i.tenant_id,
+  i.barcode,
+  i.product_name,
+  i.qty,
+  i.created_at AS updated_at
+FROM core.items i;
+
+-- Public RPC to list items for a tenant (stable read path)
+CREATE OR REPLACE FUNCTION public.list_items(_tenant_id UUID)
+RETURNS TABLE (barcode TEXT, product_name TEXT, qty INTEGER, updated_at TIMESTAMPTZ)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT i.barcode, i.product_name, i.qty, i.created_at AS updated_at
+  FROM core.items i
+  WHERE i.tenant_id = _tenant_id
+  ORDER BY i.created_at DESC
+  LIMIT 100;
+$$;
+
+-- Public RPC to reset items by tenant
+CREATE OR REPLACE FUNCTION public.reset_items(_tenant_id UUID)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_count INTEGER := 0;
+BEGIN
+  DELETE FROM core.items WHERE tenant_id = _tenant_id;
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$;
+
+-- Public RPC to upsert items into core.items (exposed via PostgREST)
+CREATE OR REPLACE FUNCTION public.upsert_items(_items JSONB)
+RETURNS TABLE (inserted INTEGER, updated INTEGER, total INTEGER)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY WITH up AS (
+    INSERT INTO core.items (tenant_id, barcode, product_name, qty)
+    SELECT
+      (elem->>'tenant_id')::UUID,
+      elem->>'barcode',
+      elem->>'productName',
+      COALESCE(NULLIF(elem->>'qty','')::INT, 0)
+    FROM jsonb_array_elements(_items) AS elem
+    ON CONFLICT (tenant_id, barcode) DO UPDATE
+      SET product_name = EXCLUDED.product_name,
+          qty = EXCLUDED.qty
+    RETURNING xmax
+  )
+  SELECT
+    SUM(CASE WHEN xmax = 0 THEN 1 ELSE 0 END) AS inserted,
+    SUM(CASE WHEN xmax <> 0 THEN 1 ELSE 0 END) AS updated,
+    COUNT(*) AS total
+  FROM up;
+END;
+$$;
 CREATE INDEX idx_orders_tenant_status ON core.orders(tenant_id, status);
 CREATE INDEX idx_orders_tenant_channel ON core.orders(tenant_id, channel_id);
 CREATE INDEX idx_order_items_order_id ON core.order_items(order_id);

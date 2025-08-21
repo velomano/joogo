@@ -242,6 +242,31 @@ on core.stage_orders for all
 using (tenant_id = current_tenant_id())
 with check (tenant_id = current_tenant_id());
 
+-- === core.items ===============================================================
+alter table core.items enable row level security;
+
+drop policy if exists "items select own" on core.items;
+drop policy if exists "items insert own" on core.items;
+drop policy if exists "items update own" on core.items;
+drop policy if exists "items delete own" on core.items;
+
+create policy "items select own"
+on core.items for select
+using (tenant_id = current_tenant_id());
+
+create policy "items insert own"
+on core.items for insert
+with check (tenant_id = current_tenant_id());
+
+create policy "items update own"
+on core.items for update
+using (tenant_id = current_tenant_id())
+with check (tenant_id = current_tenant_id());
+
+create policy "items delete own"
+on core.items for delete
+using (tenant_id = current_tenant_id());
+
 -- === ops.jobs (선택: 잡큐/로그용) ============================================
 alter table ops.jobs enable row level security;
 
