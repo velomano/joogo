@@ -52,3 +52,11 @@
 ## Observability
 - Health endpoints: /health for each provider
 - Logging: pino (pretty transport in dev)
+
+## Micro Control Providers (MCP) 구성
+- files(7301) / catalog(7302) / orders(7303) / shipping(7304)
+- 각 서비스는 `/health` 엔드포인트 제공
+- 내부 개발 단계에서 공통 인증: Authorization: Bearer DEV_TOKEN (개발 토큰)
+
+## Health 집계 흐름
+Web(App Router) → /api/health → 각 MCP /health 병렬 호출 → JSON 집계 응답

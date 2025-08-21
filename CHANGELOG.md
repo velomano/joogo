@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
+## [0.1.1] - 2025-08-21
+### Added
+- 집계 헬스 API (`apps/web-admin/src/app/api/health/route.ts`): 각 프로바이더 `/health` 호출 집계, `Authorization: Bearer DEV_TOKEN` 포함
+- GitHub Issues 초안 3건(#2 CSV↔스캔앱 매칭 안정화, #3 멀티테넌트 로그인/권한 기초, #4 헬스체크 API 구현)
+
+### Changed
+- Next.js App Router 기본 구성 정리, `experimental.appDir` 경고 제거
+- README 보강: 실행법(npm/pnpm 병기), 헬스 체크(집계/개별), 문서 운영 규칙
+- Windows/맥 교차 개발 워크플로우 정리(`git pull --rebase`, `npm i`, `npm run dev:all`)
+
+### Fixed
+- TS 빌드 에러(중복 타입, `csvToJson` 타입) 정리
+- PowerShell 입력 이슈(PSReadLine)로 인한 단일 명령 실행 가이드 추가
+
 ## [0.1.0] - 2025-08-21
 ### Added
 - Supabase 기반 멀티테넌트 구조 초안 설계 및 RLS 정책 적용

@@ -21,3 +21,23 @@
 ## 배포/협업
 - 작업 종료 후 `git add -A && git commit -m "..." && git push`
 - 맥/윈도우 전환 시 `git pull --ff-only`로 최신화
+
+## Health Check (집계 & 개별)
+- 집계(웹): http://localhost:3000/api/health
+- 개별(프로바이더):
+  - files:    http://localhost:7301/health
+  - catalog:  http://localhost:7302/health
+  - orders:   http://localhost:7303/health
+  - shipping: http://localhost:7304/health
+
+### curl 예시 (DEV_TOKEN 필요 시)
+# Windows PowerShell
+iwr http://localhost:7301/health -Headers @{Authorization='Bearer DEV_TOKEN'}
+
+# macOS/Linux
+curl -H "Authorization: Bearer DEV_TOKEN" http://localhost:7301/health
+
+## Windows ↔ mac 교차 개발 루틴
+1) 변경 푸시(Windows) → git add -A && git commit -m "..." && git push
+2) 맥에서: git pull --rebase → npm i(필요 시) → npm run dev:all
+3) 환경차로 PATH/CLI가 다를 때: 터미널 재시작 또는 임시 PATH 추가

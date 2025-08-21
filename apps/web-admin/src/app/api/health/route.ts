@@ -11,7 +11,12 @@ async function ping(url: string, timeoutMs = 3000): Promise<'OK' | 'DOWN'> {
 	const controller = new AbortController();
 	const id = setTimeout(() => controller.abort(), timeoutMs);
 	try {
-		const res = await fetch(url, { signal: controller.signal });
+		const res = await fetch(url, {
+			signal: controller.signal,
+			headers: {
+				Authorization: `Bearer ${process.env.DEV_TOKEN || 'dev-tenant'}`,
+			},
+		});
 		return res.ok ? 'OK' : 'DOWN';
 	} catch {
 		return 'DOWN';
