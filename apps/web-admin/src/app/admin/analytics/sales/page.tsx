@@ -1,247 +1,292 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { addMonths, format, parseISO } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, BarChart, Bar } from 'recharts';
-import { fmtKRW, fmtInt, toCSV } from '../../../../lib/format';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 export default function SalesAnalyticsPage() {
-  const defaultTenant = useMemo(() => process.env.NEXT_PUBLIC_TENANT_ID || '', []);
+  // 개발용 고정 테넌트 ID - 자동으로 설정
+  const defaultTenant = useMemo(() => '84949b3c-2cb7-4c42-b9f9-d1f37d371e00', []);
   const [tenantId, setTenantId] = useState(defaultTenant);
-  const [days, setDays] = useState(7);
-  const [rows, setRows] = useState<any[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [skuFilter, setSkuFilter] = useState('');
-  const [monthsLimit, setMonthsLimit] = useState(6);
 
-  const load = async () => {
-    const params = new URLSearchParams();
-    if (tenantId) params.set('tenant_id', tenantId);
-    params.set('recent', '1');
-    const res = await fetch(`/api/analytics/sales?${params.toString()}`, { cache: 'no-store' });
-    const json = await res.json();
-    setRows(json.rows || []);
-    setRecent(json.recent || []);
-    setLastRefreshed(new Date().toLocaleTimeString());
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const onGenerate = async () => {
-    setLoading(true);
-    setMsg(null);
-    try {
-      const res = await fetch('/api/analytics/mock-sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: tenantId, days }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setMsg(JSON.stringify(json, null, 2));
-        return;
-      }
-      setMsg(JSON.stringify(json, null, 2));
-      await load();
-    } catch (e: any) {
-      setMsg(e?.message || 'failed');
-    } finally {
-      setLoading(false);
+  const load = useCallback(async () => {
+    if (!tenantId) {
+      setMsg('테넌트 ID가 필요합니다.');
+      return;
     }
-  };
-
-  const onReset = async () => {
-    if (!confirm('모든 Mock 데이터를 삭제하시겠습니까?')) return;
     
     setLoading(true);
-    setMsg(null);
     try {
-      // 실제 DELETE API 호출
-      const res = await fetch(`/api/analytics/mock-sales?tenant_id=${tenantId}`, {
-        method: 'DELETE',
+      // 실제 core.items 데이터 조회
+      const res = await fetch(`/api/items?tenant_id=${tenantId}`, { 
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }
       });
-      const json = await res.json();
+      
       if (!res.ok) {
-        setMsg(JSON.stringify(json, null, 2));
-        return;
+        const errorData = await res.json();
+        throw new Error(errorData.error || `HTTP ${res.status}: ${res.statusText}`);
       }
-      setMsg(JSON.stringify(json, null, 2));
-      await load();
+      
+      const json = await res.json();
+      setItems(json.items || []);
+      setLastRefreshed(new Date().toLocaleTimeString());
+      setMsg(null); // 성공 시 에러 메시지 제거
     } catch (e: any) {
-      setMsg(e?.message || 'failed');
+      setMsg(`데이터 로드 실패: ${e?.message || '알 수 없는 오류'}`);
+      console.error('Load error:', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantId]);
+
+  // 페이지 마운트 시에만 한 번 실행
+  useEffect(() => {
+    if (tenantId) {
+      load();
+    }
+  }, []); // 빈 의존성 배열로 변경
+
+  // 페이지 포커스 시 자동 데이터 새로고침 (페이지 이동 후 돌아올 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (tenantId && items.length === 0) {
+        load();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [tenantId, items.length, load]);
+
+  // 재고 통계 계산
+  const stats = useMemo(() => {
+    if (!items.length) return {
+      totalProducts: 0,
+      totalQuantity: 0,
+      averageQuantity: 0,
+      lowStockCount: 0,
+      outOfStockCount: 0,
+      highStockCount: 0
+    };
+
+    const totalProducts = items.length;
+    const totalQuantity = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+    const averageQuantity = totalProducts > 0 ? totalQuantity / totalProducts : 0;
+    
+    const lowStockCount = items.filter(item => Number(item.qty || 0) < 10).length;
+    const outOfStockCount = items.filter(item => Number(item.qty || 0) === 0).length;
+    const highStockCount = items.filter(item => Number(item.qty || 0) >= 50).length;
+
+    return {
+      totalProducts,
+      totalQuantity,
+      averageQuantity,
+      lowStockCount,
+      outOfStockCount,
+      highStockCount
+    };
+  }, [items]);
+
+  // 상위 재고 상품 (수량 기준)
+  const topStockItems = useMemo(() => {
+    return [...items]
+      .sort((a, b) => Number(b.qty || 0) - Number(a.qty || 0))
+      .slice(0, 10);
+  }, [items]);
+
+  // 부족 재고 상품
+  const lowStockItems = useMemo(() => {
+    return items
+      .filter(item => Number(item.qty || 0) < 10)
+      .sort((a, b) => Number(a.qty || 0) - Number(b.qty || 0))
+      .slice(0, 10);
+  }, [items]);
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Sales Analytics (Mock)</h1>
+      <h1 className="text-2xl font-semibold">재고 분석 (실시간 데이터)</h1>
 
       <div className="flex gap-2 items-end">
         <div>
-          <label className="block text-sm mb-1">tenant_id</label>
-          <input className="border rounded px-3 py-2 w-[420px]" value={tenantId} onChange={e=>setTenantId(e.target.value)} />
+          <label className="block text-sm mb-1">테넌트 ID <span className="text-green-500">✓ 자동 설정됨</span></label>
+          <input 
+            className="border rounded px-3 py-2 w-[420px] bg-gray-50 text-gray-600" 
+            value={tenantId} 
+            onChange={e => setTenantId(e.target.value)}
+            placeholder="테넌트 ID가 자동으로 설정되었습니다"
+            readOnly
+          />
+          <p className="text-xs text-green-600 mt-1">개발용 테넌트 ID가 자동으로 설정되었습니다</p>
         </div>
-        <div>
-          <label className="block text-sm mb-1">days</label>
-          <input type="number" className="border rounded px-3 py-2 w-28" value={days} onChange={e=>setDays(Number(e.target.value)||0)} />
-        </div>
-        <button onClick={async()=>{await onGenerate(); await load();}} disabled={loading} className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50">{loading?'생성 중...':'목업 생성(자동 새로고침)'}</button>
-        <button onClick={load} className="px-3 py-2 border rounded">요약 새로고침</button>
-        <button onClick={onReset} disabled={loading} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50">{loading?'처리 중...':'Mock 데이터 리셋'}</button>
-        {lastRefreshed && <span className="text-sm text-gray-500">마지막 갱신 {lastRefreshed} · {rows.length} rows</span>}
-      </div>
-
-      <div className="flex gap-4 items-end">
-        <div>
-          <label className="block text-sm mb-1">SKU 필터(부분일치)</label>
-          <input className="border rounded px-3 py-2 w-60" value={skuFilter} onChange={e=>setSkuFilter(e.target.value)} placeholder="예: SKU-1001" />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">표시 개월수</label>
-          <select className="border rounded px-3 py-2" value={monthsLimit} onChange={e=>setMonthsLimit(Number(e.target.value))}>
-            <option value={3}>3</option>
-            <option value={6}>6</option>
-            <option value={12}>12</option>
-          </select>
-        </div>
+        <button 
+          onClick={load} 
+          disabled={loading}
+          className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        >
+          {loading ? '로딩 중...' : '데이터 새로고침'}
+        </button>
+        {lastRefreshed && <span className="text-sm text-gray-500">마지막 갱신 {lastRefreshed} · {items.length}개 상품</span>}
       </div>
 
       {msg && <div className="bg-gray-50 border rounded px-3 py-2">{msg}</div>}
 
-      {/* 월별 매출 차트 (집계 rows 기반) */}
-      {(() => {
-        // 필터 적용
-        const fr = rows.filter(r => !skuFilter || String(r.sku || '').includes(skuFilter));
-        // month 라벨 만들기, 매출 합계(모든 SKU 합)
-        const m2rev = new Map<string, number>();
-        for (const r of fr) {
-          const d = new Date(r.month);
-          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
-          m2rev.set(key, (m2rev.get(key) || 0) + Number(r.revenue || 0));
-        }
-        const labels = Array.from(m2rev.keys()).sort();
-        const sliced = labels.slice(Math.max(0, labels.length - monthsLimit));
-        const data = sliced.map(k => m2rev.get(k) || 0);
-        const max = Math.max(1, ...data);
-        const W = 800, H = 200, pad = 24;
-        const bw = Math.max(10, Math.floor((W - pad*2) / Math.max(1, data.length)) - 6);
-        return (
-          <div className="border rounded p-4">
-            <div className="font-medium mb-2">월별 매출 차트(합계)</div>
-            <svg width={W} height={H} className="max-w-full">
-              {data.map((v, i) => {
-                const x = pad + i * (bw + 6);
-                const h = Math.max(1, Math.round((v / max) * (H - pad*2)));
-                const y = H - pad - h;
-                return (
-                  <g key={i}>
-                    <rect x={x} y={y} width={bw} height={h} fill="#3b82f6" />
-                    <text x={x + bw/2} y={H - 6} textAnchor="middle" fontSize="10">{sliced[i]}</text>
-                  </g>
-                );
-              })}
-            </svg>
+      {/* 새 대시보드 - 상단 카드 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow">
+          <div className="text-blue-100 text-sm">총 상품 수</div>
+          <div className="text-2xl font-bold mt-1">
+            {stats.totalProducts.toLocaleString()}개
           </div>
-        );
-      })()}
+        </div>
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow">
+          <div className="text-green-100 text-sm">총 재고 수량</div>
+          <div className="text-2xl font-bold mt-1">
+            {stats.totalQuantity.toLocaleString()}개
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
+          <div className="text-purple-100 text-sm">평균 수량</div>
+          <div className="text-2xl font-bold mt-1">
+            {Math.round(stats.averageQuantity)}개
+          </div>
+        </div>
+      </div>
 
-      {/* Top 5 SKUs (latest month) */}
-      {(() => {
-        if (!rows.length) return null;
-        const months = rows.map(r => r.month).sort();
-        const latest = months[months.length - 1];
-        const bySku = new Map<string, number>();
-        for (const r of rows) {
-          if (r.month === latest) {
-            bySku.set(r.sku, (bySku.get(r.sku) || 0) + Number(r.revenue || 0));
-          }
-        }
-        const top = Array.from(bySku.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        return (
-          <div className="border rounded p-4">
-            <div className="font-medium mb-2">Top 5 SKUs (최근월, 매출)</div>
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
+      {/* 추가 통계 카드 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+          <div className="text-yellow-800 text-sm font-medium">부족 재고</div>
+          <div className="text-yellow-900 text-2xl font-bold mt-1">
+            {stats.lowStockCount}개
+          </div>
+          <div className="text-yellow-600 text-sm mt-1">10개 미만</div>
+        </div>
+        <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
+          <div className="text-red-800 text-sm font-medium">품절 상품</div>
+          <div className="text-red-900 text-2xl font-bold mt-1">
+            {stats.outOfStockCount}개
+          </div>
+          <div className="text-red-600 text-sm mt-1">0개</div>
+        </div>
+        <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-lg">
+          <div className="text-indigo-800 text-sm font-medium">충분 재고</div>
+          <div className="text-indigo-900 text-2xl font-bold mt-1">
+            {stats.highStockCount}개
+          </div>
+          <div className="text-indigo-600 text-sm mt-1">50개 이상</div>
+        </div>
+      </div>
+
+      {/* 상위 재고 상품 */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">상위 재고 상품 (Top 10)</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-2">순위</th>
+                <th className="text-left px-4 py-2">바코드</th>
+                <th className="text-left px-4 py-2">상품명</th>
+                <th className="text-left px-4 py-2">현재 수량</th>
+                <th className="text-left px-4 py-2">업데이트</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topStockItems.map((item, idx) => (
+                <tr key={item.barcode} className="border-b">
+                  <td className="px-4 py-2 font-medium">{idx + 1}</td>
+                  <td className="px-4 py-2 font-medium">{item.barcode}</td>
+                  <td className="px-4 py-2">{item.product_name}</td>
+                  <td className="px-4 py-2 font-bold text-green-600">{item.qty.toLocaleString()}개</td>
+                  <td className="px-4 py-2 text-sm text-gray-600">
+                    {item.updated_at ? new Date(item.updated_at).toLocaleDateString('ko-KR') : 'N/A'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 부족 재고 상품 */}
+      {lowStockItems.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">⚠️ 부족 재고 상품 (10개 미만)</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-yellow-50">
                 <tr>
-                  <th className="text-left px-3 py-2">sku</th>
-                  <th className="text-left px-3 py-2">revenue</th>
+                  <th className="text-left px-4 py-2">바코드</th>
+                  <th className="text-left px-4 py-2">상품명</th>
+                  <th className="text-left px-4 py-2">현재 수량</th>
+                  <th className="text-left px-4 py-2">상태</th>
+                  <th className="text-left px-4 py-2">업데이트</th>
                 </tr>
               </thead>
               <tbody>
-                {top.map(([sku, rev]) => (
-                  <tr key={sku} className="border-t">
-                    <td className="px-3 py-2">{sku}</td>
-                    <td className="px-3 py-2">{rev.toFixed(2)}</td>
+                {lowStockItems.map((item) => (
+                  <tr key={item.barcode} className="border-b">
+                    <td className="px-4 py-2 font-medium">{item.barcode}</td>
+                    <td className="px-4 py-2">{item.product_name}</td>
+                    <td className="px-4 py-2 font-bold text-yellow-600">{item.qty}개</td>
+                    <td className="px-4 py-2">
+                      {item.qty === 0 ? (
+                        <span className="text-red-600 font-medium">품절</span>
+                      ) : (
+                        <span className="text-yellow-600 font-medium">부족</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-600">
+                      {item.updated_at ? new Date(item.updated_at).toLocaleDateString('ko-KR') : 'N/A'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
-      <div className="overflow-auto border rounded">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left px-3 py-2">month</th>
-              <th className="text-left px-3 py-2">sku</th>
-              <th className="text-left px-3 py-2">total_qty</th>
-              <th className="text-left px-3 py-2">revenue</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-t">
-                <td className="px-3 py-2">{r.month}</td>
-                <td className="px-3 py-2">{r.sku}</td>
-                <td className="px-3 py-2">{r.total_qty}</td>
-                <td className="px-3 py-2">{r.revenue}</td>
-              </tr>
-            ))}
-            {!rows.length && (
+      {/* 전체 상품 목록 */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">전체 상품 목록</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
               <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-gray-500">No data</td>
+                <th className="text-left px-4 py-2">바코드</th>
+                <th className="text-left px-4 py-2">상품명</th>
+                <th className="text-left px-4 py-2">현재 수량</th>
+                <th className="text-left px-4 py-2">상태</th>
+                <th className="text-left px-4 py-2">업데이트</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="overflow-auto border rounded">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left px-3 py-2">sold_at</th>
-              <th className="text-left px-3 py-2">sku</th>
-              <th className="text-left px-3 py-2">qty</th>
-              <th className="text-left px-3 py-2">price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recent.map((r, i) => (
-              <tr key={i} className="border-t">
-                <td className="px-3 py-2">{r.sold_at}</td>
-                <td className="px-3 py-2">{r.sku}</td>
-                <td className="px-3 py-2">{r.qty}</td>
-                <td className="px-3 py-2">{r.price}</td>
-              </tr>
-            ))}
-            {!recent.length && (
-              <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-gray-500">No recent rows</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.barcode} className="border-b">
+                  <td className="px-4 py-2 font-medium">{item.barcode}</td>
+                  <td className="px-4 py-2">{item.product_name}</td>
+                  <td className="px-4 py-2 font-bold">{item.qty.toLocaleString()}개</td>
+                  <td className="px-4 py-2">
+                    {item.qty === 0 ? (
+                      <span className="text-red-600 font-medium">품절</span>
+                    ) : item.qty < 10 ? (
+                      <span className="text-yellow-600 font-medium">부족</span>
+                    ) : (
+                      <span className="text-green-600 font-medium">충분</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-gray-600">
+                    {item.updated_at ? new Date(item.updated_at).toLocaleDateString('ko-KR') : 'N/A'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
