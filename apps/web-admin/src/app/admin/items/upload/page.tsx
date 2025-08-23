@@ -20,6 +20,11 @@ export default function DataManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Helper function to safely get count
+  const getCount = (obj: any, key: string) => {
+    return obj && obj[key] ? obj[key] : 0;
+  };
+
   const handleUpload = async () => {
     if (!file) {
       setError('CSV 파일을 선택해주세요');
@@ -32,7 +37,7 @@ export default function DataManagementPage() {
 
     try {
       const formData = new FormData();
-      formData.append('tenantId', tenantId.trim());
+      formData.append('tenant_id', tenantId.trim());
       formData.append('file', file);
 
       const response = await fetch('/api/upload/unified', {
@@ -179,25 +184,25 @@ export default function DataManagementPage() {
             {/* 요약 통계 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-blue-600">{result.total}</div>
+                <div className="text-2xl font-bold text-blue-600">{result.total || 0}</div>
                 <div className="text-sm text-blue-600">총 행 수</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-green-600">{result.inserted.sales}</div>
+                <div className="text-2xl font-bold text-green-600">{getCount(result.inserted, 'sales')}</div>
                 <div className="text-sm text-green-600">판매 데이터</div>
               </div>
               <div className="bg-orange-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-orange-600">{result.inserted.items}</div>
+                <div className="text-2xl font-bold text-orange-600">{getCount(result.inserted, 'items')}</div>
                 <div className="text-sm text-orange-600">재고 데이터</div>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-gray-600">{result.skipped}</div>
+                <div className="text-2xl font-bold text-gray-600">{result.skipped || 0}</div>
                 <div className="text-sm text-gray-600">건너뛴 행</div>
               </div>
             </div>
 
             {/* 에러 목록 */}
-            {result.errors.length > 0 && (
+            {result.errors && result.errors.length > 0 && (
               <div>
                 <h4 className="font-semibold text-red-600 mb-2">⚠️ 에러 목록 (최대 50개)</h4>
                 <div className="max-h-60 overflow-auto bg-red-50 rounded-lg p-3">
@@ -211,7 +216,7 @@ export default function DataManagementPage() {
             )}
 
             {/* 미리보기 */}
-            {result.preview.length > 0 && (
+            {result.preview && result.preview.length > 0 && (
               <div>
                 <h4 className="font-semibold text-green-600 mb-2">👀 데이터 미리보기 (상위 5행)</h4>
                 <div className="overflow-auto max-h-80">

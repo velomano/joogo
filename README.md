@@ -1,288 +1,215 @@
-# Joogo WMS/OMS MVP
+# Joogo - WMS/OMS MVP
 
-A comprehensive Warehouse Management System (WMS) and Order Management System (OMS) built with MCP providers and Supabase as the single source of truth.
+멀티테넌트 기반의 Warehouse Management System (WMS) 및 Order Management System (OMS) MVP 프로젝트입니다.
 
-## 🏗️ Architecture
+## 🚀 주요 기능
 
-- **Monorepo**: pnpm workspaces with TypeScript
-- **Frontend**: Next.js 15 with App Router, Tailwind CSS
-- **Backend**: MCP (Model Context Protocol) providers as microservices
-- **Database**: Supabase with PostgreSQL, Row Level Security (RLS)
-- **Authentication**: Supabase Auth with multi-tenant support
-- **File Storage**: Supabase Storage for shipping labels
+### 📊 **판매 분석 시스템 (신규)**
+- **새로운 데이터 포맷 지원**: `데이터 분석 - RawData.csv` (95개 컬럼)
+- **고급 분석**: 상품별 매출, 원가, 마진, 일별 판매 추이
+- **대시보드**: 실시간 통계, 차트 시각화, 필터링
+- **API**: 업로드, 조회, 일별 데이터 처리
 
-## 🚀 Quick Start
+### 🤖 **AI 기반 자연어 쿼리**
+- **토큰 최적화**: 60% 이상 토큰 사용량 감소
+- **의도 라우터**: 빠른 의도 파악 (600 토큰 이하)
+- **SQL 템플릿**: 미리 정의된 쿼리로 LLM 호출 최소화
+- **캐싱**: 반복 질문에 대한 즉시 응답
 
-### Prerequisites
+### 📈 **Sales Analytics Dashboard**
+- 월별 매출 추이 및 Top SKU 분석
+- 재고 현황 및 CSV 다운로드
+- Recharts 기반 동적 차트 렌더링
 
-- Node.js >= 20.0.0
-- pnpm >= 8.0.0 (또는 npm 최신)
-- Supabase CLI (optional, for local development)
+### 🔍 **Items Management**
+- 상품 정보 업로드/관리
+- 바코드 스캔 지원
+- 재고 현황 모니터링
 
-### 1. Clone and Install
+## 🏗️ 아키텍처
 
+### **데이터베이스 구조**
+```
+core/
+├── items (기존)           # 기본 재고 관리
+├── products (신규)        # 상세 상품 정보 (95개 컬럼)
+├── daily_sales (신규)     # 일별 판매 데이터
+├── product_mapping        # 기존-신규 테이블 매핑
+└── sales                 # 매출 데이터
+```
+
+### **API 구조**
+```
+/api/
+├── upload/
+│   └── sales-analysis    # CSV 업로드 및 처리
+├── sales-analysis/       # 메인 판매 분석
+│   └── daily            # 일별 데이터
+├── analytics/sales       # 기존 매출 분석
+├── ask                  # AI 자연어 쿼리
+└── items                # 상품 관리
+```
+
+### **프론트엔드 페이지**
+```
+/admin/
+├── sales-analysis        # 새로운 판매 분석 대시보드
+├── analytics/sales       # 기존 매출 분석
+├── ask                  # AI 쿼리 인터페이스
+└── items                # 상품 관리
+```
+
+## 🛠️ 설치 및 실행
+
+### **필수 요구사항**
+- Node.js 18+
+- pnpm
+- Supabase 프로젝트
+
+### **1. 저장소 클론**
 ```bash
-git clone <repository-url>
-cd joogo-wms-oms
-pnpm install # 또는 npm i
+git clone https://github.com/velomano/joogo.git
+cd joogo
 ```
 
-### 2. Environment Setup
-
-Copy the environment file and configure your Supabase credentials:
-
+### **2. 의존성 설치**
 ```bash
-cp env.example .env
+pnpm install
 ```
 
-Edit `.env` with your Supabase project details:
-
-```env
-# MCP Provider Ports
-FILES_PORT=7301
-CATALOG_PORT=7302
-ORDERS_PORT=7303
-SHIPPING_PORT=7304
-
-# Development Token
-DEV_TOKEN=dev-tenant
-
-# Supabase Configuration
-SUPABASE_URL=your_supabase_url_here
-SUPABASE_ANON_KEY=your_supabase_anon_key_here
-SUPABASE_SERVICE_ROLE=your_supabase_service_role_key_here
-
-# Next.js Public Environment Variables
-NEXT_PUBLIC_FILES_PORT=7301
-NEXT_PUBLIC_CATALOG_PORT=7302
-NEXT_PUBLIC_ORDERS_PORT=7303
-NEXT_PUBLIC_SHIPPING_PORT=7304
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-
-# Supabase Storage
-SUPABASE_STORAGE_BUCKET=labels
-```
-
-### 3. Database Setup
-
-#### Option A: Using Supabase CLI (Recommended)
-
+### **3. 환경변수 설정**
 ```bash
-# Link to your Supabase project
-supabase link --project-ref your-project-ref
+# .env.local 파일 생성
+cp .env.example .env.local
 
-# Push the schema
-pnpm db:push
+# Supabase 설정
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE=your_service_role_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+# OpenAI API (AI 쿼리용)
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-#### Option B: Manual SQL Execution
+### **4. 데이터베이스 스키마 설정**
+```sql
+-- Supabase SQL Editor에서 실행
+-- database/schema/sales_analysis.sql 파일의 내용을 실행
+```
 
-1. Go to your Supabase project dashboard
-2. Navigate to SQL Editor
-3. Execute the SQL files in order:
-   - `supabase/schema/001_core.sql`
-   - `supabase/schema/002_rls.sql`
-   - `supabase/seed/seed.sql`
-
-### 4. Create Storage Bucket
-
-In your Supabase dashboard:
-1. Go to Storage
-2. Create a new bucket called `labels`
-3. Set it to public
-
-### 5. Start Development
-
+### **5. 개발 서버 실행**
 ```bash
-# Start all services (MCP providers + web admin)
-pnpm dev:all # 또는 npm run dev:all
+# 프론트엔드 (Next.js)
+cd apps/web-admin
+pnpm dev
 
-# Or start individually:
-pnpm dev:providers  # Start MCP providers (npm run dev:providers)
-pnpm dev:web        # Start Next.js app (npm run dev:web)
-pnpm dev:db         # Start local Supabase (if using CLI)
+# 백엔드 (Supabase)
+# Supabase Studio에서 Functions 활성화
 ```
 
-Open http://localhost:3000 to access the web admin.
+## 📊 **새로운 판매 분석 기능 사용법**
 
-## 🔎 Health Check
+### **1. CSV 파일 업로드**
+- `/admin/sales-analysis` 페이지 접속
+- `데이터 분석 - RawData.csv` 파일 업로드
+- 자동 파싱 및 데이터베이스 저장
 
-- Aggregated: `curl http://localhost:3000/api/health`
-- Individual services:
-  - Files: `curl http://localhost:7301/health`
-  - Catalog: `curl http://localhost:7302/health`
-  - Orders: `curl http://localhost:7303/health`
-  - Shipping: `curl http://localhost:7304/health`
+### **2. 데이터 분석**
+- **요약 카드**: 총 상품 수, 매출, 이익, 재고 상태
+- **차트**: 일별 판매 추이, Top 10 상품
+- **필터**: 검색, 카테고리별 분류
+- **상품 목록**: 상세 정보 및 통계
 
-## 📁 Project Structure
-
-```
-joogo-wms-oms/
-├── apps/
-│   └── web-admin/           # Next.js 15 web application
-├── packages/
-│   ├── shared/              # Zod schemas, types, utilities
-│   ├── mcp-files/           # CSV processing provider
-│   ├── mcp-catalog/         # Product catalog provider
-│   ├── mcp-orders/          # Order management provider
-│   └── mcp-shipping/        # Shipping & labels provider
-├── supabase/
-│   ├── schema/              # Database schema files
-│   └── seed/                # Seed data
-├── samples/                  # Sample CSV files
-└── root config files
-```
-
-## 🔧 MCP Providers
-
-### MCP Files (Port 7301)
-- CSV template management
-- CSV validation
-- CSV upload to stage tables
-
-### MCP Catalog (Port 7302)
-- Product import from stage tables
-- Product search and management
-- Barcode lookup
-
-### MCP Orders (Port 7303)
-- Order import from stage tables
-- Order listing and search
-- Mock order generation for testing
-
-### MCP Shipping (Port 7304)
-- Shipment creation
-- PDF label generation
-- Mock printing operations
-
-## 📊 Database Schema
-
-### Core Tables
-- `tenants` - Multi-tenant support
-- `products` - Product catalog
-- `orders` - Customer orders
-- `order_items` - Order line items
-- `shipments` - Shipping information
-- `shipment_items` - Shipment contents
-
-### Stage Tables
-- `stage_products` - CSV import staging
-- `stage_orders` - CSV import staging
-
-### Operations
-- `jobs` - Background job tracking
-
-## 🔐 Security Features
-
-- **Row Level Security (RLS)** on all tables
-- **Multi-tenant isolation** via `tenant_id`
-- **Service role keys** for MCP providers only
-- **Bearer token authentication** for MCP APIs
-
-## 📚 문서 운영 규칙
-- **프로젝트 안내**: README.md
-- **버전별 기록**: CHANGELOG.md
-- **아키텍처/구조**: docs/ARCHITECTURE.md
-- **로드맵**: docs/ROADMAP.md
-- **운영/트러블슈팅**: docs/RUNBOOK.md
-
-## 🧪 Testing the System
-
-### 1. Product Import
-1. Go to `/catalog`
-2. Paste sample CSV content from `samples/products.csv`
-3. Click "Validate" → "Upload" → "Import"
-
-### 2. Order Import
-1. Go to `/orders`
-2. Paste sample CSV content from `samples/orders.csv`
-3. Click "Validate" → "Upload" → "Import"
-
-### 3. Mock Order Generation
-1. Go to `/orders`
-2. Click "Mock Sync (7 days)"
-3. View generated orders
-
-### 4. Shipping Labels
-1. Go to `/shipping`
-2. Select an order
-3. Create shipment → Generate label → Print (mock)
-
-## 🚀 Production Deployment
-
-### Environment Variables
-- Set `NODE_ENV=production`
-- Use production Supabase credentials
-- Configure proper CORS settings
-- Set up proper logging
-
-### Scaling
-- Deploy MCP providers as separate services
-- Use load balancers for MCP providers
-- Implement proper health checks
-- Set up monitoring and alerting
-
-## 🛠️ Development Commands
-
+### **3. API 활용**
 ```bash
-# Type checking
+# 업로드
+POST /api/upload/sales-analysis
+Content-Type: multipart/form-data
+file: CSV파일, tenant_id: 테넌트ID
+
+# 데이터 조회
+GET /api/sales-analysis?tenant_id=default&limit=100
+
+# 일별 데이터
+GET /api/sales-analysis/daily?tenant_id=default&days=30
+```
+
+## 🔧 **개발 가이드**
+
+### **새로운 기능 추가**
+1. **데이터베이스**: `database/schema/` 폴더에 SQL 스키마 작성
+2. **API**: `apps/web-admin/src/app/api/` 폴더에 API 라우트 생성
+3. **페이지**: `apps/web-admin/src/app/admin/` 폴더에 React 컴포넌트 생성
+4. **문서**: `CHANGELOG.md`에 변경사항 기록
+
+### **코드 스타일**
+- TypeScript 사용
+- ESLint + Prettier 설정 준수
+- 컴포넌트별 타입 정의
+- 에러 핸들링 및 로깅
+
+### **테스트**
+```bash
+# 타입 체크
 pnpm typecheck
 
-# Linting
+# 린트
 pnpm lint
 
-# Formatting
-pnpm format
-
-# Building
+# 빌드
 pnpm build
-
-# Clean
-pnpm clean
 ```
 
-## 📝 API Documentation
+## 📈 **성능 최적화**
 
-### MCP Provider Endpoints
+### **토큰 사용량 최적화**
+- **의도 라우터**: LLM 호출 80% 감소
+- **SQL 템플릿**: 미리 정의된 쿼리 활용
+- **캐싱**: 반복 질문 즉시 응답
+- **스키마 선택**: 최소한의 컨텍스트만 전송
 
-Each MCP provider exposes:
-- `GET /health` - Health check
-- `GET /tools` - List available tools
-- `POST /run` - Execute a tool
+### **데이터베이스 최적화**
+- **인덱싱**: 자주 조회되는 컬럼에 인덱스 적용
+- **배치 처리**: 100개씩 배치로 데이터 처리
+- **RLS**: 테넌트별 데이터 격리 및 보안
 
-### Authentication
-All MCP requests require:
-```
-Authorization: Bearer dev-tenant
-```
+## 🚨 **문제 해결**
 
-## 🤝 Contributing
+### **일반적인 오류**
+1. **환경변수 누락**: `.env.local` 파일 확인
+2. **Supabase 연결 실패**: URL 및 키 확인
+3. **타입 오류**: `pnpm typecheck` 실행
+4. **빌드 실패**: `pnpm build` 실행하여 오류 확인
+
+### **데이터베이스 문제**
+1. **스키마 오류**: `sales_analysis.sql` 재실행
+2. **RLS 정책**: 테넌트 설정 확인
+3. **함수 오류**: Supabase Functions 재배포
+
+## 📝 **변경 이력**
+
+자세한 변경사항은 [CHANGELOG.md](./CHANGELOG.md)를 참조하세요.
+
+## 🤝 **기여하기**
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📄 **라이선스**
 
-This project is licensed under the MIT License.
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](./LICENSE) 파일을 참조하세요.
 
-## 🆘 Support
+## 📞 **지원**
 
-For issues and questions:
-1. Check the existing issues
-2. Create a new issue with detailed information
-3. Include logs and error messages
+문제가 발생하거나 질문이 있으시면:
+1. [GitHub Issues](https://github.com/velomano/joogo/issues) 생성
+2. 프로젝트 문서 확인
+3. 개발팀에 문의
 
-## 🔮 Roadmap
+---
 
-- [ ] Real carrier integrations (FedEx, UPS, DHL)
-- [ ] Advanced inventory management
-- [ ] Barcode scanning integration
-- [ ] Mobile app for warehouse operations
-- [ ] Advanced analytics and reporting
-- [ ] Multi-language support
-- [ ] Advanced user roles and permissions
+**Joogo** - 스마트한 창고 및 주문 관리 시스템 🚀
 

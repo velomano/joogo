@@ -1,8 +1,0 @@
-channel_order_no,buyer,ordered_at,sku,qty,option,price
-MOCK-001,John Doe,2024-01-15 10:30:00+00,PROD-001,2,Dark Roast,12.99
-MOCK-001,John Doe,2024-01-15 10:30:00+00,PROD-003,1,70% Dark,8.99
-MOCK-002,Jane Smith,2024-01-16 14:20:00+00,PROD-002,3,Green Tea,15.99
-MOCK-003,Bob Johnson,2024-01-17 09:15:00+00,PROD-001,1,Dark Roast,12.99
-MOCK-003,Bob Johnson,2024-01-17 09:15:00+00,PROD-004,2,Lavender,6.50
-MOCK-004,Alice Brown,2024-01-18 16:45:00+00,PROD-005,1,Raw,18.99
-

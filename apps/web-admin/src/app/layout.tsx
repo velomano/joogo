@@ -36,6 +36,11 @@ export default function RootLayout({
                 <div className="flex items-center space-x-4">
                   <a href="/admin/ask" className="text-sm text-blue-600 hover:underline">❓ AI 질의</a>
                 </div>
+                
+                {/* Insight-to-Action */}
+                <div className="flex items-center space-x-4">
+                  <a href="/actions" className="text-sm text-green-600 hover:underline font-medium">🎯 액션 큐</a>
+                </div>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">

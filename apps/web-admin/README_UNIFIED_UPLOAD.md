@@ -21,26 +21,24 @@
 
 ## 📊 CSV 형식
 
-### 필수 헤더 (정확한 컬럼명)
+### 필수 헤더 (정확한 컬럼명) - 데이터 분석 RawData.csv 기준
 
 ```csv
-tenant_id,sale_date,barcode,상품명,옵션명,sale_qty,unit_price_krw,revenue_krw,channel,stock_qty
+대표판매가,상품코드,상품명,상품등록일자,공급처명,공급처코드,공급처전화번호,공급처위치,사입상품명,상품분류,옵션일련번호,옵션내용,원가,판매가,옵션코드,상품위치,바코드번호,품절여부,안정재고,현재고,주문금액,주문수,발송수,발송금액,미발송수,입고수량,출고수량,부족수량,사입옵션명,상품설명,옵션별공급처,옵션비고,주문단가,취소주문수,판매가X출고수량,반품주문수,상품메모5,20250207,20250208,20250209,...
 ```
 
 ### 컬럼 설명
 
 | 컬럼명 | 타입 | 설명 | 예시 |
 |--------|------|------|------|
-| `tenant_id` | UUID | 테넌트 식별자 | `84949b3c-2cb7-4c42-b9f9-d1f37d371e00` |
-| `sale_date` | YYYY-MM-DD | 판매/스냅샷 날짜 | `2025-08-22` |
-| `barcode` | 정수/문자열 | 상품 바코드 | `123456789` |
+| `tenant_id` | UUID | 테넌트 식별자 (폼에서 입력) | 업로드 시 폼에서 입력 |
+| `바코드번호` | 문자열 | 상품 바코드 | `123456789` |
 | `상품명` | 문자열 | 상품 기본명 | `티셔츠`, `후디` |
-| `옵션명` | 문자열 | 상품 옵션 | `레드`, `블루`, `L` |
-| `sale_qty` | 정수 | 판매 수량 | `5` (판매행), `0` (스냅샷) |
-| `unit_price_krw` | 정수 | 단가 (원화, 기호 없음) | `15000` |
-| `revenue_krw` | 정수 | 매출 (원화, 기호 없음) | `75000` |
-| `channel` | 문자열 | 판매 채널 | `online`, `offline`, `wholesale`, `snapshot` |
-| `stock_qty` | 정수 | 재고 수량 | `10` |
+| `옵션내용` | 문자열 | 상품 옵션 | `레드`, `블루`, `L` |
+| `현재고` | 정수 | 현재 재고 수량 | `10` |
+| `판매가` | 정수 | 판매 단가 (원화) | `15000` |
+| `원가` | 정수 | 상품 원가 (원화) | `10000` |
+| `20250207`, `20250208`, ... | 정수 | 일별 판매 수량 | `5`, `3`, `0` |
 
 ### 데이터 규칙
 
@@ -63,7 +61,31 @@ tenant_id,sale_date,barcode,상품명,옵션명,sale_qty,unit_price_krw,revenue_
 
 ## 🔧 사용법
 
-### 1. 업로드 페이지 접속
+### 1. 환경변수 설정
+
+**중요**: 이 단계를 먼저 완료해야 합니다.
+
+프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
+
+```bash
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE=your_service_role_key_here
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+
+# Database Configuration
+DATABASE_URL=your_database_url_here
+
+# App Configuration
+NODE_ENV=development
+```
+
+**보안 주의사항**: 
+- `SUPABASE_SERVICE_ROLE`은 서버 사이드에서만 사용되어야 하며, 클라이언트에 노출되면 안 됩니다
+- `.env` 파일은 `.gitignore`에 포함되어 있어야 합니다
+
+### 2. 업로드 페이지 접속
 
 ```
 http://localhost:3001/admin/upload-one
@@ -71,9 +93,10 @@ http://localhost:3001/admin/upload-one
 
 ### 2. 데이터 입력
 
-1. **Tenant ID 입력**: UUID 형식으로 입력
-2. **CSV 파일 선택**: 위 형식에 맞는 CSV 파일 선택
-3. **업로드 시작**: "🚀 업로드 시작" 버튼 클릭
+1. **환경변수 설정**: `.env` 파일에 Supabase 정보 입력
+2. **Tenant ID 입력**: UUID 형식으로 입력 (예: 84949b3c-2cb7-4c42-b9f9-d1f37d371e00)
+3. **CSV 파일 선택**: 위 형식에 맞는 CSV 파일 선택 (tenant_id 컬럼 제외)
+4. **업로드 시작**: "🚀 업로드 시작" 버튼 클릭
 
 ### 3. 결과 확인
 

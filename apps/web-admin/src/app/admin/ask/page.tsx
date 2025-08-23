@@ -65,7 +65,7 @@ export default function AskPage() {
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question.trim(), tenant_id: tenantId }),
+        body: JSON.stringify({ question: question.trim(), tenantId: tenantId }),
       });
       
       const data = await res.json();
@@ -800,6 +800,218 @@ export default function AskPage() {
       );
     }
 
+    // 90일간 상품판매 추이 응답
+    if (resp.type === 'sales_trend_90') {
+      const trendData = resp.data;
+      const chartData = trendData?.dailySales?.map((item: any) => ({
+        name: item.date,
+        매출: item.total_revenue || 0,
+        판매량: item.total_qty || 0,
+        주문수: item.order_count || 0
+      })) || [];
+
+      return (
+        <div className="space-y-6">
+          {/* LLM 분석 결과 */}
+          {resp.analysis && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="text-blue-800 font-medium">AI 분석 결과</div>
+              <div className="text-blue-600 text-sm mt-1">
+                <strong>의도:</strong> {resp.analysis.intent} 
+                <span className="ml-2 text-blue-500">(신뢰도: {(resp.analysis.confidence * 100).toFixed(0)}%)</span>
+              </div>
+              <div className="text-blue-600 text-sm mt-1">
+                <strong>분석:</strong> {resp.analysis.reasoning}
+              </div>
+            </div>
+          )}
+
+          {/* AI 인사이트 */}
+          {resp.insight && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-green-800 font-medium">AI 인사이트</div>
+              <div className="text-green-700 mt-1">{resp.insight}</div>
+            </div>
+          )}
+
+          {/* 요약 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow">
+              <div className="text-blue-100 text-sm">90일 총 매출</div>
+              <div className="text-2xl font-bold">₩{(trendData?.totalRevenue || 0).toLocaleString()}</div>
+            </div>
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow">
+              <div className="text-green-100 text-sm">90일 총 판매량</div>
+              <div className="text-2xl font-bold">{trendData?.totalQty || 0}개</div>
+            </div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow">
+              <div className="text-purple-100 text-sm">평균 일 매출</div>
+              <div className="text-2xl font-bold">₩{Math.round((trendData?.avgDailyRevenue || 0)).toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* 90일간 매출 추이 차트 */}
+          <div className="bg-white border rounded-lg p-4">
+            <h3 className="font-medium mb-3">90일간 매출 추이</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => fmtInt(typeof value === 'number' ? value : 0)} />
+                  <Legend />
+                  <Line type="monotone" dataKey="매출" stroke="#3b82f6" strokeWidth={2} />
+                  <Line type="monotone" dataKey="판매량" stroke="#10b981" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 일별 상세 데이터 */}
+          {trendData?.dailySales && trendData.dailySales.length > 0 && (
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-medium mb-3">일별 판매 상세 (최근 30일)</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-2">날짜</th>
+                      <th className="text-left px-4 py-2">총 매출</th>
+                      <th className="text-left px-4 py-2">총 판매량</th>
+                      <th className="text-left px-4 py-2">주문 건수</th>
+                      <th className="text-left px-4 py-2">평균 단가</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trendData.dailySales.slice(-30).map((item: any) => (
+                      <tr key={item.date} className="border-b">
+                        <td className="px-4 py-2 font-medium">{item.date}</td>
+                        <td className="px-4 py-2">₩{(item.total_revenue || 0).toLocaleString()}</td>
+                        <td className="px-4 py-2">{(item.total_qty || 0).toLocaleString()}개</td>
+                        <td className="px-4 py-2">{item.order_count || 0}건</td>
+                        <td className="px-4 py-2">₩{Math.round((item.total_revenue || 0) / (item.total_qty || 1)).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 상위 5개 상품 응답
+    if (resp.type === 'top_5_products') {
+      const topData = resp.data;
+      const chartData = topData?.topProducts?.map((item: any) => ({
+        name: item.product_name?.substring(0, 20) + '...' || item.barcode,
+        매출: item.total_revenue || 0,
+        판매량: item.total_qty || 0,
+        평균단가: item.avg_price || 0
+      })) || [];
+
+      return (
+        <div className="space-y-6">
+          {/* LLM 분석 결과 */}
+          {resp.analysis && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="text-blue-800 font-medium">AI 분석 결과</div>
+              <div className="text-blue-600 text-sm mt-1">
+                <strong>의도:</strong> {resp.analysis.intent} 
+                <span className="ml-2 text-blue-500">(신뢰도: {(resp.analysis.confidence * 100).toFixed(0)}%)</span>
+              </div>
+              <div className="text-blue-600 text-sm mt-1">
+                <strong>분석:</strong> {resp.analysis.reasoning}
+              </div>
+            </div>
+          )}
+
+          {/* AI 인사이트 */}
+          {resp.insight && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-green-800 font-medium">AI 인사이트</div>
+              <div className="text-green-700 mt-1">{resp.insight}</div>
+            </div>
+          )}
+
+          {/* 요약 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow">
+              <div className="text-blue-100 text-sm">TOP 5 총 매출</div>
+              <div className="text-2xl font-bold">₩{(topData?.totalTopRevenue || 0).toLocaleString()}</div>
+            </div>
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow">
+              <div className="text-green-100 text-sm">TOP 5 총 판매량</div>
+              <div className="text-2xl font-bold">{topData?.totalTopQty || 0}개</div>
+            </div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow">
+              <div className="text-purple-100 text-sm">1위 상품</div>
+              <div className="text-2xl font-bold">{topData?.topProducts?.[0]?.product_name?.substring(0, 15) || 'N/A'}...</div>
+            </div>
+          </div>
+
+          {/* TOP 5 상품 차트 */}
+          <div className="bg-white border rounded-lg p-4">
+            <h3 className="font-medium mb-3">TOP 5 상품 매출 현황</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => fmtInt(typeof value === 'number' ? value : 0)} />
+                  <Legend />
+                  <Bar dataKey="매출" fill="#3b82f6" />
+                  <Bar dataKey="판매량" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* TOP 5 상품 상세 테이블 */}
+          {topData?.topProducts && topData.topProducts.length > 0 && (
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-medium mb-3">TOP 5 상품 상세</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-2">순위</th>
+                      <th className="text-left px-4 py-2">바코드</th>
+                      <th className="text-left px-4 py-2">상품명</th>
+                      <th className="text-left px-4 py-2">옵션</th>
+                      <th className="text-left px-4 py-2">총 판매량</th>
+                      <th className="text-left px-4 py-2">총 매출</th>
+                      <th className="text-left px-4 py-2">평균 단가</th>
+                      <th className="text-left px-4 py-2">현재 재고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topData.topProducts.map((item: any, index: number) => (
+                      <tr key={item.barcode} className="border-b">
+                        <td className="px-4 py-2 font-bold text-lg">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}위`}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-sm">{item.barcode}</td>
+                        <td className="px-4 py-2 font-medium">{item.product_name}</td>
+                        <td className="px-4 py-2">{item.option_name}</td>
+                        <td className="px-4 py-2">{(item.total_qty || 0).toLocaleString()}개</td>
+                        <td className="px-4 py-2">₩{(item.total_revenue || 0).toLocaleString()}</td>
+                        <td className="px-4 py-2">₩{Math.round((item.total_revenue || 0) / (item.total_qty || 1)).toLocaleString()}</td>
+                        <td className="px-4 py-2">{(item.current_stock || 0).toLocaleString()}개</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // 추세 분석 응답
     if (resp.type === 'trends') {
       const trendData = resp.data;
@@ -1032,6 +1244,18 @@ export default function AskPage() {
           >
             {showHistory ? '히스토리 숨기기' : '히스토리 보기'}
           </button>
+          <button 
+            onClick={() => setQuestion('90일간 상품판매 추이')}
+            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            📈 90일 판매추이
+          </button>
+          <button 
+            onClick={() => setQuestion('상위 5개 많이 판매된 상품')}
+            className="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            🏆 TOP 5 상품
+          </button>
           <a href="/admin/analytics/sales" className="px-3 py-2 border rounded hover:bg-gray-50">
             Analytics로
           </a>
@@ -1163,7 +1387,9 @@ export default function AskPage() {
                   'SKU 분석',
                   '월별 분석',
                   '전체 분석',
-                  '현황 분석'
+                  '현황 분석',
+                  '90일간 상품판매 추이',
+                  '상위 5개 많이 판매된 상품'
                 ].map((example, idx) => (
                   <button
                     key={idx}

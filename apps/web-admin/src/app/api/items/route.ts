@@ -1,79 +1,94 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import path from 'path';
-import dotenv from 'dotenv';
 
-// Load root .env for monorepo
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
-
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenant_id') || process.env.NEXT_PUBLIC_TENANT_ID || '';
-    if (!tenantId) {
-      return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
-    }
-
-    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url) return NextResponse.json({ error: 'supabaseUrl missing' }, { status: 500 });
-    if (!serviceKey) return NextResponse.json({ error: 'supabase service key missing' }, { status: 500 });
-
-    const supabase = createClient(url, serviceKey, { db: { schema: 'public' } });
-    
-    // RPC 대신 직접 테이블 조회 (public.items 사용)
-            const { data, error } = await supabase
-          .from('items')
-          .select('barcode, product_name, option_name, qty, unit_price_krw, revenue_krw, channel, sale_date, updated_at, created_at')
-          .eq('tenant_id', tenantId)
-          .order('updated_at', { ascending: false });
-      
-    if (error) throw error;
-
-            const rows = (data || []).map((r: any) => ({
-          barcode: r.barcode,
-          product_name: r.product_name || r.productName,
-          option_name: r.option_name,
-          qty: r.qty,
-          unit_price_krw: r.unit_price_krw,
-          revenue_krw: r.revenue_krw,
-          channel: r.channel,
-          sale_date: r.sale_date,
-          updated_at: r.updated_at,
-          created_at: r.created_at,
-        }));
-
-    return NextResponse.json({ items: rows });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'failed' }, { status: 500 });
+// 환경 변수 로드 헬퍼 함수
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(`환경 변수가 누락되었습니다. SUPABASE_URL: ${!!supabaseUrl}, SUPABASE_SERVICE_ROLE_KEY: ${!!supabaseKey}`);
   }
+  
+  return createClient(supabaseUrl, supabaseKey);
 }
 
-export async function DELETE(req: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenant_id') || process.env.NEXT_PUBLIC_TENANT_ID || '';
-    if (!tenantId) {
-      return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
+    const { searchParams } = new URL(request.url);
+    const tenant_id = searchParams.get('tenant_id');
+
+    if (!tenant_id) {
+      return NextResponse.json(
+        { error: 'tenant_id가 필요합니다.' },
+        { status: 400 }
+      );
     }
 
-    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url) return NextResponse.json({ error: 'supabaseUrl missing' }, { status: 500 });
-    if (!serviceKey) return NextResponse.json({ error: 'supabase service key missing' }, { status: 500 });
+    const supabase = getSupabaseClient();
 
-    const supabase = createClient(url, serviceKey, { db: { schema: 'public' } });
-    
-    // RPC 대신 직접 테이블 삭제 (public.items 사용)
-    const { data, error } = await supabase
-      .from('items')
-      .delete()
-      .eq('tenant_id', tenantId);
-      
-    if (error) throw error;
-    return NextResponse.json({ reset: data ?? 0 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'failed' }, { status: 500 });
+    // 새로운 analytics 스키마에서 데이터 조회
+    const { data: salesData, error: salesError } = await supabase
+      .schema('analytics')
+      .from('fact_sales')
+      .select(`
+        tenant_id,
+        sales_date,
+        sku,
+        channel,
+        qty,
+        revenue,
+        cost,
+        warehouse_code,
+        yyyymm,
+        created_at
+      `)
+      .eq('tenant_id', tenant_id)
+      .order('sales_date', { ascending: false })
+      .limit(1000);
+
+    if (salesError) {
+      console.error('sales 데이터 조회 실패:', salesError);
+      return NextResponse.json(
+        { error: `데이터 조회 실패: ${salesError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // 데이터 변환 (기존 API와 호환성 유지)
+    const transformedData = salesData?.map((row: any) => ({
+      id: `${row.sku}-${row.sales_date}`,
+      tenant_id: row.tenant_id,
+      sale_date: row.sales_date,
+      barcode: row.sku,
+      product_name: row.sku, // SKU를 product_name으로 사용
+      sale_qty: row.qty,
+      unit_price_krw: row.revenue ? row.revenue / row.qty : 0,
+      revenue_krw: row.revenue || 0,
+      channel: row.channel || 'unknown',
+      stock_qty: 0, // 재고 정보는 별도로 관리 필요
+      created_at: row.created_at,
+      // analytics 스키마의 추가 정보들
+      cost: row.cost,
+      warehouse_code: row.warehouse_code,
+      yyyymm: row.yyyymm
+    })) || [];
+
+    console.log(`analytics 스키마에서 ${transformedData.length}개 행 조회 완료`);
+
+    return NextResponse.json({
+      success: true,
+      items: transformedData,  // data.data -> data.items로 변경
+      total: transformedData.length,
+      source: 'analytics.fact_sales'
+    });
+
+  } catch (error) {
+    console.error('데이터 조회 중 오류:', error);
+    return NextResponse.json(
+      { error: `데이터 조회 중 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` },
+      { status: 500 }
+    );
   }
 }
 
