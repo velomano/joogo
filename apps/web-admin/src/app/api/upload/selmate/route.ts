@@ -1,12 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
-import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from 'csv-parse/sync';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+// Edge-safe crypto helpers (Web Crypto)
+const te = new TextEncoder();
+const toUint8 = (d: string | Uint8Array) => (typeof d === 'string' ? te.encode(d) : d);
+const bufToHex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+
+export async function sha256Hex(data: string | Uint8Array) {
+  const digest = await crypto.subtle.digest('SHA-256', toUint8(data));
+  return bufToHex(digest);
+}
+
+export async function hmacSha256Hex(key: string | Uint8Array, msg: string | Uint8Array) {
+  const k = await crypto.subtle.importKey('raw', toUint8(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, toUint8(msg));
+  return bufToHex(sig);
+}
+
+export function randomHex(bytes = 16) {
+  const a = new Uint8Array(bytes);
+  crypto.getRandomValues(a);
+  return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 export async function POST(req: Request) {
 	try {
@@ -42,7 +63,7 @@ export async function POST(req: Request) {
 		const supabase = createServerClient();
 		
 		// 1. 파일 메타데이터 저장
-		const fileHash = createHash('sha256').update(text).digest('hex');
+		const fileHash = await sha256Hex(text);
 		const fileData = {
 			tenant_id: tenantId,
 			filename: file.name,
