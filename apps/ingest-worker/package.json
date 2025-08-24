@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env --import=tsx ./src/index.ts",
+    "dev": "node --import=tsx ./src/index.ts",
     "start": "node --enable-source-maps dist/index.js",
     "build": "tsc -p tsconfig.json"
   },
@@ -21,7 +21,6 @@
     "@types/node": "^20.0.0",
     "@types/pg": "^8.15.5",
     "@types/pg-copy-streams": "^1.2.5",
-    "dotenv": "^17.2.1",
     "tsx": "^4.19.1",
     "typescript": "^5.4.5"
   }

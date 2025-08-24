@@ -2,11 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { csvToJson } from '@joogo/shared/src/csvToJson';
 import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
-import path from 'path';
-import dotenv from 'dotenv';
-
-// Load root .env for monorepo (apps/web-admin doesn't auto-load root env)
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 export const runtime = 'nodejs';
 

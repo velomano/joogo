@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import path from 'path';
-import dotenv from 'dotenv';
-
-// Load root .env for monorepo
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 export const runtime = 'nodejs';
 

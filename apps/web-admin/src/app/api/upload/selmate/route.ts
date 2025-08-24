@@ -2,11 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
 import { createHash } from 'crypto';
-import path from 'path';
-import dotenv from 'dotenv';
-
-// Load root .env for monorepo
-dotenv.config({ path: path.resolve(process.cwd(), '../../../.env') });
+import { v4 as uuidv4 } from 'uuid';
+import { parse } from 'csv-parse/sync';
 
 export const runtime = 'nodejs';
 
@@ -125,6 +122,8 @@ function createServerClient() {
 	if (!serviceKey) throw new Error('supabase service key is required.');
 	return createClient(url, serviceKey);
 }
+
+
 
 
 
