@@ -57,9 +57,30 @@ export default function ActionsPage() {
               </details>
             )}
             <div className="mt-3 flex gap-2">
-              {c.ctas.includes('simulate') && <button className="px-3 py-1 rounded bg-black text-white" onClick={()=>alert('시뮬레이터는 다음 스프린트에서 활성화됩니다.')}>시뮬레이션</button>}
-              {c.ctas.includes('approve') && <button className="px-3 py-1 rounded border" onClick={()=>alert('승인은 다음 스프린트에서 활성화됩니다.')}>승인</button>}
-              <button className="px-3 py-1 rounded border" onClick={()=>alert('보류 처리')}>보류</button>}
+              {c.ctas.includes('simulate') && (
+                <button
+                  className="px-3 py-1 rounded bg-black text-white"
+                  onClick={() => alert('시뮬레이터는 다음 스프린트에서 활성화됩니다.')}
+                >
+                  시뮬레이션
+                </button>
+              )}
+
+              {c.ctas.includes('approve') && (
+                <button
+                  className="px-3 py-1 rounded border"
+                  onClick={() => alert('승인은 다음 스프린트에서 활성화됩니다.')}
+                >
+                  승인
+                </button>
+              )}
+
+              <button
+                className="px-3 py-1 rounded border"
+                onClick={() => alert('보류 처리')}
+              >
+                보류
+              </button>
             </div>
           </div>
         ))}
