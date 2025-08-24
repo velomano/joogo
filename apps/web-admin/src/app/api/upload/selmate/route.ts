@@ -5,7 +5,8 @@ import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from 'csv-parse/sync';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
 	try {

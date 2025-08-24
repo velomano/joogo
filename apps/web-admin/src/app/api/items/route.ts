@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 // 환경 변수 로드 헬퍼 함수
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;

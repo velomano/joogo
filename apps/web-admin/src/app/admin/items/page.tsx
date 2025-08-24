@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 // fetchItems 함수 정의
 async function fetchItems(tenantId: string) {
   const res = await fetch(`/api/items?tenant_id=${tenantId}`);

@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { csvToJson } from '@joogo/shared/src/csvToJson';
 import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 // 파일 형식 감지 함수
 function detectFileFormat(headers: string[]): 'selmate' | 'standard' {
