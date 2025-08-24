@@ -81,9 +81,6 @@ importers:
       '@types/pg-copy-streams':
         specifier: ^1.2.5
         version: 1.2.5
-      dotenv:
-        specifier: ^17.2.1
-        version: 17.2.1
       tsx:
         specifier: ^4.19.1
         version: 4.20.4
@@ -114,9 +111,6 @@ importers:
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
-      dotenv:
-        specifier: ^17.2.1
-        version: 17.2.1
       next:
         specifier: ^14.2.32
         version: 14.2.32(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
