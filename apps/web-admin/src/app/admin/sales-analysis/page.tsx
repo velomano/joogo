@@ -1,81 +1,46 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Badge } from '../../../components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '../../../components/ui/table';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line
-} from 'recharts';
-import { fmtKRW, fmtInt } from '../../../lib/format';
 
-// 95개 컬럼의 새로운 데이터 구조에 맞는 인터페이스
-interface Product {
-  id: number;
+interface SalesSummary {
+  summary: {
+    total_items: number;
+    total_quantity: number;
+    average_quantity: number;
+    low_stock_count: number;
+    out_of_stock_count: number;
+    sufficient_stock_count: number;
+  };
+  top_stock_items: Array<{
+    barcode: number;
+    product_name: string;
+    qty: number;
+    updated_at: string;
+  }>;
+  low_stock_items: Array<{
+    barcode: number;
+    product_name: string;
+    qty: number;
+    status: string;
+    updated_at: string;
+  }>;
+  all_items: Array<{
+    barcode: number;
+    product_name: string;
+    qty: number;
+    status: string;
+    updated_at: string;
+  }>;
   tenant_id: string;
-  상품코드: string;
-  상품명: string;
-  상품분류: string;
-  브랜드: string;
-  공급업체: string;
-  현재고: number;
-  주문수: number;
-  발송수: number;
-  판매가: number;
-  원가: number;
-  품절여부: string;
-  옵션내용: string;
-  // 일별 데이터 컬럼들 (63개)
-  [key: string]: any; // 동적 컬럼 지원
-}
-
-interface DailySales {
-  id: number;
-  tenant_id: string;
-  product_id: number;
-  date: string;
-  daily_qty: number;
-  daily_revenue: number;
-}
-
-interface SalesAnalytics {
-  totalProducts: number;
-  totalDailyRecords: number;
-  latestUpdate: string;
-  sampleProducts: Product[];
-  categoryStats: { [key: string]: number };
-  supplierStats: { [key: string]: number };
+  retrieved_at: string;
+  note: string;
 }
 
 export default function SalesAnalysisPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [dailySales, setDailySales] = useState<DailySales[]>([]);
+  const [data, setData] = useState<SalesSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [analytics, setAnalytics] = useState<SalesAnalytics | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showProductDetail, setShowProductDetail] = useState(false);
+  const [tenantId] = useState("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
 
-  // 데이터 로드
   useEffect(() => {
     loadData();
   }, []);
@@ -83,278 +48,205 @@ export default function SalesAnalysisPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // 판매 분석 데이터 로드
-      const response = await fetch('/api/sales-analysis?tenant_id=default');
+      const response = await fetch(`/api/analytics/sales-summary?tenant_id=${tenantId}`);
       if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-        setProducts(data.sampleProducts || []);
+        const result = await response.json();
+        setData(result);
+      } else {
+        console.error('Failed to load sales summary');
       }
-      
-      // 일별 판매 데이터 로드 (최근 30일)
-      const dailyResponse = await fetch('/api/sales-analysis/daily?tenant_id=default&days=30');
-      if (dailyResponse.ok) {
-        const dailyData = await dailyResponse.json();
-        setDailySales(dailyData);
-      }
-      
     } catch (error) {
-      console.error('데이터 로드 오류:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 필터링된 상품 목록
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.상품명.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.상품코드.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.상품분류 === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  // 상품 상세보기
-  const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setShowProductDetail(true);
-  };
-
-  // 상세보기 닫기
-  const closeProductDetail = () => {
-    setShowProductDetail(false);
-    setSelectedProduct(null);
-  };
-
-  // 일별 데이터 추출 (동적 컬럼에서)
-  const getDailyData = (product: Product) => {
-    const dailyData = [];
-    for (let i = 1; i <= 63; i++) {
-      const dateKey = `2024-01-${String(i).padStart(2, '0')}`;
-      const qtyKey = `일${i}`;
-      if (product[qtyKey] !== undefined && product[qtyKey] > 0) {
-        dailyData.push({
-          date: dateKey,
-          qty: product[qtyKey],
-          revenue: product[qtyKey] * (product.판매가 || 0)
-        });
-      }
-    }
-    return dailyData;
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">데이터를 불러오는 중...</div>
+      <div className="p-6">
+        <div className="text-center py-8">데이터를 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-8">데이터를 불러올 수 없습니다.</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">판매 분석 대시보드</h1>
-        <Button onClick={loadData} variant="outline">
-          새로고침
-        </Button>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">재고 분석 (실시간 데이터)</h1>
+        <button
+          onClick={loadData}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          데이터 새로고침
+        </button>
       </div>
 
-      {/* 요약 카드들 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">총 상품 수</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics?.totalProducts || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">총 일별 기록</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics?.totalDailyRecords || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">최근 업데이트</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">
-              {analytics?.latestUpdate ? new Date(analytics.latestUpdate).toLocaleDateString() : 'N/A'}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">필터된 상품</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredProducts.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 필터 및 검색 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>필터 및 검색</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="search">상품명/코드 검색</Label>
-              <Input
-                id="search"
-                placeholder="상품명 또는 상품코드로 검색..."
-                value={searchTerm}
-                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">상품 분류</Label>
-              <select
-                id="category"
-                className="w-full p-2 border rounded-md"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="all">전체 분류</option>
-                {analytics?.categoryStats && Object.keys(analytics.categoryStats).map(category => (
-                  <option key={category} value={category}>
-                    {category} ({analytics.categoryStats[category]})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 상품 목록 테이블 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>상품 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>상품코드</TableHead>
-                  <TableHead>상품명</TableHead>
-                  <TableHead>상품분류</TableHead>
-                  <TableHead>현재고</TableHead>
-                  <TableHead>판매가</TableHead>
-                  <TableHead>원가</TableHead>
-                  <TableHead>품절여부</TableHead>
-                  <TableHead>액션</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.slice(0, 20).map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>{product.상품코드}</TableCell>
-                    <TableCell>{product.상품명}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{product.상품분류}</Badge>
-                    </TableCell>
-                    <TableCell>{fmtInt(product.현재고)}</TableCell>
-                    <TableCell>{fmtKRW(product.판매가)}</TableCell>
-                    <TableCell>{fmtKRW(product.원가)}</TableCell>
-                    <TableCell>
-                      <Badge variant={product.품절여부 === 'Y' ? 'destructive' : 'default'}>
-                        {product.품절여부 === 'Y' ? '품절' : '재고있음'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleProductClick(product)}
-                      >
-                        상세보기
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 상품 상세보기 모달 */}
-      {showProductDetail && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">상품 상세정보</h2>
-              <Button onClick={closeProductDetail} variant="outline">닫기</Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 기본 정보 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">기본 정보</h3>
-                <div className="space-y-2">
-                  <div><strong>상품코드:</strong> {selectedProduct.상품코드}</div>
-                  <div><strong>상품명:</strong> {selectedProduct.상품명}</div>
-                  <div><strong>상품분류:</strong> {selectedProduct.상품분류}</div>
-                  <div><strong>브랜드:</strong> {selectedProduct.브랜드}</div>
-                  <div><strong>공급업체:</strong> {selectedProduct.공급업체}</div>
-                  <div><strong>현재고:</strong> {fmtInt(selectedProduct.현재고)}</div>
-                  <div><strong>판매가:</strong> {fmtKRW(selectedProduct.판매가)}</div>
-                  <div><strong>원가:</strong> {fmtKRW(selectedProduct.원가)}</div>
-                </div>
-              </div>
-              
-              {/* 일별 판매 데이터 차트 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">일별 판매 추이</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={getDailyData(selectedProduct)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="qty" stroke="#8884d8" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            {/* 모든 컬럼 데이터 표시 */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-3">전체 데이터</h3>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>컬럼명</TableHead>
-                      <TableHead>값</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(selectedProduct).map(([key, value]) => (
-                      <TableRow key={key}>
-                        <TableCell className="font-medium">{key}</TableCell>
-                        <TableCell>{String(value)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
+      {/* 테넌트 정보 */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="text-sm text-gray-600">
+          <strong>테넌트 ID</strong> ✓ 자동 설정됨<br />
+          <span className="font-mono">{tenantId}</span><br />
+          <span className="text-green-600">개발용 테넌트 ID가 자동으로 설정되었습니다</span>
         </div>
-      )}
+      </div>
+
+      {/* 마지막 갱신 정보 */}
+      <div className="text-sm text-gray-500 mb-6">
+        마지막 갱신 {new Date(data.retrieved_at).toLocaleTimeString('ko-KR')} · {data.summary.total_items}개 상품
+      </div>
+
+      {/* 요약 통계 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-blue-600">{data.summary.total_items.toLocaleString()}</div>
+          <div className="text-sm text-blue-600">총 상품 수</div>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-green-600">{data.summary.total_quantity.toLocaleString()}</div>
+          <div className="text-sm text-green-600">총 재고 수량</div>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600">{data.summary.average_quantity}</div>
+          <div className="text-sm text-orange-600">평균 수량</div>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-red-600">{data.summary.low_stock_count}</div>
+          <div className="text-sm text-red-600">부족 재고</div>
+          <div className="text-xs text-red-500">10개 미만</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600">{data.summary.out_of_stock_count}</div>
+          <div className="text-sm text-orange-600">품절 상품</div>
+          <div className="text-xs text-orange-500">0개</div>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-green-600">{data.summary.sufficient_stock_count}</div>
+          <div className="text-sm text-green-600">충분 재고</div>
+          <div className="text-xs text-green-500">50개 이상</div>
+        </div>
+      </div>
+
+      {/* Top 10 재고 상품 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">상위 재고 상품 (Top 10)</h2>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3">순위</th>
+                <th className="text-left p-3">바코드</th>
+                <th className="text-left p-3">상품명</th>
+                <th className="text-right p-3">현재 수량</th>
+                <th className="text-left p-3">업데이트</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.top_stock_items.map((item, index) => (
+                <tr key={item.barcode} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-semibold">{index + 1}</td>
+                  <td className="p-3 font-mono">{item.barcode}</td>
+                  <td className="p-3">{item.product_name}</td>
+                  <td className="p-3 text-right font-semibold">{item.qty}개</td>
+                  <td className="p-3 text-sm text-gray-600">{formatDate(item.updated_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 부족 재고 상품 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">⚠️ 부족 재고 상품 (10개 미만)</h2>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3">바코드</th>
+                <th className="text-left p-3">상품명</th>
+                <th className="text-right p-3">현재 수량</th>
+                <th className="text-center p-3">상태</th>
+                <th className="text-left p-3">업데이트</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.low_stock_items.map((item) => (
+                <tr key={item.barcode} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-mono">{item.barcode}</td>
+                  <td className="p-3">{item.product_name}</td>
+                  <td className="p-3 text-right font-semibold">{item.qty}개</td>
+                  <td className="p-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.status === '품절' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-sm text-gray-600">{formatDate(item.updated_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 전체 상품 목록 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">전체 상품 목록</h2>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3">바코드</th>
+                <th className="text-left p-3">상품명</th>
+                <th className="text-right p-3">현재 수량</th>
+                <th className="text-center p-3">상태</th>
+                <th className="text-left p-3">업데이트</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.all_items.map((item) => (
+                <tr key={item.barcode} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-mono">{item.barcode}</td>
+                  <td className="p-3">{item.product_name}</td>
+                  <td className="p-3 text-right font-semibold">{item.qty}개</td>
+                  <td className="p-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.status === '품절' ? 'bg-red-100 text-red-800' : 
+                      item.status === '부족' ? 'bg-orange-100 text-orange-800' : 
+                      item.status === '충분' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-sm text-gray-600">{formatDate(item.updated_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 데이터 요약 */}
+      <div className="text-sm text-gray-600 text-center">
+        {data.note}
+      </div>
     </div>
   );
 }

@@ -40,15 +40,24 @@ export async function POST(request: NextRequest) {
 
     // items 테이블에 저장할 데이터 준비 (실제 스키마에 맞춤)
     const itemsData = [];
+    let skippedRows = 0;
+    let processedRows = 0;
     
     for (const row of rows) {
       try {
-        // 바코드 처리 (숫자로 변환)
+        // 바코드 처리 (숫자로 변환, 하이픈 제거)
         let barcode = 0;
         if (row['바코드번호']) {
-          // 바코드에서 숫자만 추출
+          // 바코드에서 숫자만 추출 (하이픈, 공백 등 제거)
           const barcodeStr = String(row['바코드번호']).replace(/[^0-9]/g, '');
           barcode = parseInt(barcodeStr) || 0;
+        }
+        
+        // 바코드가 유효하지 않으면 건너뛰기
+        if (barcode === 0) {
+          console.warn('Invalid barcode, skipping row:', row['바코드번호']);
+          skippedRows++;
+          continue;
         }
         
         // 실제 테이블 스키마에 맞는 데이터만 포함
@@ -91,36 +100,53 @@ export async function POST(request: NextRequest) {
         };
         
         itemsData.push(itemData);
+        processedRows++;
         
       } catch (rowError) {
         console.error('Row processing error:', rowError, 'Row:', row);
-        // 개별 행 오류는 건너뛰고 계속 진행
+        skippedRows++;
         continue;
       }
     }
 
     console.log('Processed items data sample:', itemsData[0]);
     console.log('Total items to insert:', itemsData.length);
+    console.log('Skipped rows:', skippedRows);
 
-    // items 테이블에 데이터 삽입
+    if (itemsData.length === 0) {
+      return NextResponse.json({ 
+        error: 'No valid data to insert after processing',
+        processed: 0,
+        skipped: skippedRows
+      }, { status: 400 });
+    }
+
+    // UPSERT 방식으로 데이터 삽입 (중복 시 업데이트)
     const { data: insertResult, error: insertError } = await supabase
       .from('items')
-      .insert(itemsData)
+      .upsert(itemsData, { 
+        onConflict: 'tenant_id,barcode',
+        ignoreDuplicates: false
+      })
       .select();
 
     if (insertError) {
-      console.error('Database insert error:', insertError);
+      console.error('Database upsert error:', insertError);
       return NextResponse.json({ 
         error: insertError.message,
         details: insertError.details,
         hint: insertError.hint,
-        code: insertError.code
+        code: insertError.code,
+        processed: processedRows,
+        skipped: skippedRows
       }, { status: 500 });
     }
     
-    console.log('Insert successful:', { 
+    console.log('Upsert successful:', { 
       inserted_count: insertResult?.length, 
-      table: 'items'
+      table: 'items',
+      processed: processedRows,
+      skipped: skippedRows
     });
 
     // 날짜별 데이터 개수 확인
@@ -130,10 +156,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       inserted: insertResult?.length || itemsData.length,
+      processed: processedRows,
+      skipped: skippedRows,
       table: 'items',
       tenant_id,
       date_columns: dateColumns.length,
-      message: `${itemsData.length}개 상품이 items 테이블에 저장되었습니다. 날짜별 데이터 ${dateColumns.length}개 컬럼은 original_data에 포함되었습니다.`
+      message: `${processedRows}개 상품이 처리되었습니다. ${insertResult?.length || itemsData.length}개가 저장되었습니다. ${skippedRows}개 행이 건너뛰어졌습니다.`
     });
 
   } catch (error: any) {
