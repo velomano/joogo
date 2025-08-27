@@ -69,6 +69,25 @@ export default function ItemsPage({ searchParams }: { searchParams?: { tenant_id
   const lowStockItems = data.items?.filter((item: any) => (item.qty || 0) < 10).length || 0;
   const outOfStockItems = data.items?.filter((item: any) => (item.qty || 0) === 0).length || 0;
 
+  // 최근 판매일 계산 함수
+  const getRecentSaleDate = (item: any) => {
+    if (!item.original_data?.daily_data) return '-';
+    
+    const dailyData = item.original_data.daily_data;
+    const dates = Object.keys(dailyData).sort().reverse();
+    
+    for (const date of dates) {
+      if (dailyData[date] > 0) {
+        // YYYYMMDD 형식을 YYYY.MM.DD로 변환
+        const year = date.substring(0, 4);
+        const month = date.substring(4, 6);
+        const day = date.substring(6, 8);
+        return `${year}. ${month}. ${day}`;
+      }
+    }
+    return '-';
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* 메시지 표시 */}
@@ -154,23 +173,27 @@ export default function ItemsPage({ searchParams }: { searchParams?: { tenant_id
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {/* 기본 보기 컬럼 */}
+                {/* 기본 보기 컬럼 - 요청사항에 맞게 수정 */}
                 <th className="text-left px-3 py-2 whitespace-nowrap">📱 바코드</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">🏷️ 상품명</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">🔤 옵션</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">📍 상품위치</th>
                 <th className="text-left px-3 py-2 whitespace-nowrap">📦 재고수량</th>
-                <th className="text-left px-3 py-2 whitespace-nowrap">🕒 최종업데이트</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">📅 최근 판매일</th>
                 
                 {/* 상세 보기 추가 컬럼들 */}
                 {showDetailed && (
                   <>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">🏷️ 상품명</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">🔤 옵션명</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">💰 단가</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">🛍️ 판매처</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">💰 원가</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">💵 판매가</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">🏢 공급처</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">📊 안정재고</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">🛒 주문수</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">📤 발송수</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">📥 입고수량</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">📤 출고수량</th>
                     <th className="text-left px-3 py-2 whitespace-nowrap">📅 생성일</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">🏢 테넌트 ID</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">📊 총 재고</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">💵 매출</th>
-                    <th className="text-left px-3 py-2 whitespace-nowrap">📈 판매량</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap">🔄 수정일</th>
                   </>
                 )}
               </tr>
@@ -182,44 +205,59 @@ export default function ItemsPage({ searchParams }: { searchParams?: { tenant_id
                 if (qty === 0) qtyColor = 'text-red-600 font-bold';
                 else if (qty < 10) qtyColor = 'text-orange-600 font-semibold';
                 
+                // original_data에서 정보 추출
+                const originalData = r.original_data || {};
+                
                 return (
                   <tr key={i} className="border-t hover:bg-gray-50">
                     {/* 기본 보기 컬럼 */}
                     <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{r.barcode}</td>
+                    <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={r.product_name || r.productname || '-'}>
+                      {r.product_name || r.productname || '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={r.option_name || '-'}>
+                      {r.option_name || '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={originalData.location || '-'}>
+                      {originalData.location || '-'}
+                    </td>
                     <td className={`px-3 py-2 whitespace-nowrap ${qtyColor}`}>{qty.toLocaleString()}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
-                      {r.updated_at ? new Date(r.updated_at).toLocaleDateString('ko-KR') : '-'}
+                      {getRecentSaleDate(r)}
                     </td>
                     
                     {/* 상세 보기 추가 컬럼들 */}
                     {showDetailed && (
                       <>
-                        <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={r.product_name || r.productname || '-'}>
-                          {r.product_name || r.productname || '-'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={r.option_name || '-'}>
-                          {r.option_name || '-'}
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {originalData.cost_price ? `${originalData.cost_price.toLocaleString()}원` : '-'}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          {r.unit_price_krw ? `${r.unit_price_krw.toLocaleString()}원` : '-'}
+                          {originalData.selling_price ? `${originalData.selling_price.toLocaleString()}원` : '-'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap max-w-xs truncate" title={originalData.supplier_name || '-'}>
+                          {originalData.supplier_name || '-'}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          {r.channel || '-'}
+                          {originalData.safety_stock ? originalData.safety_stock.toLocaleString() : '-'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {originalData.order_count ? originalData.order_count.toLocaleString() : '-'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {originalData.shipped_count ? originalData.shipped_count.toLocaleString() : '-'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {originalData.inbound_qty ? originalData.inbound_qty.toLocaleString() : '-'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {originalData.outbound_qty ? originalData.outbound_qty.toLocaleString() : '-'}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
                           {r.created_at ? new Date(r.created_at).toLocaleDateString('ko-KR') : '-'}
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-xs font-mono text-gray-500">
-                          {r.tenant_id ? r.tenant_id.substring(0, 8) + '...' : '-'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          {r.qty ? r.qty.toLocaleString() : '-'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          {r.revenue_krw ? `${r.revenue_krw.toLocaleString()}원` : '-'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          {r.sale_qty ? r.sale_qty.toLocaleString() : '-'}
+                        <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                          {r.updated_at ? new Date(r.updated_at).toLocaleDateString('ko-KR') : '-'}
                         </td>
                       </>
                     )}
@@ -237,7 +275,7 @@ export default function ItemsPage({ searchParams }: { searchParams?: { tenant_id
           <div className="flex items-center gap-2">
             <span className="text-blue-600">💡</span>
             <span className="text-sm text-blue-800">
-              <strong>상세 보기 모드</strong> - 모든 컬럼을 확인할 수 있습니다. 
+              <strong>상세 보기 모드</strong> - 모든 상세 정보를 확인할 수 있습니다. 
               테이블이 가로로 길어질 수 있으니 가로 스크롤을 사용해주세요.
             </span>
           </div>
