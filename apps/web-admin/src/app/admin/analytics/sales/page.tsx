@@ -19,8 +19,8 @@ export default function SalesAnalyticsPage() {
     
     setLoading(true);
     try {
-      // 실제 core.items 데이터 조회
-      const res = await fetch(`/api/items?tenant_id=${tenantId}`, { 
+      // 새로운 sales-summary API 사용 (전체 데이터)
+      const res = await fetch(`/api/analytics/sales-summary?tenant_id=${tenantId}`, { 
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -31,7 +31,8 @@ export default function SalesAnalyticsPage() {
       }
       
       const json = await res.json();
-      setItems(json.items || []);
+      // 새로운 API 구조에 맞게 데이터 설정
+      setItems(json.all_items || []);
       setLastRefreshed(new Date().toLocaleTimeString());
       setMsg(null); // 성공 시 에러 메시지 제거
     } catch (e: any) {

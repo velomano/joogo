@@ -19,12 +19,33 @@ export default function UploadPage() {
   const [ingesting, setIngesting] = useState(false);
   const [result, setResult] = useState<ParseResult | null>(null);
   const [message, setMessage] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const onChoose = () => fileRef.current?.click();
+
+  // 파일 초기화 함수
+  const resetFile = () => {
+    setSelectedFile(null);
+    setResult(null);
+    setMessage("");
+    setParsing(false);
+    setIngesting(false);
+    if (fileRef.current) {
+      fileRef.current.value = "";
+    }
+  };
+
+  // 파싱 취소 함수
+  const cancelParsing = () => {
+    setParsing(false);
+    setMessage("파싱이 취소되었습니다.");
+  };
 
   const onFile = async (file: File) => {
     setMessage("");
     setResult(null);
+    setSelectedFile(file);
+    
     if (!file) return;
     
     const fd = new FormData();
@@ -64,7 +85,16 @@ export default function UploadPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "INGEST_FAILED");
       
-      setMessage(`저장 완료: ${json?.inserted || result.rows.length}행`);
+      // 성공 메시지 표시
+      const successMessage = `✅ 업로드 성공!\n\n` +
+        `📊 처리 결과:\n` +
+        `• 총 처리: ${json?.processed || 0}개 상품\n` +
+        `• 성공 저장: ${json?.inserted || 0}개\n` +
+        `• 건너뛴 행: ${json?.skipped || 0}개\n` +
+        `• 날짜 컬럼: ${json?.date_columns || 0}개\n\n` +
+        `3초 후 재고 목록 페이지로 이동합니다...`;
+      
+      setMessage(successMessage);
       
       // 3초 후 items 페이지로 자동 이동
       setTimeout(() => {
@@ -72,7 +102,11 @@ export default function UploadPage() {
       }, 3000);
       
     } catch (e: any) {
-      setMessage(e?.message || "저장 오류");
+      const errorMessage = `❌ 업로드 실패!\n\n` +
+        `오류 내용: ${e?.message || "알 수 없는 오류"}\n\n` +
+        `문제가 지속되면 CSV 파일을 확인하거나 다시 시도해주세요.`;
+      
+      setMessage(errorMessage);
     } finally {
       setIngesting(false);
     }
@@ -126,16 +160,55 @@ export default function UploadPage() {
         </div>
       </div>
 
+      {/* 파일 정보 및 취소 버튼 */}
+      {selectedFile && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600">📁</span>
+              <span className="text-sm text-blue-800">
+                <strong>선택된 파일:</strong> {selectedFile.name} 
+                ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </span>
+            </div>
+            <button
+              onClick={resetFile}
+              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+            >
+              🗑️ 파일 제거
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
         className="border-2 border-dashed rounded p-8 text-center text-sm text-gray-600"
       >
         여기로 파일을 드래그&드롭하세요 (.csv / .xlsx)
-        {parsing && <div className="mt-2">파싱 중...</div>}
+        {parsing && (
+          <div className="mt-4 space-y-2">
+            <div className="text-blue-600 font-medium">파싱 중...</div>
+            <button
+              onClick={cancelParsing}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              ❌ 파싱 취소
+            </button>
+          </div>
+        )}
       </div>
 
-      {message && <div className="text-sm">{message}</div>}
+      {message && (
+        <div className={`p-3 rounded-lg whitespace-pre-line ${
+          message.includes('성공') ? 'bg-green-50 border border-green-200 text-green-800' :
+          message.includes('오류') || message.includes('취소') || message.includes('실패') ? 'bg-red-50 border border-red-200 text-red-800' :
+          'bg-blue-50 border border-blue-200 text-blue-800'
+        }`}>
+          {message}
+        </div>
+      )}
 
       {result?.mapping && (
         <div className="mt-4">
@@ -186,6 +259,13 @@ export default function UploadPage() {
               className="border rounded px-3 py-2 bg-gray-600 text-white hover:bg-gray-700"
             >
               📋 목록 보기
+            </button>
+
+            <button
+              onClick={resetFile}
+              className="border rounded px-3 py-2 bg-orange-600 text-white hover:bg-orange-700"
+            >
+              🔄 새로 시작
             </button>
           </div>
         </>

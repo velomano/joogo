@@ -1,0 +1,83 @@
+[33mcommit 2d3bd9ba4dfced0a11b9671b57a7f34e866c965f[m
+Author: velomano <sky3rain7@gmail.com>
+Date:   Sat Aug 23 23:42:38 2025 +0900
+
+    feat: Complete wide-format CSV ingest pipeline with unpivot merge
+    
+     Add robust CSV parsing with csv-parse relax options
+    - Implement KNOWN/EXTRAS separation for unknown headers
+    - Create analytics.merge_stage_to_fact_v3 for wide-to-long unpivot
+    - Add automatic SQL migration on worker startup
+    - Implement 0-row prevention guards and detailed logging
+    - Fix array_agg syntax issues in PostgreSQL functions
+    - Add comprehensive error handling and debugging logs
+    
+    Current status: Pipeline complete, needs constraint fixes for duplicate handling
+
+ .env.new                                           |  Bin [31m436[m -> [32m0[m bytes
+ CHANGELOG.md                                       |  116 [32m+[m[31m-[m
+ README.md                                          |  391 [32m+++[m[31m----[m
+ apps/ingest-worker/package-lock.json               | 1149 [32m++++++++++++++++++++[m
+ apps/ingest-worker/package.json                    |   28 [32m+[m
+ apps/ingest-worker/scripts/enqueue-upload.ts       |   45 [32m+[m
+ apps/ingest-worker/sql/20250823_wide_unpivot.sql   |  181 [32m+++[m
+ apps/ingest-worker/src/index.ts                    |  382 [32m+++++++[m
+ apps/ingest-worker/src/mapping.ts                  |   44 [32m+[m
+ apps/ingest-worker/src/types/pg-copy-streams.d.ts  |   13 [32m+[m
+ apps/ingest-worker/test100.csv                     |    4 [32m+[m
+ apps/ingest-worker/tsconfig.json                   |   14 [32m+[m
+ apps/web-admin/README_UNIFIED_UPLOAD.md            |   53 [32m+[m[31m-[m
+ apps/web-admin/package.json                        |   16 [32m+[m[31m-[m
+ apps/web-admin/src/app/actions/page.tsx            |   69 [32m++[m
+ apps/web-admin/src/app/admin/ask/page.tsx          |  230 [32m+++[m[31m-[m
+ apps/web-admin/src/app/admin/items/page.tsx        |  143 [32m++[m[31m-[m
+ apps/web-admin/src/app/admin/items/upload/page.tsx |   19 [32m+[m[31m-[m
+ .../src/app/admin/sales-analysis/page.tsx          |  360 [32m++++++[m
+ .../src/app/admin/selmate-upload/page.tsx          |  186 [32m++++[m
+ apps/web-admin/src/app/api/actions/queue/route.ts  |  117 [32m++[m
+ apps/web-admin/src/app/api/ask/route.ts            |  512 [32m++[m[31m-------[m
+ apps/web-admin/src/app/api/items/route.ts          |  143 [32m+[m[31m--[m
+ .../src/app/api/sales-analysis/daily/route.ts      |  194 [32m++++[m
+ apps/web-admin/src/app/api/sales-analysis/route.ts |  262 [32m+++++[m
+ apps/web-admin/src/app/api/upload/route.ts         |  143 [32m++[m[31m-[m
+ .../src/app/api/upload/sales-analysis/route.ts     |  273 [32m+++++[m
+ apps/web-admin/src/app/api/upload/selmate/route.ts |  132 [32m+++[m
+ apps/web-admin/src/app/api/upload/unified/route.ts |  455 [32m+[m[31m-------[m
+ apps/web-admin/src/app/globals.css                 |   76 [32m+[m[31m-[m
+ apps/web-admin/src/app/layout.tsx                  |    5 [32m+[m
+ apps/web-admin/src/components/ui/badge.tsx         |   36 [32m+[m
+ apps/web-admin/src/components/ui/button.tsx        |   56 [32m+[m
+ apps/web-admin/src/components/ui/card.tsx          |   78 [32m++[m
+ apps/web-admin/src/components/ui/input.tsx         |   25 [32m+[m
+ apps/web-admin/src/components/ui/label.tsx         |   24 [32m+[m
+ apps/web-admin/src/components/ui/table.tsx         |  117 [32m++[m
+ apps/web-admin/src/lib/utils.ts                    |   12 [32m+[m
+ apps/web-admin/src/server/ask/costLog.ts           |  224 [32m++++[m
+ apps/web-admin/src/server/ask/intentRouter.ts      |  149 [32m+++[m
+ apps/web-admin/src/server/ask/schemaPicker.ts      |  130 [32m+++[m
+ apps/web-admin/src/server/ask/sqlTemplates.ts      |  191 [32m++++[m
+ apps/web-admin/tailwind.config.ts                  |   56 [32m+[m
+ database/schema/sales_analysis.sql                 |  205 [32m++++[m
+ docs/PRD_insight_to_action.md                      |   39 [32m+[m
+ docs/TECH_DESIGN_insight_to_action.md              |   32 [32m+[m
+ packages/shared/src/csvToJson.ts                   |   71 [32m+[m[31m-[m
+ packages/shared/src/selmateCsvToJson.ts            |  167 [32m+++[m
+ pnpm-lock.yaml                                     |  473 [32m+++++++[m[31m-[m
+ samples/clean_sample_data.csv                      |  101 [31m--[m
+ samples/excel-test.csv                             |    7 [32m+[m
+ samples/orders.csv                                 |    8 [31m-[m
+ samples/products.csv                               |    7 [31m-[m
+ samples/simple-test.csv                            |    5 [32m+[m
+ samples/test-items.csv                             |    9 [32m+[m
+ samples/test100.csv                                |   65 [32m++[m
+ samples/test_fixed.csv                             |   11 [31m-[m
+ samples/test_minimal.csv                           |    7 [31m-[m
+ samples/test_simple.csv                            |   13 [31m-[m
+ samples/unified_dummy_200_split_krw_utf8.csv       |  201 [31m----[m
+ ...204\260 \353\266\204\354\204\235 - RawData.csv" |  387 [32m+++++++[m
+ ...04\260 \353\266\204\354\204\235 - RawData.xlsx" |  Bin [31m0[m -> [32m165090[m bytes
+ scripts/quick-check.sql                            |   20 [32m+[m
+ supabase/migrations/20250822_insight_to_action.sql |  281 [32m+++++[m
+ .../20250822_insight_to_action_views.sql           |  108 [32m++[m
+ web-admin-snippets/upload-and-register.ts          |   25 [32m+[m
+ 66 files changed, 7455 insertions(+), 1640 deletions(-)
