@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 type ParseResult = {
   rows: any[];
@@ -11,7 +10,6 @@ type ParseResult = {
 
 export default function UploadPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const router = useRouter();
   // 기본 테넌트 ID 설정 (기존에 사용하던 값)
   const [tenantId, setTenantId] = useState("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
   const [type, setType] = useState<"sales" | "inventory">("sales");
@@ -63,14 +61,7 @@ export default function UploadPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "INGEST_FAILED");
-      
       setMessage(`저장 완료: ${json?.inserted || result.rows.length}행`);
-      
-      // 3초 후 items 페이지로 자동 이동
-      setTimeout(() => {
-        router.push(`/admin/items?tenant_id=${tenantId}`);
-      }, 3000);
-      
     } catch (e: any) {
       setMessage(e?.message || "저장 오류");
     } finally {
@@ -172,26 +163,15 @@ export default function UploadPage() {
             </table>
           </div>
 
-          <div className="flex gap-3 mt-3">
-            <button
-              onClick={onIngest}
-              className="border rounded px-3 py-2 bg-blue-600 text-white hover:bg-blue-700"
-              disabled={ingesting}
-            >
-              {ingesting ? "저장 중..." : "DB 저장"}
-            </button>
-            
-            <button
-              onClick={() => router.push(`/admin/items?tenant_id=${tenantId}`)}
-              className="border rounded px-3 py-2 bg-gray-600 text-white hover:bg-gray-700"
-            >
-              📋 목록 보기
-            </button>
-          </div>
+          <button
+            onClick={onIngest}
+            className="mt-3 border rounded px-3 py-2"
+            disabled={ingesting}
+          >
+            {ingesting ? "저장 중..." : "DB 저장"}
+          </button>
         </>
       ) : null}
     </main>
   );
 }
-
-
