@@ -4,18 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-// 환경 변수 로드 헬퍼 함수
-function getSupabaseClient() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(`환경 변수가 누락되었습니다. SUPABASE_URL: ${!!supabaseUrl}, SUPABASE_SERVICE_ROLE_KEY: ${!!supabaseKey}`);
-  }
-  
-  return createClient(supabaseUrl, supabaseKey);
-}
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,11 +16,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
+    // Supabase 클라이언트 생성
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Supabase configuration missing',
+        details: {
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseKey
+        }
+      }, { status: 500 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -43,28 +38,14 @@ export async function GET(request: NextRequest) {
     let totalCount = 0;
     
     try {
-      // 전체 개수 확인 (검색 조건 포함)
-      let countQuery = supabase
+      // 전체 개수 확인
+      const { count, error: countError } = await supabase
         .from('items')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenant_id);
       
-      // 검색 조건이 있으면 추가
-      if (search.trim()) {
-        // barcode는 숫자이므로 정확한 매칭만, 나머지는 ilike로 검색
-        if (/^\d+$/.test(search.trim())) {
-          // 숫자만 입력된 경우: barcode 정확한 매칭
-          countQuery = countQuery.eq('barcode', parseInt(search.trim()));
-        } else {
-          // 텍스트인 경우: product_name과 productname만 검색
-          countQuery = countQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
-        }
-      }
-      
-      const { count, error: countError } = await countQuery;
-      
       if (countError) {
-        console.warn('Count query failed:', countError.message);
+        console.error('[ERROR] Count query failed:', countError);
         totalCount = 0;
       } else {
         totalCount = count || 0;
@@ -80,50 +61,81 @@ export async function GET(request: NextRequest) {
         
         // barcode는 숫자이므로 정확한 매칭만, 나머지는 ilike로 검색
         if (/^\d+$/.test(search.trim())) {
-          // 숫자만 입력된 경우: barcode 정확한 매칭
           searchQuery = searchQuery.eq('barcode', parseInt(search.trim()));
         } else {
-          // 텍스트인 경우: product_name과 productname만 검색
           searchQuery = searchQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
         }
         
         const { data, error } = await searchQuery.order('updated_at', { ascending: false });
         
         if (error) { 
-          console.warn('Search query failed:', error.message); 
+          console.error('[ERROR] Search query failed:', error); 
           items = [];
         } else { 
           items = data || []; 
           console.log(`[items] Search found ${items.length} items for query: "${search}"`);
         }
       } else {
-        // 검색어가 없으면 페이지네이션으로 조회
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
+        // 검색어가 없으면 페이지네이션으로 조회 (sales-summary와 동일한 방식)
+        let allItems: any[] = [];
+        let offset = 0;
+        const batchSize = 1000;
+        let hasMore = true;
         
-        const { data, error } = await supabase
-          .from('items')
-          .select('*')
-          .eq('tenant_id', tenant_id)
-          .order('updated_at', { ascending: false })
-          .range(from, to);
-        
-        if (error) { 
-          console.warn('Items query failed:', error.message); 
-          items = [];
-        } else { 
-          items = data || []; 
-          console.log(`[items] Retrieved ${items.length} items from database (page: ${page}, limit: ${limit}, range: ${from}-${to})`);
+        while (hasMore) {
+          const { data: batchData, error: batchError } = await supabase
+            .from('items')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .order('updated_at', { ascending: false })
+            .range(offset, offset + batchSize - 1);
+          
+          if (batchError) {
+            console.error(`[ERROR] Batch query failed at offset ${offset}:`, batchError);
+            break;
+          }
+          
+          if (!batchData || batchData.length === 0) {
+            hasMore = false;
+          } else {
+            allItems = allItems.concat(batchData);
+            offset += batchSize;
+            
+            if (batchData.length < batchSize) {
+              hasMore = false;
+            }
+          }
+          
+          // 무한 루프 방지
+          if (offset > 100000) {
+            console.warn('Safety limit reached, stopping pagination');
+            break;
+          }
         }
+        
+        items = allItems;
+        console.log(`[items] Retrieved ${items.length} items via pagination (${Math.ceil(offset / batchSize)} batches)`);
+        
+        // 페이지네이션 적용
+        const from = (page - 1) * limit;
+        const to = from + limit;
+        items = items.slice(from, to);
       }
       
     } catch (e) { 
-      console.warn('Items table not found, returning empty array'); 
+      console.error('[ERROR] Items table query exception:', e); 
       items = [];
     }
 
     // 페이지네이션 정보 계산
     const totalPages = Math.ceil(totalCount / limit);
+    
+    console.log('[DEBUG] API response prepared:', {
+      itemsCount: items.length,
+      totalCount,
+      totalPages,
+      tenant_id
+    });
     
     // 상세한 통계 정보 반환
     return NextResponse.json({ 
@@ -141,9 +153,12 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('Items API error:', error);
+    console.error('[ERROR] Items API error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch items' },
+      { 
+        error: error.message || 'Unknown error',
+        type: error.constructor.name
+      },
       { status: 500 }
     );
   }
