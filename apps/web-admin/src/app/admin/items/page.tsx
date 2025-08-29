@@ -18,6 +18,7 @@ export default function ItemsPage() {
   const [limit, setLimit] = useState(50);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [q, setQ] = useState("");
   const [tenantId] = useState("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
 
@@ -48,6 +49,41 @@ export default function ItemsPage() {
     }
   };
 
+  const downloadCSV = async () => {
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams({
+        tenant_id: tenantId,
+      });
+      // 다운로드 시에는 검색 조건을 전달하지 않음 (항상 전체 데이터)
+
+      const res = await fetch(`/api/items/download?${params.toString()}`);
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Download failed");
+      }
+
+      // CSV 파일 다운로드
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `재고목록_${tenantId}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      alert("CSV 다운로드가 완료되었습니다!");
+    } catch (e) {
+      console.error(e);
+      alert("CSV 다운로드에 실패했습니다.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPage(1, q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,9 +105,20 @@ export default function ItemsPage() {
           placeholder="바코드/상품명 검색"
           className="border rounded px-3 py-2 w-64"
         />
-        <button className="rounded px-4 py-2 border" type="submit" disabled={loading}>
+        <button className="border rounded px-4 py-2" type="submit" disabled={loading}>
           검색
         </button>
+        
+        {/* CSV 다운로드 버튼 */}
+        <button
+          type="button"
+          onClick={downloadCSV}
+          disabled={downloading || total === 0}
+          className="rounded px-4 py-2 bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {downloading ? "다운로드 중..." : "📥 CSV 다운로드"}
+        </button>
+        
         <label className="ml-auto text-sm flex items-center gap-2">
           페이지당
           <select

@@ -34,8 +34,15 @@ CREATE TABLE IF NOT EXISTS core.items (
   tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
   barcode TEXT NOT NULL,
   product_name TEXT NOT NULL,
+  option_name TEXT,
   qty INTEGER NOT NULL DEFAULT 0,
+  selling_price NUMERIC(10,2),
+  cost_price NUMERIC(10,2),
+  product_category TEXT,
+  supplier_name TEXT,
+  safety_stock INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(tenant_id, barcode)
 );
 

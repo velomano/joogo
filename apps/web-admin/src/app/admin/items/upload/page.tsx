@@ -80,15 +80,26 @@ export default function UploadPage() {
     setPollingInterval(interval);
   };
 
-  const onFile = async (file: File) => {
+  // 파일 선택 함수 (업로드는 하지 않음)
+  const onFileSelect = (file: File) => {
     setMessage("");
     setJobStatus(null);
     setSelectedFile(file);
     
-    if (!file) return;
+    if (file) {
+      setMessage(`📁 파일이 선택되었습니다: ${file.name}\n\n이제 "📤 파일 업로드" 버튼을 눌러주세요.`);
+    }
+  };
+
+  // 실제 업로드 함수
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setMessage("업로드할 파일을 먼저 선택해주세요.");
+      return;
+    }
     
     const fd = new FormData();
-    fd.append("file", file);
+    fd.append("file", selectedFile);
     fd.append("tenant_id", tenantId);
     setUploading(true);
     
@@ -110,8 +121,8 @@ export default function UploadPage() {
           status: 'pending',
           file_name: json.file_name,
           file_size: json.file_size,
-          created_at: json.meta.job_created_at,
-          updated_at: json.meta.job_created_at,
+          created_at: json.meta?.job_created_at || new Date().toISOString(),
+          updated_at: json.meta?.job_created_at || new Date().toISOString(),
           progress: 0,
           message: '업로드 완료. 파싱 작업 대기 중...'
         });
@@ -128,7 +139,9 @@ export default function UploadPage() {
   const onDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) onFile(file);
+    if (file) {
+      onFileSelect(file);
+    }
   };
 
   // 컴포넌트 언마운트 시 폴링 정리
@@ -142,7 +155,7 @@ export default function UploadPage() {
 
   return (
     <main className="p-6 space-y-4">
-      <h2 className="text-xl font-semibold">데이터 업로드 (비동기 처리)</h2>
+      <h2 className="text-xl font-semibold">데이터 업로드 (수동 업로드)</h2>
       
       <div className="flex gap-3 items-center">
         <div>
@@ -182,7 +195,7 @@ export default function UploadPage() {
             hidden
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onFile(file);
+              if (file) onFileSelect(file);
             }}
           />
         </div>
@@ -306,6 +319,14 @@ export default function UploadPage() {
           className="border rounded px-3 py-2 bg-gray-600 text-white hover:bg-gray-700"
         >
           📋 목록 보기
+        </button>
+
+        <button
+          onClick={handleUpload}
+          className="border rounded px-3 py-2 bg-blue-600 text-white hover:bg-blue-700"
+          disabled={!selectedFile || uploading}
+        >
+          {uploading ? "업로드 중..." : "📤 파일 업로드"}
         </button>
 
         <button
