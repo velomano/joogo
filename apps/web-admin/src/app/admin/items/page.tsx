@@ -5,24 +5,11 @@ import { useEffect, useMemo, useState } from "react";
 type Item = {
   tenant_id: string;
   barcode: number;
-  productname: string | null;
   product_name: string | null;
   option_name: string | null;
   qty: number;
   created_at: string;
   updated_at: string;
-  sale_date: string | null;
-  sale_qty: number | null;
-  unit_price_krw: number | null;
-  revenue_krw: number | null;
-  channel: string | null;
-  original_data: {
-    memo?: string;
-    category?: string;
-    location?: string;
-    cost_price?: number;
-    daily_data?: Record<string, number>;
-  } | null;
 };
 
 export default function ItemsPage() {
@@ -71,21 +58,6 @@ export default function ItemsPage() {
     fetchPage(1, q);
   };
 
-  const getRecentSaleDate = (originalData: any) => {
-    if (!originalData?.daily_data) return null;
-    
-    const dailyData = originalData.daily_data;
-    const dates = Object.keys(dailyData).filter(date => dailyData[date] > 0);
-    
-    if (dates.length === 0) return null;
-    
-    // 가장 최근 판매일 반환 (YYYYMMDD 형식을 YYYY.MM.DD로 변환)
-    const latestDate = dates.sort().pop();
-    if (!latestDate) return null;
-    
-    return `${latestDate.slice(0, 4)}.${latestDate.slice(4, 6)}.${latestDate.slice(6, 8)}`;
-  };
-
   return (
     <main className="p-6">
       <h1 className="text-2xl font-bold mb-4">재고 목록</h1>
@@ -94,7 +66,7 @@ export default function ItemsPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="바코드/상품명/SKU 검색"
+          placeholder="바코드/상품명 검색"
           className="border rounded px-3 py-2 w-64"
         />
         <button className="rounded px-4 py-2 border" type="submit" disabled={loading}>
@@ -128,30 +100,28 @@ export default function ItemsPage() {
               <th className="text-left p-2">바코드</th>
               <th className="text-left p-2">상품명</th>
               <th className="text-left p-2">옵션</th>
-              <th className="text-left p-2">상품위치</th>
               <th className="text-right p-2">재고수량</th>
-              <th className="text-left p-2">최근판매일</th>
+              <th className="text-left p-2">업데이트</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
               <tr key={`${item.tenant_id}-${item.barcode}`} className="border-t hover:bg-gray-50">
                 <td className="p-2 font-mono">{item.barcode}</td>
-                <td className="p-2">{item.product_name || item.productname || "-"}</td>
+                <td className="p-2">{item.product_name || "-"}</td>
                 <td className="p-2">{item.option_name || "-"}</td>
-                <td className="p-2">{item.original_data?.location || "-"}</td>
                 <td className="p-2 text-right">
                   <span className={`font-semibold ${item.qty < 10 ? 'text-red-600' : item.qty < 50 ? 'text-yellow-600' : 'text-green-600'}`}>
                     {item.qty.toLocaleString()}
                   </span>
                 </td>
                 <td className="p-2 text-sm text-gray-600">
-                  {getRecentSaleDate(item.original_data) || "-"}
+                  {new Date(item.updated_at).toLocaleDateString('ko-KR')}
                 </td>
               </tr>
             ))}
             {!loading && items.length === 0 && (
-              <tr><td className="p-4 text-center" colSpan={6}>데이터가 없습니다.</td></tr>
+              <tr><td className="p-4 text-center" colSpan={5}>데이터가 없습니다.</td></tr>
             )}
           </tbody>
         </table>
@@ -180,6 +150,45 @@ export default function ItemsPage() {
       {loading && (
         <div className="text-center py-4 text-gray-500">
           데이터를 불러오는 중...
+        </div>
+      )}
+
+      {/* 하단 정보 표시 */}
+      {!loading && items.length > 0 && (
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3">재고 현황 요약</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{total.toLocaleString()}</div>
+              <div className="text-sm text-gray-600">전체 상품</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {items.filter(item => item.qty >= 50).length.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">충분한 재고</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {items.filter(item => item.qty > 0 && item.qty < 10).length.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">부족한 재고</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {items.filter(item => item.qty === 0).length.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">품절</div>
+            </div>
+          </div>
+          
+          {q && (
+            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <div className="text-sm text-blue-800">
+                <strong>검색 결과:</strong> "{q}"에 대한 검색 결과 {items.length}개를 찾았습니다.
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>

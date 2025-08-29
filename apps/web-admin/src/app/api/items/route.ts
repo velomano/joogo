@@ -51,7 +51,14 @@ export async function GET(request: NextRequest) {
       
       // 검색 조건이 있으면 추가
       if (search.trim()) {
-        countQuery = countQuery.or(`product_name.ilike.%${search}%,barcode.ilike.%${search}%,productname.ilike.%${search}%`);
+        // barcode는 숫자이므로 정확한 매칭만, 나머지는 ilike로 검색
+        if (/^\d+$/.test(search.trim())) {
+          // 숫자만 입력된 경우: barcode 정확한 매칭
+          countQuery = countQuery.eq('barcode', parseInt(search.trim()));
+        } else {
+          // 텍스트인 경우: product_name과 productname만 검색
+          countQuery = countQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
+        }
       }
       
       const { count, error: countError } = await countQuery;
@@ -78,7 +85,14 @@ export async function GET(request: NextRequest) {
       
       // 검색 조건이 있으면 추가
       if (search.trim()) {
-        itemsQuery = itemsQuery.or(`product_name.ilike.%${search}%,barcode.ilike.%${search}%,productname.ilike.%${search}%`);
+        // barcode는 숫자이므로 정확한 매칭만, 나머지는 ilike로 검색
+        if (/^\d+$/.test(search.trim())) {
+          // 숫자만 입력된 경우: barcode 정확한 매칭
+          itemsQuery = itemsQuery.eq('barcode', parseInt(search.trim()));
+        } else {
+          // 텍스트인 경우: product_name과 productname만 검색
+          itemsQuery = itemsQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
+        }
       }
       
       const { data, error } = await itemsQuery;
@@ -94,6 +108,7 @@ export async function GET(request: NextRequest) {
       console.warn('Items table not found, returning empty array'); 
     }
 
+    // daily_sales 테이블이 없을 수 있으므로 안전하게 처리
     let sales = [];
     try {
       const { data, error } = await supabase
@@ -102,8 +117,16 @@ export async function GET(request: NextRequest) {
         .eq('tenant_id', tenant_id)
         .order('sales_date', { ascending: false })
         .limit(100);
-      if (error) { console.warn('Daily sales table query failed:', error.message); } else { sales = data || []; }
-    } catch (e) { console.warn('Daily sales table not found'); }
+      if (error) { 
+        console.warn('Daily sales table query failed:', error.message); 
+        sales = []; // 오류 시 빈 배열로 설정
+      } else { 
+        sales = data || []; 
+      }
+    } catch (e) { 
+      console.warn('Daily sales table not found, returning empty array'); 
+      sales = []; // 예외 시 빈 배열로 설정
+    }
 
     // 페이지네이션 정보 계산
     const totalPages = Math.ceil((totalCount as number) / limit);

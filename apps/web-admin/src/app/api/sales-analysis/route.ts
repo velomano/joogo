@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenant_id');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '100000');
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const sortBy = searchParams.get('sort_by') || '주문수';

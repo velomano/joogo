@@ -1,0 +1,10 @@
+[33m2901f35[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m 환경변수 파일 추가 및 .gitignore 수정
+[33mdc11db1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add files via upload
+[33md11edad[m[33m ([m[1;31morigin/feat/ask-enhance[m[33m)[m chore: pnpm-lock.yaml 업데이트
+[33m15f6230[m feat: 재고 목록 UI 개선 및 컬럼 순서 최적화
+[33m2f5a8d9[m feat: CSV 업로드 시스템 완전 통합 및 재고 관리 기능 구현
+[33m1171952[m[33m ([m[1;32mpm/pivot-upload-analytics[m[33m, [m[1;32mfeat/ask-enhance[m[33m)[m chore: trigger production deploy
+[33m991a46a[m fix(selmate): replace Node crypto with Web Crypto for Edge runtime
+[33me665981[m feat(edge): mark admin/items and all API routes as edge runtime
+[33m66fb188[m fix(ask api): lazy init OpenAI with env guard to avoid build-time key requirement
+[33mebc09b0[m chore(next): ignore eslint/ts errors during CI build & remove experimental.appDir
