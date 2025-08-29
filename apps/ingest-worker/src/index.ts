@@ -9,6 +9,29 @@ import copyFrom from 'pg-copy-streams';
 import fs from 'fs';
 import { parse } from 'csv-parse/sync';
 
+// .env 파일 직접 로딩
+import { fileURLToPath as fileURLToPath2 } from 'url';
+const __filename2 = fileURLToPath2(import.meta.url);
+const __dirname2 = path.dirname(__filename2);
+const envPath = path.join(__dirname2, '..', '.env');
+
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('=').trim();
+        process.env[key] = value;
+      }
+    }
+  });
+  console.log('[ingest] .env file loaded from:', envPath);
+} else {
+  console.warn('[ingest] .env file not found at:', envPath);
+}
+
 // Use require for pg to avoid ESM type issues
 const pg = require('pg');
 
@@ -26,6 +49,9 @@ const isMain = (() => {
 const DB_URL = process.env.SUPABASE_DB_URL;
 if (!DB_URL) {
   console.error('[ingest] SUPABASE_DB_URL is missing');
+  console.error('[ingest] Current working directory:', process.cwd());
+  console.error('[ingest] .env file path:', envPath);
+  console.error('[ingest] Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
   process.exit(1);
 }
 
