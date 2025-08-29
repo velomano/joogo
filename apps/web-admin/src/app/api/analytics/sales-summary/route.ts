@@ -22,16 +22,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
+    // 환경변수 디버깅
+    console.log('[DEBUG] Environment variables check:', {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...',
+      supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 20) + '...'
+    });
+
+    // Supabase 클라이언트 생성 - 올바른 환경변수 사용
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+      console.error('[ERROR] Missing environment variables:', {
+        supabaseUrl: !!supabaseUrl,
+        supabaseKey: !!supabaseKey
+      });
+      return NextResponse.json({ 
+        error: 'Supabase configuration missing',
+        details: {
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseKey
+        }
+      }, { status: 500 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
     });
+
+    console.log('[DEBUG] Supabase client created successfully');
 
     let items: any[] = [];
     let salesItems: any[] = [];
