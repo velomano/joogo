@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
       auth: { persistSession: false }
     });
 
-    let items = [];
-    let totalCount: number | string = 'unknown';
+    let items: any[] = [];
+    let totalCount = 0;
     
     try {
-      // 먼저 전체 개수 확인 (검색 조건 포함)
+      // 전체 개수 확인 (검색 조건 포함)
       let countQuery = supabase
         .from('items')
         .select('*', { count: 'exact', head: true })
@@ -65,87 +65,79 @@ export async function GET(request: NextRequest) {
       
       if (countError) {
         console.warn('Count query failed:', countError.message);
-        totalCount = 'unknown';
+        totalCount = 0;
       } else {
         totalCount = count || 0;
         console.log(`[items] Total count for tenant ${tenant_id}: ${totalCount}`);
       }
 
-      // 페이지네이션을 위한 range 계산
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      
-      // 검색 조건과 페이지네이션을 적용한 데이터 조회
-      let itemsQuery = supabase
-        .from('items')
-        .select('*')
-        .eq('tenant_id', tenant_id)
-        .order('updated_at', { ascending: false })
-        .range(from, to);
-      
-      // 검색 조건이 있으면 추가
+      // 검색 조건이 있으면 필터링된 데이터만 조회
       if (search.trim()) {
+        let searchQuery = supabase
+          .from('items')
+          .select('*')
+          .eq('tenant_id', tenant_id);
+        
         // barcode는 숫자이므로 정확한 매칭만, 나머지는 ilike로 검색
         if (/^\d+$/.test(search.trim())) {
           // 숫자만 입력된 경우: barcode 정확한 매칭
-          itemsQuery = itemsQuery.eq('barcode', parseInt(search.trim()));
+          searchQuery = searchQuery.eq('barcode', parseInt(search.trim()));
         } else {
           // 텍스트인 경우: product_name과 productname만 검색
-          itemsQuery = itemsQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
+          searchQuery = searchQuery.or(`product_name.ilike.%${search}%,productname.ilike.%${search}%`);
         }
-      }
-      
-      const { data, error } = await itemsQuery;
-      
-      if (error) { 
-        console.warn('Items table query failed:', error.message); 
-      } else { 
-        items = data || []; 
-        console.log(`[items] Retrieved ${items.length} items from database (page: ${page}, limit: ${limit}, range: ${from}-${to})`);
+        
+        const { data, error } = await searchQuery.order('updated_at', { ascending: false });
+        
+        if (error) { 
+          console.warn('Search query failed:', error.message); 
+          items = [];
+        } else { 
+          items = data || []; 
+          console.log(`[items] Search found ${items.length} items for query: "${search}"`);
+        }
+      } else {
+        // 검색어가 없으면 페이지네이션으로 조회
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+        
+        const { data, error } = await supabase
+          .from('items')
+          .select('*')
+          .eq('tenant_id', tenant_id)
+          .order('updated_at', { ascending: false })
+          .range(from, to);
+        
+        if (error) { 
+          console.warn('Items query failed:', error.message); 
+          items = [];
+        } else { 
+          items = data || []; 
+          console.log(`[items] Retrieved ${items.length} items from database (page: ${page}, limit: ${limit}, range: ${from}-${to})`);
+        }
       }
       
     } catch (e) { 
       console.warn('Items table not found, returning empty array'); 
-    }
-
-    // daily_sales 테이블이 없을 수 있으므로 안전하게 처리
-    let sales = [];
-    try {
-      const { data, error } = await supabase
-        .from('daily_sales')
-        .select('*')
-        .eq('tenant_id', tenant_id)
-        .order('sales_date', { ascending: false })
-        .limit(100);
-      if (error) { 
-        console.warn('Daily sales table query failed:', error.message); 
-        sales = []; // 오류 시 빈 배열로 설정
-      } else { 
-        sales = data || []; 
-      }
-    } catch (e) { 
-      console.warn('Daily sales table not found, returning empty array'); 
-      sales = []; // 예외 시 빈 배열로 설정
+      items = [];
     }
 
     // 페이지네이션 정보 계산
-    const totalPages = Math.ceil((totalCount as number) / limit);
+    const totalPages = Math.ceil(totalCount / limit);
     
     // 상세한 통계 정보 반환
     return NextResponse.json({ 
       items: items, 
-      sales: sales, 
       total_items: items.length,
-      total_count: totalCount, // 실제 DB에 저장된 총 개수
-      total_sales: sales.length,
+      total_count: totalCount,
       tenant_id: tenant_id,
       page: page,
       limit: limit,
       total_pages: totalPages,
       retrieved_at: new Date().toISOString(),
-      note: totalCount !== 'unknown' && totalCount !== items.length ? 
-        `⚠️ 주의: DB에는 ${totalCount}개가 저장되어 있지만, 조회된 것은 ${items.length}개입니다.` : 
-        '정상적으로 페이지네이션이 적용되었습니다.'
+      note: totalCount > 0 ? 
+        `정상적으로 조회되었습니다. (총 ${totalCount}개 중 ${items.length}개 표시)` : 
+        '데이터가 없습니다.'
     });
     
   } catch (error: any) {
