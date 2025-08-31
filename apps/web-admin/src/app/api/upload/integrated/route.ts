@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 export async function POST() {
   return NextResponse.json({ 
     error: 'This API is deprecated. Please use /api/upload/parse and /api/upload/ingest instead.',

@@ -3,8 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
 
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY;

@@ -13,8 +13,3 @@ name = "joogo-wms-oms-staging"
 [build]
 command = "pnpm build"
 cwd = "apps/web-admin"
-
-# Pages 설정
-[site]
-bucket = "apps/web-admin/.next"
-entry-point = "apps/web-admin/.next/server/pages-manifest.json"
