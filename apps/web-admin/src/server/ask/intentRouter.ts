@@ -126,7 +126,7 @@ function extractDays(question: string): number {
 }
 
 function extractProductKeywords(question: string): string[] {
-  const keywords = [];
+  const keywords: string[] = [];
   const productTerms = ['티셔츠', '후드', '모자', '상의', '하의', '신발', '가방', '액세서리'];
   
   for (const term of productTerms) {
