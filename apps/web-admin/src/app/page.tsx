@@ -3,29 +3,6 @@ import Link from 'next/link';
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl font-bold">J</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Joogo</h1>
-                <p className="text-sm text-gray-500">WMS/OMS Platform</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>System Online</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
