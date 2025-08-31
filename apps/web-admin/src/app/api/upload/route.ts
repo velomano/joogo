@@ -1,8 +1,154 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { csvToJson } from '@joogo/shared/src/csvToJson';
-import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
+// CSV 파싱 함수들 (로컬 복사)
+interface SelmateRow {
+	product_name: string;
+	option_name?: string;
+	location_code?: string;
+	on_hand?: number;
+	extra: Record<string, any>;
+	daily_qty: Record<string, number>;
+}
+
+interface SelmateCsvParseResult {
+	valid: SelmateRow[];
+	invalid: Record<string, any>[];
+	metadata: {
+		totalRows: number;
+		dateColumns: string[];
+		basicColumns: string[];
+	}
+}
+
+function selmateCsvToJson(content: string): SelmateCsvParseResult {
+	const lines = content.trim().split(/\r?\n/);
+	if (lines.length === 0) return { valid: [], invalid: [], metadata: { totalRows: 0, dateColumns: [], basicColumns: [] } };
+	
+	const headers = lines[0].split(',').map(h => h.trim());
+	
+	// 컬럼 분류
+	const basicColumns: string[] = [];
+	const dateColumns: string[] = [];
+	
+	headers.forEach(header => {
+		// 날짜 컬럼인지 확인 (YYYYMMDD 형식)
+		if (/^\d{8}$/.test(header)) {
+			dateColumns.push(header);
+		} else {
+			basicColumns.push(header);
+		}
+	});
+	
+	const valid: SelmateRow[] = [];
+	const invalid: Record<string, any>[] = [];
+
+	for (let i = 1; i < lines.length; i++) {
+		try {
+			const row = lines[i].split(',');
+			const raw: Record<string, any> = {};
+			
+			// 기본 컬럼과 날짜 컬럼 분리
+			headers.forEach((h, idx) => {
+				if (dateColumns.includes(h)) {
+					// 날짜 컬럼은 daily_qty에 포함
+					const value = row[idx]?.trim() || '';
+					if (value && value !== '0' && value !== '') {
+						const numValue = parseFloat(value);
+						if (!isNaN(numValue)) {
+							raw[h] = numValue;
+						}
+					}
+				} else {
+					// 기본 컬럼
+					raw[h] = row[idx]?.trim() || '';
+				}
+			});
+
+			// daily_qty JSONB 생성
+			const daily_qty: Record<string, number> = {};
+			dateColumns.forEach(dateCol => {
+				if (raw[dateCol] !== undefined && raw[dateCol] > 0) {
+					daily_qty[dateCol] = raw[dateCol];
+				}
+			});
+
+			// 상품명 찾기 (여러 가능한 컬럼명 시도)
+			let productName = '';
+			const possibleProductColumns = ['사입상품명', '상품명', '제품명', '상품'];
+			for (const col of possibleProductColumns) {
+				if (raw[col] && raw[col].trim()) {
+					productName = raw[col].trim();
+					break;
+				}
+			}
+
+			// 기본 정보 추출
+			const candidate = {
+				product_name: productName,
+				option_name: raw['옵션내용'] || raw['옵션코드'] || undefined,
+				location_code: raw['상품위치'] || undefined,
+				on_hand: parseFloat(raw['현재고'] || '0') || 0,
+				extra: {
+					바코드번호: raw['바코드번호'] || '',
+					상품코드: raw['상품코드'] || '',
+					상품분류: raw['상품분류'] || '',
+					브랜드: raw['브랜드'] || '',
+					공급처명: raw['공급처명'] || '',
+					원가: raw['원가'] || '',
+					판매가: raw['판매가'] || '',
+					품절여부: raw['품절여부'] || '',
+					안정재고: raw['안정재고'] || ''
+				},
+				daily_qty
+			};
+			
+			// 상품명이 없으면 건너뛰기
+			if (!candidate.product_name) {
+				continue;
+			}
+			
+			valid.push(candidate);
+		} catch (rowError) {
+			invalid.push({ error: 'Row processing failed', rowIndex: i });
+		}
+	}
+	
+	return { 
+		valid, 
+		invalid, 
+		metadata: {
+			totalRows: lines.length - 1,
+			dateColumns,
+			basicColumns
+		}
+	};
+}
+
+function csvToJson(content: string): any[] {
+	const lines = content.trim().split(/\r?\n/);
+	if (lines.length === 0) return [];
+	
+	const headers = lines[0].split(',').map(h => h.trim());
+	const result: any[] = [];
+	
+	for (let i = 1; i < lines.length; i++) {
+		try {
+			const row = lines[i].split(',');
+			const item: any = {};
+			
+			headers.forEach((header, idx) => {
+				item[header] = row[idx]?.trim() || '';
+			});
+			
+			result.push(item);
+		} catch (rowError) {
+			console.error(`Error processing row ${i}:`, rowError);
+		}
+	}
+	
+	return result;
+}
 
 
 // 파일 형식 감지 함수
