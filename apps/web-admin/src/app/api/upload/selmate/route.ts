@@ -4,43 +4,53 @@ import { selmateCsvToJson } from '@joogo/shared/src/selmateCsvToJson';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from 'csv-parse/sync';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 // Edge-safe crypto helpers (Web Crypto)
 const te = new TextEncoder();
-const toUint8 = (d: string | Uint8Array) => (typeof d === 'string' ? te.encode(d) : d);
-const bufToHex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+const toUint8 = (d: string | Uint8Array): Uint8Array => (typeof d === 'string' ? te.encode(d) : d);
+const bufToHex = (buf: ArrayBuffer): string => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 
 export async function sha256Hex(data: string | Uint8Array) {
-  const digest = await crypto.subtle.digest('SHA-256', toUint8(data));
+  const dataBuffer = toUint8(data);
+  const digest = await crypto.subtle.digest('SHA-256', dataBuffer.buffer as ArrayBuffer);
   return bufToHex(digest);
 }
 
 export async function hmacSha256Hex(key: string | Uint8Array, msg: string | Uint8Array) {
-  const k = await crypto.subtle.importKey('raw', toUint8(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', k, toUint8(msg));
+  const keyData = toUint8(key);
+  const msgData = toUint8(msg);
+  const k = await crypto.subtle.importKey('raw', keyData.buffer as ArrayBuffer, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, msgData.buffer as ArrayBuffer);
   return bufToHex(sig);
 }
 
-export function randomHex(bytes = 16) {
+export function randomHex(bytes = 16): string {
   const a = new Uint8Array(bytes);
   crypto.getRandomValues(a);
-  return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
 	try {
 		const form = await req.formData();
 		const file = form.get('file');
 		const tenantId = String(form.get('tenant_id') || '');
 		
 		console.log('Selmate upload request - tenant_id:', tenantId);
-		console.log('File info:', file ? { name: file.name, size: file.size, type: file.type } : 'No file');
 		
+		// 타입 가드로 File 객체인지 확인
 		if (!file || !(file instanceof File)) {
 			return NextResponse.json({ error: 'file required' }, { status: 400 });
 		}
+		
+		// File 객체의 속성에 안전하게 접근
+		console.log('File info:', { 
+			name: file.name, 
+			size: file.size, 
+			type: file.type 
+		});
+		
 		if (!tenantId) {
 			return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
 		}

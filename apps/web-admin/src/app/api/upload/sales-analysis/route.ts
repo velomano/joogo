@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 
 // CSV 파싱 함수
@@ -61,7 +61,7 @@ function validateData(row: any): { valid: boolean; errors: string[] } {
   };
 }
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
@@ -203,7 +203,7 @@ export async function POST(req: Request) {
 }
 
 // GET 요청 - 업로드 상태 확인
-export async function GET(req: Request) {
+export async function GET(req: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenant_id');
@@ -249,7 +249,7 @@ export async function GET(req: Request) {
     const summary = {
       totalProducts: products?.length || 0,
       totalDailyRecords: dailySales?.length || 0,
-      latestUpdate: products?.[0]?.updated_at || null,
+      latestUpdate: products?.[0] ? (products[0] as any).updated_at || null : null,
       sampleProducts: products?.slice(0, 5) || []
     };
     
