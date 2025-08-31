@@ -267,7 +267,8 @@ async function main() {
     await loop();
 }
 async function loop() {
-    while (true) {
+    let shouldContinue = true;
+    while (shouldContinue) {
         try {
             console.log("Polling for new uploads...");
             // get pending uploads (including failed ones to retry)
