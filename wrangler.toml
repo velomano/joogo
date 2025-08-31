@@ -1,0 +1,14 @@
+name = "joogo-wms-oms"
+main = "apps/web-admin/.next/server/pages-manifest.json"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "3c9a7e5abdcef2bba6746bd305f11ede"
+
+[env.production]
+name = "joogo-wms-oms-prod"
+
+[env.staging]
+name = "joogo-wms-oms-staging"
+
+[build]
+command = "pnpm build"

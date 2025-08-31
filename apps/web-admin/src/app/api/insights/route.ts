@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 type ActionId =

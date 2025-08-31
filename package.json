@@ -14,7 +14,9 @@
     "format": "prettier -w .",
     "build": "turbo run build",
     "test": "turbo run test",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "deploy:cloudflare": "pnpm build && wrangler pages deploy apps/web-admin/.next --project-name=joogo-wms-oms",
+    "deploy:cloudflare:staging": "pnpm build && wrangler pages deploy apps/web-admin/.next --project-name=joogo-wms-oms --env=staging"
   },
   "devDependencies": {
     "@types/node": "^20.19.11",
@@ -25,10 +27,12 @@
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.0.0",
+    "glob": "^11.0.3",
     "prettier": "^3.0.0",
     "tsx": "^4.20.4",
     "turbo": "^1.10.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "wrangler": "^4.33.1"
   },
   "engines": {
     "node": ">=20.0.0",

@@ -106,6 +106,11 @@ class CostTracker {
     return promptCost + completionCost;
   }
   
+  // 로그 조회 (public 메서드)
+  getLog(sessionId: string): CostLog | undefined {
+    return this.logs.get(sessionId);
+  }
+  
   // 통계 정보
   getStats(): {
     totalSessions: number;
@@ -202,7 +207,7 @@ export function createResponseMeta(
   
   if (!fromCache) {
     // 실제 토큰 사용량이 있는 경우
-    const log = costTracker.logs.get(sessionId);
+    const log = costTracker.getLog(sessionId);
     if (log && log.steps.length > 0) {
       const lastStep = log.steps[log.steps.length - 1];
       meta.tokens = {
