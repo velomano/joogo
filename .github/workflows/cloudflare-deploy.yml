@@ -52,3 +52,5 @@ jobs:
           directory: apps/web-admin/.next
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           workingDirectory: apps/web-admin
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
