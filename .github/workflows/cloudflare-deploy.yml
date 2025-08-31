@@ -48,7 +48,7 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
-          projectName: joogo-wms-oms
+          projectName: joogo
           directory: apps/web-admin/.next
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           workingDirectory: apps/web-admin

@@ -1,13 +1,13 @@
-name = "joogo-wms-oms"
+name = "joogo"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "3c9a7e5abdcef2bba6746bd305f11ede"
 
 [env.production]
-name = "joogo-wms-oms-prod"
+name = "joogo-prod"
 
 [env.staging]
-name = "joogo-wms-oms-staging"
+name = "joogo-staging"
 
 # Cloudflare Pages + Edge Functions 설정
 [build]
