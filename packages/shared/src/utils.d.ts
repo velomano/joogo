@@ -1,0 +1,16 @@
+export declare const generateId: () => string;
+export declare const formatDate: (date: string | Date, formatString?: string) => string;
+export declare const parseDate: (dateString: string) => Date;
+export declare const parseCsv: (csvContent: string) => string[][];
+export declare const csvToJson: <T>(csvContent: string, headers: string[]) => T[];
+export declare const validateRequired: (value: unknown, fieldName: string) => string | null;
+export declare const validateEmail: (email: string) => string | null;
+export declare const validateUrl: (url: string) => string | null;
+export declare const chunk: <T>(array: T[], size: number) => T[][];
+export declare const unique: <T>(array: T[], key?: keyof T) => T[];
+export declare const truncate: (str: string, length: number, suffix?: string) => string;
+export declare const slugify: (str: string) => string;
+export declare const isError: (error: unknown) => error is Error;
+export declare const getErrorMessage: (error: unknown) => string;
+export declare const delay: (ms: number) => Promise<void>;
+export declare const retry: <T>(fn: () => Promise<T>, maxAttempts?: number, delayMs?: number) => Promise<T>;

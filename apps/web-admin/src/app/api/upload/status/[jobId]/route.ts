@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // 작업 결과가 있으면 함께 반환
-    let result = null;
+    let result: any = null;
     if (job.status === 'completed' && job.result) {
       try {
         result = typeof job.result === 'string' ? JSON.parse(job.result) : job.result;

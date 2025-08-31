@@ -40,7 +40,7 @@ export async function GET() {
 
     // 2. 간단한 테스트 데이터 삽입 시도 (올바른 UUID와 데이터 타입)
     let insertTest = '삽입 테스트 실패';
-    let testData = null;
+    let testData: any = null;
     
     try {
       // 올바른 UUID 형식과 데이터 타입으로 테스트

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     // items 테이블에 저장할 데이터 준비 (실제 스키마에 맞춤)
-    const itemsData = [];
+    const itemsData: any[] = [];
     let skippedRows = 0;
     let processedRows = 0;
     
