@@ -150,3 +150,4 @@ pnpm deploy:cloudflare:staging
 
 ⭐ **이 프로젝트가 도움이 되었다면 스타를 눌러주세요!**
 
+# Test deployment with API keys - Sun Aug 31 22:59:45 KST 2025
