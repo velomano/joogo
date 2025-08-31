@@ -86,7 +86,6 @@ export default function ItemsPage() {
 
   useEffect(() => {
     fetchPage(1, q);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit, tenantId]);
 
   const onSearch = (e: React.FormEvent) => {

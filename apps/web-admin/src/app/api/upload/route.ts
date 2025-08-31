@@ -264,7 +264,24 @@ export async function POST(req: Request) {
 		} else {
 			// 일반 CSV 처리
 			console.log('Processing as standard CSV...');
-			const { valid, invalid } = csvToJson(text);
+
+			type CsvRecord = Record<string, unknown>;
+			type CsvParseResult =
+			  | { valid: CsvRecord[]; invalid: CsvRecord[] }
+			  | CsvRecord[];
+
+			/** 두 가지 반환 형태를 모두 {valid, invalid}로 통일 */
+			const normalizeCsvResult = (
+			  res: CsvParseResult
+			): { valid: CsvRecord[]; invalid: CsvRecord[] } => {
+			  if (Array.isArray(res)) return { valid: res, invalid: [] };
+			  const v = Array.isArray(res.valid) ? res.valid : [];
+			  const i = Array.isArray(res.invalid) ? res.invalid : [];
+			  return { valid: v, invalid: i };
+			};
+
+			const parsed = csvToJson(text) as CsvParseResult;
+			const { valid, invalid } = normalizeCsvResult(parsed);
 			
 			if (valid.length === 0) {
 				return NextResponse.json({ 

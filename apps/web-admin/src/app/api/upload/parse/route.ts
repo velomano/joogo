@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
               case 'product_name':
               case 'productname':
               case '사입상품명':
-              case '상품명':
                 itemData.product_name = value.trim();
                 break;
               case '옵션명':
