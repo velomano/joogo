@@ -101,3 +101,8 @@ Thumbs.db
 # Supabase
 .supabase/
 
+# Cloudflare
+.wrangler/
+wrangler.toml.local
+cloudflare.env
+

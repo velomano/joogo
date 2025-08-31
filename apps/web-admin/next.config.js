@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@joogo/shared'],
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  // Cloudflare Workers 배포를 위한 설정
+  experimental: {
+    serverComponentsExternalPackages: ['@joogo/shared']
+  }
 }
 
 module.exports = nextConfig
