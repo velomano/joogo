@@ -1,4 +1,14 @@
-import { McpRunRequest, McpTool } from '@joogo/shared';
+// MCP 타입 정의
+interface McpTool {
+  name: string;
+  description: string;
+  inputSchema: any;
+}
+
+interface McpRunRequest {
+  tool: string;
+  args?: Record<string, any>;
+}
 
 const DEV_TOKEN = process.env.NEXT_PUBLIC_DEV_TOKEN || 'dev-tenant';
 
