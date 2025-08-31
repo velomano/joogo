@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     // 데이터 파싱
-    const salesData = [];
+    const salesData: any[] = [];
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
