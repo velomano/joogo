@@ -311,7 +311,8 @@ async function main() {
 }
 
 async function loop() {
-  while (true) {
+  let shouldContinue = true;
+  while (shouldContinue) {
     try {
       console.log("Polling for new uploads...");
       
