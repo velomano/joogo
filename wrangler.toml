@@ -9,7 +9,12 @@ name = "joogo-wms-oms-prod"
 [env.staging]
 name = "joogo-wms-oms-staging"
 
-# Cloudflare Pages 설정
+# Cloudflare Pages + Edge Functions 설정
 [build]
 command = "pnpm build"
 cwd = "apps/web-admin"
+
+# Pages 설정
+[site]
+bucket = "apps/web-admin/.next"
+entry-point = "apps/web-admin/.next/server/pages-manifest.json"
