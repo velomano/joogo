@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Application } from 'express';
 import pino from 'pino';
 import { config } from 'dotenv';
 import { ShippingService } from './services/shippingService';
@@ -18,7 +18,7 @@ const logger = pino({
   },
 });
 
-const app = express();
+const app: Application = express();
 const port = process.env.SHIPPING_PORT || 7304;
 
 // Middleware
