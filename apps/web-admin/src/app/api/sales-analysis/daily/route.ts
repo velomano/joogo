@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
@@ -66,7 +66,7 @@ export async function GET(req: Request) {
     }
     
     // 데이터 가공
-    const processedData = data?.map(item => ({
+    const processedData = data?.map((item: any) => ({
       id: item.id,
       date: item.date,
       daily_qty: item.daily_qty,

@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 // ✅ 0 값도 보존하는 가격 추출 로직 (수정)

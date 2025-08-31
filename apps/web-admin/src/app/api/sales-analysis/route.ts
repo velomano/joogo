@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
@@ -88,20 +88,25 @@ export async function GET(req: Request) {
     
     const { data: products, error: productsError } = await query;
     
+    // 타입 안전성을 위한 타입 가드
+    if (!products || !Array.isArray(products)) {
+      throw new Error('Invalid products data');
+    }
+    
     if (productsError) {
       throw productsError;
     }
     
     // 통계 계산
     const totalProducts = products?.length || 0;
-    const totalRevenue = products?.reduce((sum, p) => sum + (p.판매가 * p.발송수), 0) || 0;
-    const totalCost = products?.reduce((sum, p) => sum + (p.원가 * p.발송수), 0) || 0;
+    const totalRevenue = products?.reduce((sum, p: any) => sum + (p.판매가 * p.발송수), 0) || 0;
+    const totalCost = products?.reduce((sum, p: any) => sum + (p.원가 * p.발송수), 0) || 0;
     const totalProfit = totalRevenue - totalCost;
-    const outOfStockCount = products?.filter(p => p.현재고 <= 0).length || 0;
-    const lowStockCount = products?.filter(p => p.현재고 > 0 && p.현재고 <= 10).length || 0;
+    const outOfStockCount = products?.filter((p: any) => p.현재고 <= 0).length || 0;
+    const lowStockCount = products?.filter((p: any) => p.현재고 > 0 && p.현재고 <= 10).length || 0;
     
     // 카테고리별 통계
-    const categoryStats = products?.reduce((acc, p) => {
+    const categoryStats = products?.reduce((acc, p: any) => {
       const category = p.상품분류 || '미분류';
       if (!acc[category]) {
         acc[category] = {
@@ -121,7 +126,7 @@ export async function GET(req: Request) {
     }, {} as Record<string, any>) || {};
     
     // 공급처별 통계
-    const supplierStats = products?.reduce((acc, p) => {
+    const supplierStats = products?.reduce((acc, p: any) => {
       const supplier = p.공급처명 || '미지정';
       if (!acc[supplier]) {
         acc[supplier] = {
@@ -163,13 +168,13 @@ export async function GET(req: Request) {
         profit: stats.totalRevenue - stats.totalCost,
         profitMargin: stats.totalRevenue > 0 ? ((stats.totalRevenue - stats.totalCost) / stats.totalRevenue) * 100 : 0
       })),
-      products: products?.map(p => ({
+      products: products?.map((p: any) => ({
         ...p,
         마진: p.판매가 - p.원가,
         마진율: p.판매가 > 0 ? ((p.판매가 - p.원가) / p.판매가) * 100 : 0,
         재고상태: p.현재고 <= 0 ? '품절' : p.현재고 <= (p.안정재고 || 10) ? '부족' : '충분'
       })) || [],
-      latestUpdate: products?.[0]?.updated_at || null
+      latestUpdate: products?.[0] ? (products[0] as any).updated_at || null : null
     };
     
     return NextResponse.json(response);
