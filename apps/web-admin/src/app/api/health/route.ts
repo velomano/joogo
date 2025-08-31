@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 const targets = [
 	{ key: 'files', portEnv: 'NEXT_PUBLIC_FILES_PORT', fallback: 7301 },
 	{ key: 'catalog', portEnv: 'NEXT_PUBLIC_CATALOG_PORT', fallback: 7302 },

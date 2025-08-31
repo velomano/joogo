@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
 export async function GET() {
   try {
     // Supabase 클라이언트 생성 - Service Role Key 우선, 실패시 Anon Key 사용

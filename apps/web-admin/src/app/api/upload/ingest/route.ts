@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
 export async function POST(request: NextRequest) {
   try {
     const { rows, type, tenant_id } = await request.json();

@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-export const runtime = 'edge';
 // ✅ 0 값도 보존하는 가격 추출 로직 (수정)
 function extractPrice(metaData: any, originalData: any): { price: number | null, costPrice: number | null } {
   // 0 값도 보존하기 위해 nullish coalescing (??) 사용

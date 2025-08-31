@@ -5,8 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { parse } from 'csv-parse/sync';
 import { sha256Hex } from '../../../../lib/crypto';
 
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request): Promise<NextResponse> {
 	try {

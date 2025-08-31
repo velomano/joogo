@@ -2,7 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
+// output: export와 호환되도록 generateStaticParams 추가
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { jobId: string } }
