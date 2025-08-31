@@ -12,45 +12,66 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
+        {/* Modern Navigation Bar */}
+        <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
-              <div className="flex items-center space-x-6">
-                <a href="/" className="text-xl font-semibold text-gray-900">Joogo WMS/OMS</a>
+              {/* Logo and Brand */}
+              <div className="flex items-center space-x-8">
+                <a href="/" className="flex items-center space-x-3 group">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <span className="text-white text-sm font-bold">J</span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900">Joogo</span>
+                </a>
                 
-                {/* 상품 관리 */}
-                <div className="flex items-center space-x-4">
-                  <a href="/admin/items" className="text-sm text-blue-600 hover:underline">📋 재고 목록</a>
-                  <a href="/admin/items/upload" className="text-sm text-blue-600 hover:underline">📤 데이터 업로드</a>
-                </div>
-                
-                {/* 분석 및 인사이트 */}
-                <div className="flex items-center space-x-4">
-                  <a href="/admin/analytics/sales" className="text-sm text-blue-600 hover:underline">📈 판매 분석</a>
-                  <a href="/admin/insights" className="text-sm text-blue-600 hover:underline">🚀 인사이트</a>
-                </div>
-                
-                {/* AI 질의 */}
-                <div className="flex items-center space-x-4">
-                  <a href="/admin/ask" className="text-sm text-blue-600 hover:underline">❓ AI 질의</a>
-                </div>
-                
-                {/* Insight-to-Action */}
-                <div className="flex items-center space-x-4">
-                  <a href="/actions" className="text-sm text-green-600 hover:underline font-medium">🎯 액션 큐</a>
+                {/* Navigation Links */}
+                <div className="hidden md:flex items-center space-x-1">
+                  <a href="/admin/items" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    재고 관리
+                  </a>
+                  <a href="/admin/items/upload" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    데이터 업로드
+                  </a>
+                  <a href="/admin/analytics/sales" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    판매 분석
+                  </a>
+                  <a href="/admin/insights" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    인사이트
+                  </a>
+                  <a href="/admin/ask" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    AI 질의
+                  </a>
+                  <a href="/actions" className="px-3 py-2 text-sm font-medium text-green-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200">
+                    액션 큐
+                  </a>
                 </div>
               </div>
+              
+              {/* Right Side */}
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">
-                  Tenant: Joogo Test Company
-                </span>
+                {/* Status Indicator */}
+                <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-green-700">시스템 정상</span>
+                </div>
+                
+                {/* Tenant Info */}
+                <div className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Joogo Test Company</span>
+                </div>
               </div>
             </div>
           </div>
         </nav>
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        
+        {/* Main Content */}
+        <main className="min-h-screen">
           {children}
         </main>
       </body>
