@@ -52,3 +52,4 @@ jobs:
           projectName: joogo-wms-oms
           directory: apps/web-admin/.next
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: apps/web-admin
