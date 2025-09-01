@@ -46,9 +46,16 @@ jobs:
         run: |
           cd apps/web-admin
           pnpm build
-          # 번들 크기 확인
+          # 번들 크기 확인 및 검증
           echo "Checking bundle sizes..."
           find .next -name "*.js" -size +20M -exec ls -lh {} \;
+          # 25MB 이상 파일이 있으면 빌드 실패
+          if find .next -name "*.js" -size +25M | grep -q .; then
+            echo "ERROR: Files larger than 25MB found!"
+            find .next -name "*.js" -size +25M -exec ls -lh {} \;
+            exit 1
+          fi
+          echo "✅ All files are under 25MB limit"
         
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
