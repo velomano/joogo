@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "format": "prettier -w .",
     "build": "turbo run build",
+    "build:analyze": "ANALYZE=true pnpm build",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules",
     "deploy:cloudflare": "pnpm build && wrangler pages deploy apps/web-admin/.next --project-name=joogo-wms-oms",
@@ -32,6 +33,7 @@
     "tsx": "^4.20.4",
     "turbo": "^1.10.0",
     "typescript": "^5.0.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "wrangler": "^4.33.1"
   },
   "engines": {
