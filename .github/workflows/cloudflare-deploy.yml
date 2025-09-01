@@ -42,8 +42,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         
-      - name: Build project
-        run: pnpm build
+      - name: Build project with optimization
+        run: |
+          cd apps/web-admin
+          pnpm build
+          # 번들 크기 확인
+          echo "Checking bundle sizes..."
+          find .next -name "*.js" -size +20M -exec ls -lh {} \;
         
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -54,3 +59,4 @@ jobs:
           workingDirectory: apps/web-admin
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4
