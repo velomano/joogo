@@ -12,8 +12,6 @@ const nextConfig = {
     bundlePagesExternals: true,
     // 트리 쉐이킹 최적화
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
-    // 번들 크기 제한
-    maxConcurrency: 1,
   },
   
   // 웹팩 최적화
@@ -40,9 +38,6 @@ const nextConfig = {
             },
           },
         },
-        // 번들 크기 제한
-        maxEntrypointSize: 25000000,
-        maxAssetSize: 25000000,
       };
       
       // 불필요한 폴리필 제거
