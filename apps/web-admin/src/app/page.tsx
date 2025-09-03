@@ -16,9 +16,9 @@ export default function HomePage() {
         </div>
 
         {/* Main Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {/* Insights */}
-          <Link href="/admin/insights" className="group">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {/* Board */}
+          <Link href="/board" className="group">
             <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -27,49 +27,15 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">인사이트 분석</h3>
-                  <p className="text-sm text-gray-600">데이터 기반 비즈니스 인사이트</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Inventory */}
-          <Link href="/admin/items" className="group">
-            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">재고 관리</h3>
-                  <p className="text-sm text-gray-600">실시간 재고 현황 및 상품 정보</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Upload */}
-          <Link href="/admin/items/upload" className="group">
-            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">데이터 업로드</h3>
-                  <p className="text-sm text-gray-600">CSV 기반 통합 데이터 처리</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">판매 실적 BOARD</h3>
+                  <p className="text-sm text-gray-600">CSV 업로드 및 실시간 분석</p>
                 </div>
               </div>
             </div>
           </Link>
 
           {/* AI Query */}
-          <Link href="/admin/ask" className="group">
+          <Link href="/ask" className="group">
             <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -79,7 +45,24 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">AI 질의</h3>
-                  <p className="text-sm text-gray-600">자연어로 재고 정보 조회</p>
+                  <p className="text-sm text-gray-600">자연어로 데이터 조회</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Upload */}
+          <Link href="/board" className="group">
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">CSV 업로드</h3>
+                  <p className="text-sm text-gray-600">판매 데이터 업로드 및 처리</p>
                 </div>
               </div>
             </div>
