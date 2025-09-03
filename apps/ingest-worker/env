@@ -1,0 +1,7 @@
+# apps>ingest-worker .env
+STORAGE_BUCKET=ingest
+POLL_MS=5000
+SUPABASE_URL=https://basgfjntohmwaatzrcsl.supabase.co
+SUPABASE_DB_URL=postgresql://postgres.basgfjntohmwaatzrcsl:*Bluesky1005315300@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhc2dmam50b2htd2FhdHpyY3NsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTY5Mzg4MywiZXhwIjoyMDcxMjY5ODgzfQ.5sV7WDXCpE8rRxunGiPFmdci04_GO-bBCuvZmMst7Jg
+DEFAULT_TENANT_ID=84949b3c-2cb7-4c42-b9f9-d1f37d371e00
