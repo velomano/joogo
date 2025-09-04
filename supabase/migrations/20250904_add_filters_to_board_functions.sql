@@ -2,6 +2,9 @@
 -- This migration adds optional filter parameters to existing board functions
 
 -- 1) Update sales daily function to support filters
+-- 기존 함수 삭제
+drop function if exists public.board_sales_daily(uuid, date, date);
+drop function if exists public.board_sales_daily(uuid, date, date, text, text, text, text);
 create or replace function public.board_sales_daily(
   p_tenant_id uuid, 
   p_from date, 
@@ -11,9 +14,9 @@ create or replace function public.board_sales_daily(
   p_category text default null,
   p_sku text default null
 )
-returns table(sale_date date, revenue numeric) 
+returns table(sale_date date, qty numeric, revenue numeric) 
 language sql security definer set search_path=public, analytics as $$
-  select sale_date, sum(coalesce(revenue,0)) 
+  select sale_date, sum(coalesce(qty,0)), sum(coalesce(revenue,0)) 
   from analytics.fact_sales
   where tenant_id=p_tenant_id 
     and sale_date between p_from and p_to

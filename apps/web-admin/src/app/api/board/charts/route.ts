@@ -6,7 +6,10 @@ export const dynamic = "force-dynamic";
 
 // tiny per-process cache: key = `${tenant}|${from}|${to}`
 const _cache = new Map<string, { ts: number; payload: any }>();
-const TTL_MS = 5000; // 5초로 증가하여 더 효과적인 중복 방지
+const TTL_MS = 0; // 캐시 비활성화
+
+// 캐시 초기화
+_cache.clear();
 
 export async function GET(req: NextRequest) {
   try {
@@ -65,6 +68,12 @@ export async function GET(req: NextRequest) {
     }
 
     const asArr = (r: any) => (Array.isArray(r?.data) ? r.data : []);
+    
+    // 디버깅: daily 데이터 확인
+    console.log('[charts] Daily RPC result:', daily);
+    console.log('[charts] Daily data array:', asArr(daily));
+    console.log('[charts] First daily item:', asArr(daily)[0]);
+    
     const payload = {
       ok: true,
       salesDaily: asArr(daily),
