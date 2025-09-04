@@ -45,11 +45,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 2) RLS용 테넌트 설정
-    await supabase.rpc('set_config', { 
-      parameter: 'app.tenant_id', 
-      value: tenant_id, 
-      is_local: true 
-    }).catch(() => {}); // 함수가 없으면 무시
+    try {
+      await supabase.rpc('set_config', { 
+        parameter: 'app.tenant_id', 
+        value: tenant_id, 
+        is_local: true 
+      });
+    } catch (rpcError) {
+      // 함수가 없으면 무시
+      console.log('[UPLOAD/UNIFIED] RPC set_config not available, continuing...');
+    }
 
     // 3) raw_uploads 테이블에 메타데이터 저장
     const { data: insertData, error: insertError } = await supabase

@@ -29,23 +29,17 @@ export default function RootLayout({
                 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center space-x-1">
-                  <a href="/admin/items" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                    재고 관리
+                  <a href="/" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    대시보드
                   </a>
-                  <a href="/admin/items/upload" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                    데이터 업로드
-                  </a>
-                  <a href="/admin/analytics/sales" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                  <a href="/board/sales" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
                     판매 분석
                   </a>
-                  <a href="/admin/insights" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                    인사이트
+                  <a href="/board/abc" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200">
+                    ABC 분석
                   </a>
-                  <a href="/admin/ask" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                    AI 질의
-                  </a>
-                  <a href="/actions" className="px-3 py-2 text-sm font-medium text-green-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200">
-                    액션 큐
+                  <a href="/board/inventory" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors duration-200">
+                    재고 분석
                   </a>
                 </div>
               </div>

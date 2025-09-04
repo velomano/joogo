@@ -1,91 +1,79 @@
-"use client";
-
-import "chart.js/auto";
-import type { Chart, ChartConfiguration } from "chart.js";
+import { Chart, ChartConfiguration } from "chart.js/auto";
 
 const registry = new Map<string, Chart>();
 
-function getCanvas(id: string): HTMLCanvasElement | null {
-  const el = typeof window !== "undefined" ? document.getElementById(id) : null;
-  if (!el) return null;
-  return (el as HTMLCanvasElement) ?? null;
-}
-
-export function ensureChart(id: string, config: ChartConfiguration): Chart | null {
-  const canvas = getCanvas(id);
-  if (!canvas) return null;
-  // @ts-ignore
-  const ChartCtor = (window as any).Chart as typeof import("chart.js").Chart;
-
+export function ensureChart(id: string, cfg: ChartConfiguration) {
+  const el = document.getElementById(id) as HTMLCanvasElement | null;
+  if (!el) return;
+  const ctx = el.getContext("2d");
+  if (!ctx) return;
   const existing = registry.get(id);
-  if (!existing) {
-    const chart = new ChartCtor(canvas.getContext("2d"), config);
-    registry.set(id, chart);
-    return chart;
-  }
-
-  // @ts-ignore
-  if (existing.config.type !== config.type) {
-    existing.destroy();
-    const chart = new ChartCtor(canvas.getContext("2d"), config);
-    registry.set(id, chart);
-    return chart;
-  }
-
-  existing.data = config.data!;
-  existing.options = config.options;
-  existing.update("none");
-  return existing;
+  if (existing) existing.destroy();
+  const c = new Chart(ctx, cfg);
+  registry.set(id, c);
 }
 
-export function destroyChart(id: string) {
-  const c = registry.get(id);
-  if (c) {
-    c.destroy();
-    registry.delete(id);
-  }
-}
-
-export function destroyAllCharts() {
-  Array.from(registry.keys()).forEach(destroyChart);
-}
-
-export function lineConfig(labels: string[], seriesLabel: string, values: number[]): ChartConfiguration {
+export function lineConfig(labels: string[], label: string, values: number[]): ChartConfiguration<"line"> {
   return {
     type: "line",
-    data: {
-      labels,
-      datasets: [{ label: seriesLabel, data: values, tension: 0.2, pointRadius: 2 }]
-    },
+    data: { labels, datasets: [{ label, data: values, pointRadius: 0, tension: 0.25 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { beginAtZero: true } } }
+  };
+}
+
+export function barConfig(labels: string[], label: string, values: number[]): ChartConfiguration<"bar"> {
+  return {
+    type: "bar",
+    data: { labels, datasets: [{ label, data: values }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { beginAtZero: true } } }
+  };
+}
+
+export function doughnutConfig(labels: string[], values: number[]): ChartConfiguration<"doughnut"> {
+  return {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: values }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: true } } }
+  };
+}
+
+export function scatterConfig(
+  points: { x: number; y: number }[],
+  pointLabel: string,
+  xTitle = "X",
+  yTitle = "Y"
+): ChartConfiguration<"scatter"> {
+  return {
+    type: "scatter",
+    data: { datasets: [{ label: pointLabel, data: points, pointRadius: 3 }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
+      responsive: true, maintainAspectRatio: false, animation: false,
       plugins: { legend: { display: true } },
-      scales: {
-        x: { ticks: { autoSkip: true, maxTicksLimit: 12 } },
-        y: { beginAtZero: true }
-      }
+      scales: { x: { title: { display: true, text: xTitle } }, y: { title: { display: true, text: yTitle }, beginAtZero: true } }
     }
   };
 }
 
-export function barConfig(labels: string[], seriesLabel: string, values: number[]): ChartConfiguration {
+export function scatterWithTrendConfig(
+  points: { x: number; y: number }[],
+  trendPoints: { x: number; y: number }[],
+  pointLabel: string,
+  trendLabel: string,
+  xTitle: string,
+  yTitle: string
+): ChartConfiguration<"scatter"> {
   return {
-    type: "bar",
+    type: "scatter",
     data: {
-      labels,
-      datasets: [{ label: seriesLabel, data: values }]
+      datasets: [
+        { label: pointLabel, data: points, pointRadius: 2 },
+        { label: trendLabel, data: trendPoints, pointRadius: 0, showLine: true, borderWidth: 2 }
+      ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
+      responsive: true, maintainAspectRatio: false, animation: false,
       plugins: { legend: { display: true } },
-      scales: {
-        x: { ticks: { autoSkip: true } },
-        y: { beginAtZero: true }
-      }
+      scales: { x: { title: { display: true, text: xTitle } }, y: { title: { display: true, text: yTitle }, beginAtZero: true } }
     }
   };
 }
