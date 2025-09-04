@@ -39,14 +39,34 @@ export default function BoardPage() {
   const [channel, setChannel] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [sku, setSku] = useState<string>("");
+  const [appliedFilters, setAppliedFilters] = useState({
+    tenantId: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00",
+    from: "2025-01-01",
+    to: "2025-12-31",
+    region: "",
+    channel: "",
+    category: "",
+    sku: ""
+  });
 
-  const dTenant = useDebouncedValue(tenantId, 200);
-  const dFrom = useDebouncedValue(from, 200);
-  const dTo = useDebouncedValue(to, 200);
-
-  const swrKey = dTenant && applyTick > 0 ? ["board-charts", dTenant, dFrom, dTo, region, channel, category, sku] as const : null;
-  const insightsKey = dTenant && applyTick > 0 ? ["board-insights", dTenant, dFrom, dTo, region, channel, category, sku] as const : null;
+  const swrKey = applyTick > 0 ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const insightsKey = applyTick > 0 ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
   
+  const handleApplyFilters = () => {
+    setErrMsg("");
+    setIngestMsg("");
+    setAppliedFilters({
+      tenantId,
+      from,
+      to,
+      region,
+      channel,
+      category,
+      sku
+    });
+    setApplyTick(prev => prev + 1);
+  };
+
   const { data: insights } = useSWR(insightsKey, async ([, t, f, to_, rg, ch, ca, s]) => {
     const qs = new URLSearchParams({ tenant_id: t, from: f, to: to_, lead_time: "7", z: "1.65" });
     if (rg) qs.set("region", rg);
@@ -125,14 +145,14 @@ export default function BoardPage() {
 
     return {
       ...data,
-      salesDaily: filterData(data.salesDaily, 'region', region) || data.salesDaily,
-      roasByChannel: filterData(data.roasByChannel, 'channel', channel) || data.roasByChannel,
-      topCategories: filterData(data.topCategories, 'category', category) || data.topCategories,
-      topRegions: filterData(data.topRegions, 'region', region) || data.topRegions,
-      topSkus: filterData(data.topSkus, 'sku', sku) || data.topSkus,
-      cumulativeRevenue: filterData(data.cumulativeRevenue, 'region', region) || data.cumulativeRevenue,
-      tempVsSales: filterData(data.tempVsSales, 'region', region) || data.tempVsSales,
-      spendRevDaily: filterData(data.spendRevDaily, 'region', region) || data.spendRevDaily,
+      salesDaily: filterData(data.salesDaily, 'region', appliedFilters.region) || data.salesDaily,
+      roasByChannel: filterData(data.roasByChannel, 'channel', appliedFilters.channel) || data.roasByChannel,
+      topCategories: filterData(data.topCategories, 'category', appliedFilters.category) || data.topCategories,
+      topRegions: filterData(data.topRegions, 'region', appliedFilters.region) || data.topRegions,
+      topSkus: filterData(data.topSkus, 'sku', appliedFilters.sku) || data.topSkus,
+      cumulativeRevenue: filterData(data.cumulativeRevenue, 'region', appliedFilters.region) || data.cumulativeRevenue,
+      tempVsSales: filterData(data.tempVsSales, 'region', appliedFilters.region) || data.tempVsSales,
+      spendRevDaily: filterData(data.spendRevDaily, 'region', appliedFilters.region) || data.spendRevDaily,
     };
   };
 
@@ -418,11 +438,6 @@ export default function BoardPage() {
     }
   }
 
-  function applyFilters() {
-    setErrMsg("");
-    setIngestMsg("");
-    setApplyTick((n) => n + 1);
-  }
 
   function handleTenantSelect(selectedId: string) {
     if (selectedId === "custom") {
@@ -598,7 +613,7 @@ export default function BoardPage() {
                 </select>
               </div>
               <button 
-                onClick={applyFilters} 
+                onClick={handleApplyFilters} 
                 className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm"
               >
                 📊 조회
@@ -656,66 +671,15 @@ export default function BoardPage() {
           {/* 상태 메시지 */}
           <div className="space-y-2">
             {ingestMsg && <div className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">✅ {ingestMsg}</div>}
-            {isLoading && dTenant && <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">⏳ 로드중…</div>}
+            {isLoading && appliedFilters.tenantId && <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">⏳ 로드중…</div>}
           </div>
         </div>
 
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 p-4 overflow-y-auto">
 
-        {/* 네비게이션 카드 */}
+        {/* Insight 카드 - 최상단으로 이동 */}
         <div className="grid md:grid-cols-3 gap-3 mb-4">
-          <a 
-            href="/board/sales" 
-            className="rounded-2xl border bg-white shadow-sm p-4 hover:shadow-lg transition-shadow cursor-pointer group"
-          >
-            <div className="flex items-center mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <span className="text-xl">📊</span>
-              </div>
-              <div className="ml-3">
-                <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">판매 분석</div>
-                <div className="text-xs text-gray-600">매출, 판매량, 채널별 성과</div>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">일자별 매출 추이, ROAS, 카테고리별 분석 등</div>
-          </a>
-
-          <a 
-            href="/board/abc" 
-            className="rounded-2xl border bg-white shadow-sm p-4 hover:shadow-lg transition-shadow cursor-pointer group"
-          >
-            <div className="flex items-center mb-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                <span className="text-xl">🔍</span>
-              </div>
-              <div className="ml-3">
-                <div className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">ABC 분석</div>
-                <div className="text-xs text-gray-600">SKU별 매출 비중 분석</div>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">파레토 차트, A/B/C 그룹 분류, 상세 SKU 목록</div>
-          </a>
-
-          <a 
-            href="/board/inventory" 
-            className="rounded-2xl border bg-white shadow-sm p-4 hover:shadow-lg transition-shadow cursor-pointer group"
-          >
-            <div className="flex items-center mb-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                <span className="text-xl">📦</span>
-              </div>
-              <div className="ml-3">
-                <div className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">재고 분석</div>
-                <div className="text-xs text-gray-600">재고 수준, 리오더 포인트</div>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">재고 상태, 단종 후보, 리오더 제안</div>
-          </a>
-        </div>
-
-        {/* Insight 카드 */}
-        <div className="grid md:grid-cols-3 gap-3 mb-3">
           {tipCards.map((t,i)=>(
             <div key={i} className="rounded-2xl border bg-white shadow-sm p-4">
               <div className="text-xs text-gray-500 mb-1">Insight</div>
@@ -723,53 +687,190 @@ export default function BoardPage() {
               <div className="text-sm text-gray-700">{t.body}</div>
               </div>
           ))}
-                  </div>
+        </div>
+
+        {/* 산점도 2개 */}
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-2xl border bg-white shadow-sm p-4">
+            <h3 className="text-sm mb-2">평균기온(°C) vs 판매량/매출</h3>
+            <div className="h-64 mb-3">
+              <canvas id="chart-temp-vs-sales" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.tempVsSales?.length > 0 ? (
+                (() => {
+                  const tempData = arr(data.tempVsSales);
+                  const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.tavg || 0), 0) / tempData.length;
+                  const avgQty = tempData.reduce((sum: number, item: any) => sum + Number(item.qty || 0), 0) / tempData.length;
+                  const avgRev = tempData.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0) / tempData.length;
+                  const tempReg = insights?.tempReg;
+                  const correlation = tempReg?.r2 ? Number(tempReg.r2).toFixed(3) : "N/A";
+                  return `🌡️ 평균기온: ${avgTemp.toFixed(1)}°C | 평균판매량: ${avgQty.toFixed(0)}개 | 평균매출: ${avgRev.toLocaleString()}원 | 온도-판매 상관관계: R²=${correlation}`;
+                })()
+              ) : "데이터 없음"}
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-white shadow-sm p-4">
+            <h3 className="text-sm mb-2">광고비 vs 매출 (추세선)</h3>
+            <div className="h-64 mb-3">
+              <canvas id="chart-spend-vs-rev" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.spendRevDaily?.length > 0 ? (
+                (() => {
+                  const spendData = arr(data.spendRevDaily);
+                  const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
+                  const totalRev = spendData.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                  const avgRoas = totalSpend > 0 ? (totalRev / totalSpend) : 0;
+                  const spendReg = insights?.spendReg;
+                  const efficiency = spendReg?.slope ? Number(spendReg.slope).toFixed(2) : "N/A";
+                  return `💰 총 광고비: ${totalSpend.toLocaleString()}원 | 총 매출: ${totalRev.toLocaleString()}원 | 평균 ROAS: ${avgRoas.toFixed(2)} | 광고 효율성: ${efficiency}원/원`;
+                })()
+              ) : "데이터 없음"}
+            </div>
+          </div>
+        </div>
 
         {/* 기존 차트 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">일자별 매출</h3>
-            <canvas id="chart-sales-by-date" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-sales-by-date" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.salesDaily?.length > 0 ? (
+                (() => {
+                  const sales = arr(data.salesDaily);
+                  const totalRevenue = sales.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                  const avgDaily = totalRevenue / sales.length;
+                  const maxDay = sales.reduce((max: any, item: any) => 
+                    Number(item.revenue || 0) > Number(max.revenue || 0) ? item : max, sales[0]);
+                  const minDay = sales.reduce((min: any, item: any) => 
+                    Number(item.revenue || 0) < Number(min.revenue || 0) ? item : min, sales[0]);
+                  const variance = ((Number(maxDay?.revenue || 0) - Number(minDay?.revenue || 0)) / Number(minDay?.revenue || 1)) * 100;
+                  return `📈 일평균 매출 ${avgDaily.toLocaleString()}원 | 최고일 대비 최저일 ${variance.toFixed(0)}% 차이 | ${maxDay?.sale_date}에 최고 매출 달성`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">채널별 ROAS</h3>
-            <canvas id="chart-roas-by-channel" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-roas-by-channel" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.roasByChannel?.length > 0 ? (
+                (() => {
+                  const channels = arr(data.roasByChannel);
+                  const bestChannel = channels.reduce((best: any, item: any) => 
+                    Number(item.avg_roas || 0) > Number(best.avg_roas || 0) ? item : best, channels[0]);
+                  const worstChannel = channels.reduce((worst: any, item: any) => 
+                    Number(item.avg_roas || 0) < Number(worst.avg_roas || 0) ? item : worst, channels[0]);
+                  const avgRoas = channels.reduce((sum: number, item: any) => sum + Number(item.avg_roas || 0), 0) / channels.length;
+                  const bestRoas = Number(bestChannel?.avg_roas || 0);
+                  const worstRoas = Number(worstChannel?.avg_roas || 0);
+                  const efficiency = bestRoas > 0 ? ((bestRoas - worstRoas) / worstRoas * 100) : 0;
+                  return `🎯 ${bestChannel?.channel}이 ${worstChannel?.channel} 대비 ${efficiency.toFixed(0)}% 더 효율적 | 평균 ROAS ${avgRoas.toFixed(2)} | ${bestChannel?.channel}에 집중 투자 권장`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">누적 매출</h3>
-            <canvas id="chart-cum-revenue" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-cum-revenue" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.cumulativeRevenue?.length > 0 ? (
+                (() => {
+                  const cumData = arr(data.cumulativeRevenue);
+                  const totalCum = cumData[cumData.length - 1]?.cum_revenue || 0;
+                  const growthRate = cumData.length > 1 ? 
+                    ((Number(cumData[cumData.length - 1]?.cum_revenue || 0) - Number(cumData[0]?.cum_revenue || 0)) / Number(cumData[0]?.cum_revenue || 0) * 100) : 0;
+                  const trend = growthRate > 0 ? "상승" : growthRate < 0 ? "하락" : "보합";
+                  return `📊 누적 ${Number(totalCum).toLocaleString()}원 달성 | ${trend} 추세 (${growthRate.toFixed(1)}%) | ${growthRate > 0 ? "지속적 성장 중" : "성과 개선 필요"}`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">TOP 카테고리</h3>
-            <canvas id="chart-top-categories" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-top-categories" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.topCategories?.length > 0 ? (
+                (() => {
+                  const categories = arr(data.topCategories);
+                  const total = categories.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                  const top1 = categories[0];
+                  const top1Share = total > 0 ? (Number(top1?.revenue || 0) / total * 100) : 0;
+                  const concentration = top1Share > 50 ? "높음" : top1Share > 30 ? "보통" : "낮음";
+                  return `🏆 ${top1?.category}이 ${top1Share.toFixed(1)}%로 독주 | 집중도 ${concentration} | ${top1Share > 50 ? "다양화 필요" : "균형적 포트폴리오"}`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">TOP 지역</h3>
-            <canvas id="chart-top-regions" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-top-regions" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.topRegions?.length > 0 ? (
+                (() => {
+                  const regions = arr(data.topRegions);
+                  const total = regions.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                  const top1 = regions[0];
+                  const top1Share = total > 0 ? (Number(top1?.revenue || 0) / total * 100) : 0;
+                  const gap = regions.length > 1 ? ((Number(top1?.revenue || 0) - Number(regions[1]?.revenue || 0)) / Number(regions[1]?.revenue || 1) * 100) : 0;
+                  return `🌍 ${top1?.region}이 ${top1Share.toFixed(1)}%로 선도 | 2위 대비 ${gap.toFixed(0)}% 앞서감 | ${gap > 50 ? "지역별 차별화 전략 필요" : "균형적 지역 성장"}`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">TOP SKU</h3>
-            <canvas id="chart-top-skus" />
+            <div className="h-64 mb-3">
+              <canvas id="chart-top-skus" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {data?.topSkus?.length > 0 ? (
+                (() => {
+                  const skus = arr(data.topSkus);
+                  const total = skus.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                  const top1 = skus[0];
+                  const top1Share = total > 0 ? (Number(top1?.revenue || 0) / total * 100) : 0;
+                  const diversity = skus.length > 5 ? "다양함" : "집중됨";
+                  return `🛍️ ${top1?.sku}이 ${top1Share.toFixed(1)}%로 주력 | SKU 다양성 ${diversity} | ${top1Share > 40 ? "신제품 개발 필요" : "균형적 제품 포트폴리오"}`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
         </div>
 
         {/* ABC 분석 도넛 차트 */}
         <div className="mb-4">
-          <div className="h-72 rounded-2xl p-4 border bg-white shadow-sm">
+          <div className="rounded-2xl p-4 border bg-white shadow-sm">
             <h3 className="text-sm mb-3 text-gray-700">ABC 분석 (매출 비중)</h3>
-            <canvas id="chart-abc" />
-          </div>
-        </div>
-
-        {/* 산점도 2개 - 하단으로 이동 */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="h-72 rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">평균기온(°C) vs 판매량/매출</h3>
-            <canvas id="chart-temp-vs-sales" />
-          </div>
-          <div className="h-72 rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">광고비 vs 매출 (추세선)</h3>
-            <canvas id="chart-spend-vs-rev" />
+            <div className="h-48 mb-3 flex items-center justify-center">
+              <canvas id="chart-abc" className="max-w-full max-h-full" />
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              {insights?.abc?.length > 0 ? (
+                (() => {
+                  const abc = insights.abc;
+                  const aGroup = abc.filter((x: any) => x.grade === 'A');
+                  const bGroup = abc.filter((x: any) => x.grade === 'B');
+                  const cGroup = abc.filter((x: any) => x.grade === 'C');
+                  const aRevenue = aGroup.reduce((sum: number, x: any) => sum + Number(x.revenue || 0), 0);
+                  const totalRevenue = abc.reduce((sum: number, x: any) => sum + Number(x.revenue || 0), 0);
+                  const aShare = totalRevenue > 0 ? (aRevenue / totalRevenue * 100) : 0;
+                  return `📊 A그룹: ${aGroup.length}개 SKU (${aShare.toFixed(1)}%) | B그룹: ${bGroup.length}개 SKU | C그룹: ${cGroup.length}개 SKU | 총 ${abc.length}개 SKU | A그룹 집중도: ${aShare.toFixed(1)}%`;
+                })()
+              ) : "데이터 없음"}
+            </div>
           </div>
         </div>
 
