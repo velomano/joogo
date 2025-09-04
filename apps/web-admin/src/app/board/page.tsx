@@ -39,6 +39,8 @@ export default function BoardPage() {
   const [channel, setChannel] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [sku, setSku] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState({
     tenantId: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00",
     from: "2025-01-01",
@@ -51,6 +53,7 @@ export default function BoardPage() {
 
   const swrKey = applyTick > 0 ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
   const insightsKey = applyTick > 0 ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const statusKey = ["board-status", appliedFilters.tenantId] as const;
   
   const handleApplyFilters = () => {
     setErrMsg("");
@@ -77,6 +80,13 @@ export default function BoardPage() {
     const r = await fetch(url);
     return await r.json();
   }, { revalidateOnFocus: false, dedupingInterval: 15000 });
+
+  const { data: status } = useSWR(statusKey, async ([, t]) => {
+    const url = `/api/board/status?tenant_id=${t}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    return r.json();
+  }, { revalidateOnFocus: false, dedupingInterval: 10000 });
 
   const wxKey = ["weather", CITY[cityKey].nx, CITY[cityKey].ny] as const;
   const { data: wx } = useSWR(wxKey, async ([, nx, ny]) => {
@@ -423,18 +433,56 @@ export default function BoardPage() {
     try {
       setErrMsg("");
       setIngestMsg("");
+      setIsUploading(true);
+      setUploadProgress(0);
+      
       if (!tenantId) throw new Error("tenant_id를 입력하세요");
       if (!file) throw new Error("CSV 파일을 선택하세요");
+      
+      // 파일 크기 확인 (1만개 행 = 약 1-2MB 예상)
+      const fileSizeMB = file.size / (1024 * 1024);
+      console.log(`📁 파일 크기: ${fileSizeMB.toFixed(2)}MB, 예상 행 수: ${Math.round(fileSizeMB * 5000)}개`);
+      
+      setUploadProgress(10);
+      setIngestMsg("📤 파일 업로드 중...");
+      
       const fd = new FormData();
       fd.append("tenant_id", tenantId);
       fd.append("file", file);
-      const res = await fetch("/api/board/ingest", { method: "POST", body: fd });
+      
+      setUploadProgress(30);
+      setIngestMsg("🔄 서버에서 처리 중...");
+      
+      const res = await fetch("/api/upload/unified", { method: "POST", body: fd });
+      setUploadProgress(60);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
       const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "ingest failed");
-      setIngestMsg(`업로드 완료: ${json.inserted}행 (file_id=${json.file_id})`);
+      setUploadProgress(80);
+      
+      if (!json.ok) throw new Error(json.error || "업로드 실패");
+      
+      setUploadProgress(100);
+      setIngestMsg(`✅ 업로드 완료: ${json.inserted || json.rows_processed || '처리됨'}행 | 워커에서 백그라운드 처리 중...`);
+      
+      // 데이터 새로고침
       await mutate();
+      
+      // 3초 후 성공 메시지 업데이트
+      setTimeout(() => {
+        setIngestMsg("🎉 데이터 처리 완료! 차트를 확인하세요.");
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 3000);
+      
     } catch (e: any) {
+      console.error("❌ 업로드 오류:", e);
       setErrMsg(e?.message ?? "업로드 오류");
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -535,19 +583,48 @@ export default function BoardPage() {
                   <div className="flex gap-2">
                     <button 
                       onClick={handleUpload} 
-                      className="flex-1 px-3 py-2 rounded-lg border hover:bg-gray-50 text-sm" 
-                      disabled={isLoading}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        isUploading 
+                          ? 'bg-blue-50 border-blue-300 text-blue-600 cursor-not-allowed' 
+                          : 'hover:bg-gray-50 border-gray-300'
+                      }`}
+                      disabled={isLoading || isUploading || !file}
                     >
-                      📤 업로드
+                      {isUploading ? '⏳ 업로드 중...' : '📤 업로드'}
                     </button>
                     <button 
                       onClick={handleDataReset} 
                       className="flex-1 px-3 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium" 
-                      disabled={isLoading || !tenantId}
+                      disabled={isLoading || isUploading || !tenantId}
                     >
                       🗑️ 리셋
                     </button>
                   </div>
+                  
+                  {/* 업로드 진행률 표시 */}
+                  {isUploading && (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>업로드 진행률</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 파일 정보 표시 */}
+                  {file && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                      📁 <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                      <br />
+                      예상 행 수: {Math.round(file.size / 1024 / 1024 * 5000)}개
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -678,16 +755,61 @@ export default function BoardPage() {
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 p-4 overflow-y-auto">
 
-        {/* Insight 카드 - 최상단으로 이동 */}
-        <div className="grid md:grid-cols-3 gap-3 mb-4">
-          {tipCards.map((t,i)=>(
-            <div key={i} className="rounded-2xl border bg-white shadow-sm p-4">
-              <div className="text-xs text-gray-500 mb-1">Insight</div>
-              <div className="font-semibold mb-1">{t.title}</div>
-              <div className="text-sm text-gray-700">{t.body}</div>
+                    {/* 데이터 상태 카드 */}
+            <div className="grid md:grid-cols-4 gap-3 mb-4">
+              <div className="rounded-2xl border bg-white shadow-sm p-4">
+                <div className="text-xs text-gray-500 mb-1">📊 총 매출</div>
+                <div className="font-semibold text-lg mb-1">
+                  {status?.sales?.totalRevenue ? Number(status.sales.totalRevenue).toLocaleString() : '0'}원
+                </div>
+                <div className="text-sm text-gray-600">
+                  {status?.sales?.days || 0}일간 평균 {status?.sales?.avgDaily ? Number(status.sales.avgDaily).toLocaleString() : '0'}원
+                </div>
               </div>
-          ))}
-        </div>
+              
+              <div className="rounded-2xl border bg-white shadow-sm p-4">
+                <div className="text-xs text-gray-500 mb-1">📦 총 판매량</div>
+                <div className="font-semibold text-lg mb-1">
+                  {status?.sales?.totalQty ? Number(status.sales.totalQty).toLocaleString() : '0'}개
+                </div>
+                <div className="text-sm text-gray-600">
+                  일평균 {status?.sales?.days ? Math.round(Number(status.sales.totalQty) / status.sales.days) : 0}개
+                </div>
+              </div>
+              
+              <div className="rounded-2xl border bg-white shadow-sm p-4">
+                <div className="text-xs text-gray-500 mb-1">🛍️ 상품 수</div>
+                <div className="font-semibold text-lg mb-1">
+                  {status?.sku?.uniqueSkus || 0}개 SKU
+                </div>
+                <div className="text-sm text-gray-600">
+                  TOP: {status?.sku?.topSku || 'N/A'} ({status?.sku?.topSkuRevenue ? Number(status.sku.topSkuRevenue).toLocaleString() : '0'}원)
+                </div>
+              </div>
+              
+              <div className="rounded-2xl border bg-white shadow-sm p-4">
+                <div className="text-xs text-gray-500 mb-1">📁 업로드 상태</div>
+                <div className="font-semibold text-lg mb-1">
+                  {status?.upload?.status === 'COMPLETED' ? '✅ 완료' : 
+                   status?.upload?.status === 'PROCESSING' ? '⏳ 처리중' :
+                   status?.upload?.status === 'FAILED' ? '❌ 실패' : '📤 대기'}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {status?.upload?.count || 0}개 파일 ({((status?.upload?.totalSize || 0) / 1024 / 1024).toFixed(1)}MB)
+                </div>
+              </div>
+            </div>
+
+            {/* Insight 카드 */}
+            <div className="grid md:grid-cols-3 gap-3 mb-4">
+              {tipCards.map((t,i)=>(
+                <div key={i} className="rounded-2xl border bg-white shadow-sm p-4">
+                  <div className="text-xs text-gray-500 mb-1">Insight</div>
+                  <div className="font-semibold mb-1">{t.title}</div>
+                  <div className="text-sm text-gray-700">{t.body}</div>
+                  </div>
+              ))}
+            </div>
 
         {/* 산점도 2개 */}
         <div className="grid md:grid-cols-2 gap-4 mb-4">

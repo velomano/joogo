@@ -16,6 +16,7 @@ export default function SalesAnalysisPage() {
   const [channel, setChannel] = useState('');
   const [category, setCategory] = useState('');
   const [sku, setSku] = useState('');
+  const [period, setPeriod] = useState('1year'); // 기간 선택
   const [appliedFilters, setAppliedFilters] = useState({
     region: '',
     channel: '',
@@ -23,14 +24,41 @@ export default function SalesAnalysisPage() {
     sku: ''
   });
 
+  // 기간별 날짜 계산
+  const getDateRange = (period: string) => {
+    const today = new Date();
+    const to = today.toISOString().split('T')[0];
+    
+    switch (period) {
+      case '1month':
+        const oneMonthAgo = new Date(today);
+        oneMonthAgo.setMonth(today.getMonth() - 1);
+        return { from: oneMonthAgo.toISOString().split('T')[0], to };
+      case '3months':
+        const threeMonthsAgo = new Date(today);
+        threeMonthsAgo.setMonth(today.getMonth() - 3);
+        return { from: threeMonthsAgo.toISOString().split('T')[0], to };
+      case '6months':
+        const sixMonthsAgo = new Date(today);
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+        return { from: sixMonthsAgo.toISOString().split('T')[0], to };
+      case '1year':
+      default:
+        return { from: '2025-01-01', to: '2025-12-31' };
+    }
+  };
+
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/board/charts?from=2025-01-01&to=2025-12-31&tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00');
+        const { from, to } = getDateRange(period);
+        const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
+        console.log('🔍 Debug - API Response:', json);
+        console.log('🔍 Debug - API salesDaily[0]:', json.salesDaily?.[0]);
         setData(json);
       } catch (err) {
         setErrMsg(`데이터 로드 실패: ${err}`);
@@ -39,7 +67,7 @@ export default function SalesAnalysisPage() {
       }
     };
     loadData();
-  }, []);
+  }, [period]);
 
   // 조회 버튼 핸들러
   const handleApplyFilters = () => {
@@ -80,15 +108,100 @@ export default function SalesAnalysisPage() {
 
   const filteredData = useMemo(() => applyClientFilters(data), [data, appliedFilters]);
 
+  // 기본 통계 정보 계산
+  const calculateStats = (data: any) => {
+    if (!data) return null;
+    
+    const salesDaily = data.salesDaily || [];
+    console.log('🔍 Debug - salesDaily data:', salesDaily);
+    console.log('🔍 Debug - first item:', salesDaily[0]);
+    console.log('🔍 Debug - first item keys:', Object.keys(salesDaily[0] || {}));
+    console.log('🔍 Debug - first item qty value:', salesDaily[0]?.qty);
+    
+    const totalRevenue = salesDaily.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+    const totalQuantity = salesDaily.reduce((sum: number, item: any) => sum + Number(item.qty || 0), 0);
+    
+    console.log('🔍 Debug - totalQuantity:', totalQuantity);
+    const totalOrders = salesDaily.reduce((sum: number, item: any) => sum + Number(item.orders || 0), 0);
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    // 고유 SKU 수
+    const uniqueSkus = new Set(salesDaily.map((item: any) => item.sku)).size;
+    
+    // 고유 지역 수
+    const uniqueRegions = new Set(salesDaily.map((item: any) => item.region)).size;
+    
+    // 고유 채널 수
+    const uniqueChannels = new Set(salesDaily.map((item: any) => item.channel)).size;
+    
+    return {
+      totalRevenue,
+      totalQuantity,
+      totalOrders,
+      avgOrderValue,
+      uniqueSkus,
+      uniqueRegions,
+      uniqueChannels
+    };
+  };
+
+  const stats = calculateStats(filteredData);
+
   // 차트 렌더링
   useEffect(() => {
     if (!filteredData) return;
 
-    // 1. 일자별 매출 추이
+    // 1. 일자별 매출 추이 - 기간에 따라 데이터 포인트 조정
     const salesData = filteredData.salesDaily || [];
-    const salesLabels = salesData.map((d: any) => d.sale_date);
-    const salesValues = salesData.map((d: any) => Number(d.revenue || 0));
-    const qtyValues = salesData.map((d: any) => Number(d.qty || 0));
+    let processedSalesData = salesData;
+    
+    // 기간에 따라 데이터 포인트 수 조정
+    if (period === '1year' && salesData.length > 30) {
+      // 1년 데이터는 주간 단위로 집계
+      const weeklyData = new Map();
+      salesData.forEach((item: any) => {
+        const date = new Date(item.sale_date);
+        const weekKey = `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
+        if (!weeklyData.has(weekKey)) {
+          weeklyData.set(weekKey, {
+            sale_date: weekKey,
+            revenue: 0,
+            qty: 0,
+            orders: 0
+          });
+        }
+        const weekData = weeklyData.get(weekKey);
+        weekData.revenue += Number(item.revenue || 0);
+        weekData.qty += Number(item.qty || 0);
+        weekData.orders += Number(item.orders || 0);
+      });
+      processedSalesData = Array.from(weeklyData.values()).sort((a, b) => a.sale_date.localeCompare(b.sale_date));
+    } else if (period === '6months' && salesData.length > 20) {
+      // 6개월 데이터는 3일 단위로 집계
+      const threeDayData = new Map();
+      salesData.forEach((item: any) => {
+        const date = new Date(item.sale_date);
+        const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const threeDayKey = `${date.getFullYear()}-${Math.floor(dayOfYear / 3)}`;
+        if (!threeDayData.has(threeDayKey)) {
+          threeDayData.set(threeDayKey, {
+            sale_date: threeDayKey,
+            revenue: 0,
+            qty: 0,
+            orders: 0
+          });
+        }
+        const threeDayItem = threeDayData.get(threeDayKey);
+        threeDayItem.revenue += Number(item.revenue || 0);
+        threeDayItem.qty += Number(item.qty || 0);
+        threeDayItem.orders += Number(item.orders || 0);
+      });
+      processedSalesData = Array.from(threeDayData.values()).sort((a, b) => a.sale_date.localeCompare(b.sale_date));
+    }
+    
+    const salesLabels = processedSalesData.map((d: any) => d.sale_date);
+    const salesValues = processedSalesData.map((d: any) => Number(d.revenue || 0));
+    const qtyValues = processedSalesData.map((d: any) => Number(d.qty || 0));
 
     ensureChart("chart-sales-trend", {
       type: 'line',
@@ -130,10 +243,18 @@ export default function SalesAnalysisPage() {
             position: 'right',
             title: { display: true, text: '판매량' },
             grid: { drawOnChartArea: false }
+          },
+          x: {
+            ticks: {
+              maxTicksLimit: period === '1year' ? 12 : period === '6months' ? 8 : 15
+            }
           }
         },
         plugins: {
-          title: { display: true, text: '일자별 매출 및 판매량 추이' }
+          title: { 
+            display: true, 
+            text: `일자별 매출 및 판매량 추이 (${period === '1month' ? '1개월' : period === '3months' ? '3개월' : period === '6months' ? '6개월' : '1년'})` 
+          }
         }
       }
     });
@@ -236,7 +357,7 @@ export default function SalesAnalysisPage() {
       }
     });
 
-  }, [filteredData]);
+  }, [filteredData, period]);
 
   if (loading) {
     return (
@@ -267,6 +388,92 @@ export default function SalesAnalysisPage() {
             >
               ← 뒤로가기
             </button>
+          </div>
+        </div>
+
+        {/* 기본 통계 정보 */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">총 매출</p>
+                  <p className="text-2xl font-bold text-gray-900">₩{stats.totalRevenue.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">총 판매량</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalQuantity.toLocaleString()}개</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">총 주문수</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalOrders.toLocaleString()}건</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">평균 주문가</p>
+                  <p className="text-2xl font-bold text-gray-900">₩{Math.round(stats.avgOrderValue).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 기간 선택 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <h3 className="text-lg font-semibold mb-4">분석 기간</h3>
+          <div className="flex gap-2">
+            {[
+              { value: '1month', label: '1개월' },
+              { value: '3months', label: '3개월' },
+              { value: '6months', label: '6개월' },
+              { value: '1year', label: '1년' }
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setPeriod(option.value)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  period === option.value
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 

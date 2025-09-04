@@ -46,27 +46,18 @@ const isMain = (() => {
   return argv1 === here;
 })();
 
-const DB_URL = process.env.SUPABASE_DB_URL;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!DB_URL) {
-  console.error('[ingest] SUPABASE_DB_URL is missing');
-  console.error('[ingest] Current working directory:', process.cwd());
-  console.error('[ingest] .env file path:', envPath);
-  console.error('[ingest] Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
-  process.exit(1);
-}
+// Supabase 서비스 역할 키를 사용한 데이터베이스 연결
+// 실제로는 Supabase 클라이언트를 통해 직접 처리하므로 DB 연결 불필요
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('[ingest] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing');
   process.exit(1);
 }
 
-const pool = new pg.Pool({
-  connectionString: DB_URL,
-  statement_timeout: 0
-});
+// PostgreSQL 풀 제거 - Supabase 클라이언트만 사용
 
 // Supabase 클라이언트 (Storage 접근용)
 import { createClient } from '@supabase/supabase-js';
@@ -88,31 +79,44 @@ const POLL_MS = parseInt(process.env.POLL_MS || '5000');
 console.log('[ingest] Configuration:', {
   bucket: BUCKET,
   pollMs: POLL_MS,
-  hasDbUrl: !!DB_URL,
   hasSupabaseUrl: !!SUPABASE_URL,
   hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY
 });
 
-// 테넌트 설정 함수
+// 테넌트 설정 함수 (Supabase RPC 사용)
 async function setTenant(tenant: string) {
-  const client = await pool.connect();
   try {
-    await client.query('SELECT set_config($1, $2, $3)', ['app.tenant_id', tenant, true]);
-    console.log(`[tenant] Set tenant_id to: ${tenant}`);
-  } finally {
-    client.release();
+    const { error } = await supabase.rpc('set_config', {
+      parameter: 'app.tenant_id',
+      value: tenant,
+      is_local: true
+    });
+    if (error) {
+      console.log(`[tenant] RPC set_config not available, continuing...`);
+    } else {
+      console.log(`[tenant] Set tenant_id to: ${tenant}`);
+    }
+  } catch (err) {
+    console.log(`[tenant] RPC set_config failed, continuing...`);
   }
 }
 
-// CSV 파싱 함수
-function parseCSV(content: string): any[] {
+// CSV 스트리밍 파싱 함수 (배치 처리)
+async function parseCSVStreaming(content: string, batchSize: number = 1000): Promise<any[][]> {
   try {
     const rows = parse(content, {
       columns: true,
       skip_empty_lines: true,
       trim: true
     });
-    return rows;
+    
+    // 배치로 나누기
+    const batches: any[][] = [];
+    for (let i = 0; i < rows.length; i += batchSize) {
+      batches.push(rows.slice(i, i + batchSize));
+    }
+    
+    return batches;
   } catch (error) {
     console.error('[parse] CSV parsing error:', error);
     throw error;
@@ -175,39 +179,54 @@ async function loop() {
           
           // 파일 내용 읽기
           const fileContent = await fileData.text();
-          const rows = parseCSV(fileContent);
+          const batches = await parseCSVStreaming(fileContent, 1000);
           
-          console.log(`Parsed ${rows.length} rows from ${upload.filename}`);
+          console.log(`Parsed ${batches.flat().length} rows from ${upload.filename} in ${batches.length} batches`);
           
-          // analytics.stage_sales에 데이터 삽입
-          const client = await pool.connect();
-          try {
-            await client.query('BEGIN');
+          // analytics.stage_sales에 데이터 삽입 (배치별로)
+          let totalInserted = 0;
+          for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+            const batch = batches[batchIndex];
+            const stageData = batch.map((row, i) => ({
+              tenant_id: upload.tenant_id,
+              file_id: upload.file_id,
+              row_num: totalInserted + i + 1,
+              sku: row.sku || row.barcode || '',
+              sale_date: row.sale_date || row.date || '', // 텍스트로 저장
+              qty: row.qty || row.quantity || '0', // 텍스트로 저장
+              revenue: row.revenue || row.sales || '0', // 텍스트로 저장
+              channel: row.channel || '',
+              region: row.region || '',
+              category: row.category || '',
+              extras: JSON.stringify(row)
+            }));
             
-            for (let i = 0; i < rows.length; i++) {
-              const row = rows[i];
-              await client.query(`
-                INSERT INTO analytics.stage_sales (
-                  tenant_id, file_id, row_num, sku, extras
-                ) VALUES ($1, $2, $3, $4, $5)
-              `, [
-                upload.tenant_id,
-                upload.file_id,
-                i + 1,
-                row.sku || row.barcode,
-                JSON.stringify(row)
-              ]);
+            const { error: insertError } = await supabase
+              .from('stage_sales')
+              .insert(stageData);
+            
+            if (insertError) {
+              throw new Error(`Batch insert failed: ${insertError.message}`);
             }
             
-            await client.query('COMMIT');
-            console.log(`Successfully inserted ${rows.length} rows to stage_sales`);
-            
-          } catch (dbError) {
-            await client.query('ROLLBACK');
-            throw dbError;
-          } finally {
-            client.release();
+            totalInserted += stageData.length;
+            console.log(`Inserted batch ${batchIndex + 1}/${batches.length} (${stageData.length} rows)`);
           }
+          
+          console.log(`Successfully inserted ${totalInserted} rows to stage_sales`);
+          
+          // 머지 함수 호출
+          console.log(`Calling merge_stage_to_fact for file_id: ${upload.file_id}`);
+          const { error: mergeError } = await supabase.rpc('merge_stage_to_fact', {
+            p_tenant_id: upload.tenant_id,
+            p_file_id: upload.file_id
+          });
+          
+          if (mergeError) {
+            throw new Error(`Merge failed: ${mergeError.message}`);
+          }
+          
+          console.log(`Successfully merged data to fact_sales`);
           
           // 성공 시 상태 업데이트
           await supabase
@@ -245,7 +264,6 @@ async function loop() {
 async function main() {
   console.log('[ingest] Starting ingest worker...');
   console.log('[ingest] Environment check:', {
-    hasDbUrl: !!DB_URL,
     hasSupabaseUrl: !!SUPABASE_URL,
     hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY,
     bucket: BUCKET,
@@ -261,4 +279,4 @@ if (isMain) {
   main().catch(console.error);
 }
 
-export { main, loop, setTenant, parseCSV };
+export { main, loop, setTenant, parseCSVStreaming };
