@@ -16,6 +16,12 @@ export default function SalesAnalysisPage() {
   const [channel, setChannel] = useState('');
   const [category, setCategory] = useState('');
   const [sku, setSku] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    region: '',
+    channel: '',
+    category: '',
+    sku: ''
+  });
 
   // 데이터 로드
   useEffect(() => {
@@ -35,6 +41,16 @@ export default function SalesAnalysisPage() {
     loadData();
   }, []);
 
+  // 조회 버튼 핸들러
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      region,
+      channel,
+      category,
+      sku
+    });
+  };
+
   // 클라이언트 필터링
   const applyClientFilters = (rawData: any) => {
     if (!rawData) return rawData;
@@ -42,10 +58,10 @@ export default function SalesAnalysisPage() {
     const filter = (arr: any[]) => {
       if (!Array.isArray(arr)) return arr;
       return arr.filter((item: any) => {
-        if (region && item.region !== region) return false;
-        if (channel && item.channel !== channel) return false;
-        if (category && item.category !== category) return false;
-        if (sku && item.sku !== sku) return false;
+        if (appliedFilters.region && item.region !== appliedFilters.region) return false;
+        if (appliedFilters.channel && item.channel !== appliedFilters.channel) return false;
+        if (appliedFilters.category && item.category !== appliedFilters.category) return false;
+        if (appliedFilters.sku && item.sku !== appliedFilters.sku) return false;
         return true;
       });
     };
@@ -62,7 +78,7 @@ export default function SalesAnalysisPage() {
     };
   };
 
-  const filteredData = useMemo(() => applyClientFilters(data), [data, region, channel, category, sku]);
+  const filteredData = useMemo(() => applyClientFilters(data), [data, appliedFilters]);
 
   // 차트 렌더링
   useEffect(() => {
@@ -311,33 +327,41 @@ export default function SalesAnalysisPage() {
               </select>
             </div>
           </div>
+          <div className="mt-4">
+            <button 
+              onClick={handleApplyFilters}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+            >
+              📊 조회
+            </button>
+          </div>
         </div>
 
         {/* 차트 그리드 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 일자별 매출 추이 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-sales-trend" height="300"></canvas>
+            <canvas id="chart-sales-trend" height="200"></canvas>
           </div>
 
           {/* 채널별 ROAS */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-roas-by-channel" height="300"></canvas>
+            <canvas id="chart-roas-by-channel" height="200"></canvas>
           </div>
 
           {/* 카테고리별 매출 비중 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-category-revenue" height="300"></canvas>
+            <canvas id="chart-category-revenue" height="200"></canvas>
           </div>
 
           {/* 지역별 매출 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-region-revenue" height="300"></canvas>
+            <canvas id="chart-region-revenue" height="200"></canvas>
           </div>
 
           {/* TOP SKU 매출 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 lg:col-span-2">
-            <canvas id="chart-top-skus" height="300"></canvas>
+            <canvas id="chart-top-skus" height="200"></canvas>
           </div>
         </div>
       </div>

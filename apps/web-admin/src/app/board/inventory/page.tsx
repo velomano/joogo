@@ -15,6 +15,11 @@ export default function InventoryAnalysisPage() {
   const [region, setRegion] = useState('');
   const [channel, setChannel] = useState('');
   const [category, setCategory] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    region: '',
+    channel: '',
+    category: ''
+  });
 
   // 데이터 로드
   useEffect(() => {
@@ -34,29 +39,38 @@ export default function InventoryAnalysisPage() {
     loadData();
   }, []);
 
+  // 조회 버튼 핸들러
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      region,
+      channel,
+      category
+    });
+  };
+
   // 재고 관련 데이터 필터링
   const filteredInventory = useMemo(() => {
     if (!insights?.reorder) return [];
     
     return insights.reorder.filter((item: any) => {
-      if (region && item.region !== region) return false;
-      if (channel && item.channel !== channel) return false;
-      if (category && item.category !== category) return false;
+      if (appliedFilters.region && item.region !== appliedFilters.region) return false;
+      if (appliedFilters.channel && item.channel !== appliedFilters.channel) return false;
+      if (appliedFilters.category && item.category !== appliedFilters.category) return false;
       return true;
     });
-  }, [insights, region, channel, category]);
+  }, [insights, appliedFilters]);
 
   // EOL 후보 데이터 필터링
   const filteredEOL = useMemo(() => {
     if (!insights?.eol) return [];
     
     return insights.eol.filter((item: any) => {
-      if (region && item.region !== region) return false;
-      if (channel && item.channel !== channel) return false;
-      if (category && item.category !== category) return false;
+      if (appliedFilters.region && item.region !== appliedFilters.region) return false;
+      if (appliedFilters.channel && item.channel !== appliedFilters.channel) return false;
+      if (appliedFilters.category && item.category !== appliedFilters.category) return false;
       return true;
     });
-  }, [insights, region, channel, category]);
+  }, [insights, appliedFilters]);
 
   // 재고 상태별 통계
   const inventoryStats = useMemo(() => {
@@ -309,6 +323,14 @@ export default function InventoryAnalysisPage() {
               </select>
             </div>
           </div>
+          <div className="mt-4">
+            <button 
+              onClick={handleApplyFilters}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+            >
+              📊 조회
+            </button>
+          </div>
         </div>
 
         {/* 재고 상태 카드 */}
@@ -370,22 +392,22 @@ export default function InventoryAnalysisPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 재고 상태별 SKU 수 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-inventory-status" height="300"></canvas>
+            <canvas id="chart-inventory-status" height="200"></canvas>
           </div>
 
           {/* 공급일수 분포 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-supply-days" height="300"></canvas>
+            <canvas id="chart-supply-days" height="200"></canvas>
           </div>
 
           {/* 리오더 포인트 vs 현재 재고 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-reorder-vs-stock" height="300"></canvas>
+            <canvas id="chart-reorder-vs-stock" height="200"></canvas>
           </div>
 
           {/* 일평균 판매량 vs 재고 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-daily-sales-vs-stock" height="300"></canvas>
+            <canvas id="chart-daily-sales-vs-stock" height="200"></canvas>
           </div>
         </div>
 

@@ -15,6 +15,11 @@ export default function ABCAnalysisPage() {
   const [region, setRegion] = useState('');
   const [channel, setChannel] = useState('');
   const [category, setCategory] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    region: '',
+    channel: '',
+    category: ''
+  });
 
   // 데이터 로드
   useEffect(() => {
@@ -34,17 +39,26 @@ export default function ABCAnalysisPage() {
     loadData();
   }, []);
 
+  // 조회 버튼 핸들러
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      region,
+      channel,
+      category
+    });
+  };
+
   // ABC 데이터 필터링
   const filteredABC = useMemo(() => {
     if (!insights?.abc) return [];
     
     return insights.abc.filter((item: any) => {
-      if (region && item.region !== region) return false;
-      if (channel && item.channel !== channel) return false;
-      if (category && item.category !== category) return false;
+      if (appliedFilters.region && item.region !== appliedFilters.region) return false;
+      if (appliedFilters.channel && item.channel !== appliedFilters.channel) return false;
+      if (appliedFilters.category && item.category !== appliedFilters.category) return false;
       return true;
     });
-  }, [insights, region, channel, category]);
+  }, [insights, appliedFilters]);
 
   // ABC 그룹별 통계
   const abcStats = useMemo(() => {
@@ -306,6 +320,14 @@ export default function ABCAnalysisPage() {
               </select>
             </div>
           </div>
+          <div className="mt-4">
+            <button 
+              onClick={handleApplyFilters}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+            >
+              📊 조회
+            </button>
+          </div>
         </div>
 
         {/* ABC 통계 카드 */}
@@ -354,17 +376,17 @@ export default function ABCAnalysisPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ABC 분석 도넛 차트 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-abc-doughnut" height="300"></canvas>
+            <canvas id="chart-abc-doughnut" height="200"></canvas>
           </div>
 
           {/* ABC 그룹별 SKU 수 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-abc-count" height="300"></canvas>
+            <canvas id="chart-abc-count" height="200"></canvas>
           </div>
 
           {/* 파레토 차트 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 lg:col-span-2">
-            <canvas id="chart-pareto" height="400"></canvas>
+            <canvas id="chart-pareto" height="250"></canvas>
           </div>
         </div>
 
