@@ -25,10 +25,39 @@ const CITY = {
   GWANGJU: { name: "광주", nx: "58", ny: "74" }
 } as const;
 
+// 기간별 날짜 계산 함수
+const getDateRange = (period: string) => {
+  const today = new Date();
+  const to = today.toISOString().split('T')[0];
+  
+  switch (period) {
+    case '1week':
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
+      return { from: oneWeekAgo.toISOString().split('T')[0], to };
+    case '1month':
+      const oneMonthAgo = new Date(today);
+      oneMonthAgo.setMonth(today.getMonth() - 1);
+      return { from: oneMonthAgo.toISOString().split('T')[0], to };
+    case '3months':
+      const threeMonthsAgo = new Date(today);
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
+      return { from: threeMonthsAgo.toISOString().split('T')[0], to };
+    case '6months':
+      const sixMonthsAgo = new Date(today);
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+      return { from: sixMonthsAgo.toISOString().split('T')[0], to };
+    case '1year':
+    default:
+      return { from: '2025-01-01', to: '2025-12-31' };
+  }
+};
+
 export default function BoardPage() {
   const [tenantId, setTenantId] = useState<string>("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
-  const [from, setFrom] = useState<string>("2025-01-01");
-  const [to, setTo] = useState<string>("2025-12-31");
+  const [from, setFrom] = useState<string>(getDateRange("1week").from);
+  const [to, setTo] = useState<string>(getDateRange("1week").to);
+  const [period, setPeriod] = useState<string>("1week"); // 기간 선택 상태 추가 (기본값: 1주일)
   const [errMsg, setErrMsg] = useState("");
   const [ingestMsg, setIngestMsg] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -43,13 +72,32 @@ export default function BoardPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState({
     tenantId: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00",
-    from: "2025-01-01",
-    to: "2025-12-31",
+    from: getDateRange("1week").from,
+    to: getDateRange("1week").to,
     region: "",
     channel: "",
     category: "",
     sku: ""
   });
+
+  // 기간 변경 시 날짜 업데이트 및 자동 적용
+  useEffect(() => {
+    const dateRange = getDateRange(period);
+    setFrom(dateRange.from);
+    setTo(dateRange.to);
+    
+    // 기간 변경 시 자동으로 필터 적용
+    setAppliedFilters({
+      tenantId,
+      from: dateRange.from,
+      to: dateRange.to,
+      region,
+      channel,
+      category,
+      sku
+    });
+    setApplyTick(prev => prev + 1);
+  }, [period, tenantId, region, channel, category, sku]);
 
   const swrKey = applyTick > 0 ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
   const insightsKey = applyTick > 0 ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
@@ -634,6 +682,33 @@ export default function BoardPage() {
           {/* 필터 섹션 */}
           <div className="mb-6">
             <h3 className="text-sm font-medium mb-3 text-gray-700">필터</h3>
+            
+            {/* 기간 선택 버튼 */}
+            <div className="mb-4">
+              <label className="text-xs text-gray-600 mb-2 block">분석 기간</label>
+              <div className="flex gap-1 flex-wrap">
+                {[
+                  { value: '1week', label: '1주일' },
+                  { value: '1month', label: '한달' },
+                  { value: '3months', label: '3개월' },
+                  { value: '6months', label: '6개월' },
+                  { value: '1year', label: '1년' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPeriod(option.value)}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      period === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-600">시작 날짜</label>
@@ -789,14 +864,14 @@ export default function BoardPage() {
               </div>
               
               <div className="rounded-2xl border bg-white shadow-sm p-4">
-                <div className="text-xs text-gray-500 mb-1">📁 업로드 상태</div>
+                <div className="text-xs text-gray-500 mb-1">📦 총 재고수량</div>
                 <div className="font-semibold text-lg mb-1">
-                  {status?.upload?.status === 'COMPLETED' ? '✅ 완료' : 
-                   status?.upload?.status === 'PROCESSING' ? '⏳ 처리중' :
-                   status?.upload?.status === 'FAILED' ? '❌ 실패' : '📤 대기'}
+                  {insights?.inventoryStats?.totalStockLevel ? 
+                    `${insights.inventoryStats.totalStockLevel.toLocaleString()}개` : 
+                    '0개'}
                 </div>
                 <div className="text-sm text-gray-600">
-                  {status?.upload?.count || 0}개 파일 ({((status?.upload?.totalSize || 0) / 1024 / 1024).toFixed(1)}MB)
+                  {insights?.inventoryStats?.validStockItems || 0}개 SKU
                 </div>
               </div>
             </div>
@@ -815,7 +890,13 @@ export default function BoardPage() {
         {/* 산점도 2개 */}
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">평균기온(°C) vs 판매량/매출</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">평균기온(°C) vs 판매량/매출</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">온도 영향도</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-temp-vs-sales" />
             </div>
@@ -832,9 +913,28 @@ export default function BoardPage() {
                 })()
               ) : "데이터 없음"}
             </div>
+            {/* 온도 영향도 인사이트 카드 */}
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <div className="flex items-start">
+                <div className="text-blue-600 mr-2">💡</div>
+                <div>
+                  <div className="text-sm font-medium text-blue-900 mb-1">온도가 판매에 미치는 영향</div>
+                  <div className="text-xs text-blue-700">
+                    R² 값이 0.7 이상이면 온도가 판매량에 강한 영향을 미칩니다. 
+                    계절별 재고 관리와 마케팅 전략 수립에 활용하세요.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">광고비 vs 매출 (추세선)</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">광고비 vs 매출 (추세선)</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">광고 효율성</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-spend-vs-rev" />
             </div>
@@ -851,13 +951,32 @@ export default function BoardPage() {
                 })()
               ) : "데이터 없음"}
             </div>
+            {/* 광고 효율성 인사이트 카드 */}
+            <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+              <div className="flex items-start">
+                <div className="text-green-600 mr-2">💰</div>
+                <div>
+                  <div className="text-sm font-medium text-green-900 mb-1">광고 투자 효율성 분석</div>
+                  <div className="text-xs text-green-700">
+                    ROAS가 3.0 이상이면 효율적인 광고입니다. 추세선의 기울기가 클수록 
+                    광고비 증가에 따른 매출 증가 효과가 큽니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* 기존 차트 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl p-4 border bg-white shadow-sm">
-            <h3 className="text-sm mb-3 text-gray-700">일자별 매출</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">일자별 매출</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">매출 추이</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-sales-by-date" />
             </div>
@@ -876,9 +995,27 @@ export default function BoardPage() {
                 })()
               ) : "데이터 없음"}
             </div>
+            {/* 일자별 매출 설명 */}
+            <div className="mt-3 p-3 bg-cyan-50 rounded-lg border-l-4 border-cyan-400">
+              <div className="flex items-start">
+                <div className="text-cyan-600 mr-2">📅</div>
+                <div>
+                  <div className="text-sm font-medium text-cyan-900 mb-1">일자별 매출 추이</div>
+                  <div className="text-xs text-cyan-700">
+                    시간에 따른 매출 변화를 확인하여 계절성, 주기성, 특별 이벤트의 영향을 파악할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="rounded-2xl p-4 border bg-white shadow-sm">
-            <h3 className="text-sm mb-3 text-gray-700">채널별 ROAS</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">채널별 ROAS</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">채널 효율성</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-roas-by-channel" />
             </div>
@@ -897,6 +1034,18 @@ export default function BoardPage() {
                   return `🎯 ${bestChannel?.channel}이 ${worstChannel?.channel} 대비 ${efficiency.toFixed(0)}% 더 효율적 | 평균 ROAS ${avgRoas.toFixed(2)} | ${bestChannel?.channel}에 집중 투자 권장`;
                 })()
               ) : "데이터 없음"}
+            </div>
+            {/* 채널별 ROAS 설명 */}
+            <div className="mt-3 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-400">
+              <div className="flex items-start">
+                <div className="text-emerald-600 mr-2">📊</div>
+                <div>
+                  <div className="text-sm font-medium text-emerald-900 mb-1">채널별 광고 효율성</div>
+                  <div className="text-xs text-emerald-700">
+                    각 채널의 광고 투자 대비 매출 효과를 비교하여 효율적인 채널을 식별할 수 있습니다.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="rounded-2xl p-4 border bg-white shadow-sm">

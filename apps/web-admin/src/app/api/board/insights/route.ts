@@ -34,75 +34,61 @@ export async function GET(req: NextRequest) {
     const get0 = (r: any) => Array.isArray(r?.data) ? (r.data[0] ?? null) : null;
     const asArr= (r: any) => Array.isArray(r?.data) ? r.data : [];
 
-    // 재고 통계 계산
+    // 재고 통계 계산 (RPC 함수에서 이미 계산된 값 사용)
     const reorderData = asArr(rop);
     let inventoryStats = {
       totalStockValue: 0,
+      totalStockLevel: 0,
       avgStockLevel: 0,
-      validStockItems: 0
+      validStockItems: 0,
+      urgent: 0,
+      review: 0,
+      stable: 0,
+      eol: 0
     };
 
     if (reorderData.length > 0) {
-      try {
-        const skus = reorderData.map(item => item.sku);
-        console.log('🔍 조회할 SKU 목록:', skus);
+      // RPC 함수에서 이미 계산된 값들 사용
+      let totalStockValue = 0;
+      let totalStockLevel = 0;
+      let validStockItems = 0;
+      let urgent = 0;
+      let review = 0;
+      let stable = 0;
+
+      reorderData.forEach(item => {
+        const stockOnHand = Number(item.stock_on_hand || 0);
+        const unitCost = Number(item.unit_cost || 0);
+        const reorderGapDays = Number(item.reorder_gap_days || 0);
         
-        const { data: inventoryData, error } = await sb
-          .schema('analytics')
-          .from('fact_sales')
-          .select('sku, original_data')
-          .eq('tenant_id', tenant)
-          .not('original_data', 'is', null)
-          .in('sku', skus);
+        // 재고 수량은 항상 누적 (0이어도)
+        totalStockLevel += stockOnHand;
         
-        console.log('🔍 재고 데이터 조회 결과:', { 
-          count: inventoryData?.length || 0, 
-          error: error?.message 
-        });
-        
-        if (!error && inventoryData) {
-          let totalStockValue = 0;
-          let totalStockLevel = 0;
-          let validStockItems = 0;
-          
-          inventoryData.forEach((item, index) => {
-            console.log(`🔍 재고 데이터 ${index + 1}:`, {
-              sku: item.sku,
-              original_data: item.original_data
-            });
-            
-            const originalData = item.original_data?.original_data || item.original_data;
-            const stockOnHand = parseFloat(originalData?.stock_on_hand || '0');
-            const unitCost = parseFloat(originalData?.unit_cost || '0');
-            
-            console.log(`🔍 ${item.sku} 재고 정보:`, {
-              stockOnHand,
-              unitCost,
-              originalData: originalData
-            });
-            
-            if (stockOnHand > 0 && unitCost > 0) {
-              totalStockValue += stockOnHand * unitCost;
-              totalStockLevel += stockOnHand;
-              validStockItems++;
-            }
-          });
-          
-          console.log('🔍 최종 재고 통계:', {
-            totalStockValue,
-            avgStockLevel: validStockItems > 0 ? totalStockLevel / validStockItems : 0,
-            validStockItems
-          });
-          
-          inventoryStats = {
-            totalStockValue,
-            avgStockLevel: validStockItems > 0 ? totalStockLevel / validStockItems : 0,
-            validStockItems
-          };
+        if (stockOnHand > 0 && unitCost > 0) {
+          totalStockValue += stockOnHand * unitCost;
+          validStockItems++;
         }
-      } catch (error) {
-        console.error('❌ 재고 통계 계산 오류:', error);
-      }
+
+        // 재고 상태 분류
+        if (reorderGapDays <= 3) {
+          urgent++;
+        } else if (reorderGapDays <= 7) {
+          review++;
+        } else {
+          stable++;
+        }
+      });
+
+      inventoryStats = {
+        totalStockValue: Math.round(totalStockValue),
+        totalStockLevel: Math.round(totalStockLevel),
+        avgStockLevel: validStockItems > 0 ? Math.round(totalStockLevel / validStockItems) : 0,
+        validStockItems,
+        urgent,
+        review,
+        stable,
+        eol: asArr(eol).length
+      };
     }
 
     const temp = get0(tempReg);
@@ -119,8 +105,7 @@ export async function GET(req: NextRequest) {
       inventoryStats,         // totalStockValue, avgStockLevel, validStockItems
     };
 
-    console.log('🔍 board_reorder_points RPC 결과:', asArr(rop));
-    console.log('🔍 RPC 응답 원본:', rop);
+    console.log('🔍 재고 통계 계산 결과:', inventoryStats);
 
     return NextResponse.json(payload);
   } catch (e: any) {

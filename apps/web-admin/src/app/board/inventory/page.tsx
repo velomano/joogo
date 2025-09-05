@@ -75,25 +75,38 @@ export default function InventoryAnalysisPage() {
     });
   }, [insights, appliedFilters]);
 
-  // 재고 상태별 통계
+  // 재고 상태별 통계 (API에서 계산된 값 우선 사용, 없으면 클라이언트에서 계산)
   const inventoryStats = useMemo(() => {
+    // API에서 이미 계산된 값이 있으면 사용
+    if (insights?.inventoryStats) {
+      return {
+        urgent: insights.inventoryStats.urgent || 0,
+        review: insights.inventoryStats.review || 0,
+        stable: insights.inventoryStats.stable || 0,
+        eol: insights.inventoryStats.eol || 0,
+        total: filteredInventory.length
+      };
+    }
+
+    // API에서 계산된 값이 없으면 클라이언트에서 계산
     const urgent = filteredInventory.filter((item: any) => 
-      item.reorder_gap_days !== null && item.reorder_gap_days < 3
+      item.reorder_gap_days !== null && item.reorder_gap_days <= 3
     );
     const review = filteredInventory.filter((item: any) => 
-      item.reorder_gap_days !== null && item.reorder_gap_days >= 3 && item.reorder_gap_days < 7
+      item.reorder_gap_days !== null && item.reorder_gap_days > 3 && item.reorder_gap_days <= 7
     );
     const stable = filteredInventory.filter((item: any) => 
-      item.reorder_gap_days !== null && item.reorder_gap_days >= 7
+      item.reorder_gap_days !== null && item.reorder_gap_days > 7
     );
 
     return {
       urgent: urgent.length,
       review: review.length,
       stable: stable.length,
+      eol: filteredEOL.length,
       total: filteredInventory.length
     };
-  }, [filteredInventory]);
+  }, [insights?.inventoryStats, filteredInventory, filteredEOL]);
 
   // 기본 재고 통계 정보 계산
   const calculateInventoryStats = (data: any) => {
@@ -135,9 +148,23 @@ export default function InventoryAnalysisPage() {
 
   // 차트 렌더링
   useEffect(() => {
-    if (!filteredInventory.length) return;
+    console.log('🔍 차트 렌더링 시작:', {
+      filteredInventoryLength: filteredInventory.length,
+      inventoryStats
+    });
+    
+    if (!filteredInventory.length) {
+      console.log('❌ filteredInventory가 비어있음');
+      return;
+    }
 
     // 1. 재고 상태별 SKU 수
+    console.log('🔍 재고 상태별 차트 데이터:', {
+      urgent: inventoryStats.urgent,
+      review: inventoryStats.review,
+      stable: inventoryStats.stable
+    });
+    
     ensureChart("chart-inventory-status", {
       type: 'doughnut',
       data: {
@@ -151,13 +178,20 @@ export default function InventoryAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           title: {
-            display: true,
-            text: `재고 상태별 SKU 분포 (총 ${inventoryStats.total}개)`
+            display: false
           },
           legend: {
-            position: 'bottom'
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 8,
+              font: {
+                size: 11
+              }
+            }
           }
         }
       }
@@ -184,18 +218,40 @@ export default function InventoryAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: {
-            title: { display: true, text: '현재 재고' },
-            beginAtZero: true
+            title: { 
+              display: true, 
+              text: '현재 재고',
+              font: { size: 12 }
+            },
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11 }
+            }
           },
           y: {
-            title: { display: true, text: '리오더 포인트' },
-            beginAtZero: true
+            title: { 
+              display: true, 
+              text: '리오더 포인트',
+              font: { size: 12 }
+            },
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11 }
+            }
           }
         },
         plugins: {
-          title: { display: true, text: '리오더 포인트 vs 현재 재고' },
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          },
           tooltip: {
             callbacks: {
               label: function(context) {
@@ -240,11 +296,34 @@ export default function InventoryAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'SKU 수' } }
+          y: { 
+            beginAtZero: true, 
+            title: { 
+              display: true, 
+              text: 'SKU 수',
+              font: { size: 12 }
+            },
+            ticks: {
+              font: { size: 11 }
+            }
+          },
+          x: {
+            ticks: {
+              font: { size: 11 }
+            }
+          }
         },
         plugins: {
-          title: { display: true, text: '공급일수 분포' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -270,18 +349,40 @@ export default function InventoryAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: {
-            title: { display: true, text: '일평균 판매량' },
-            beginAtZero: true
+            title: { 
+              display: true, 
+              text: '일평균 판매량',
+              font: { size: 12 }
+            },
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11 }
+            }
           },
           y: {
-            title: { display: true, text: '현재 재고' },
-            beginAtZero: true
+            title: { 
+              display: true, 
+              text: '현재 재고',
+              font: { size: 12 }
+            },
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11 }
+            }
           }
         },
         plugins: {
-          title: { display: true, text: '일평균 판매량 vs 현재 재고' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -346,7 +447,7 @@ export default function InventoryAnalysisPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">총 재고 가치</p>
-                  <p className="text-2xl font-bold text-gray-900">₩{basicStats.totalStockValue.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-gray-900">₩{Math.round(basicStats.totalStockValue).toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -448,6 +549,19 @@ export default function InventoryAnalysisPage() {
                 <p className="text-sm text-gray-600">3일 이내 리오더 필요</p>
               </div>
             </div>
+            {/* 긴급 리오더 인사이트 */}
+            <div className="mt-4 p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+              <div className="flex items-start">
+                <div className="text-red-600 mr-2">🚨</div>
+                <div>
+                  <div className="text-sm font-medium text-red-900 mb-1">긴급 재고 부족</div>
+                  <div className="text-xs text-red-700">
+                    즉시 발주가 필요한 상품입니다. 재고 부족으로 인한 매출 손실을 방지하기 위해 
+                    우선적으로 처리하세요.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -459,6 +573,19 @@ export default function InventoryAnalysisPage() {
                 <h3 className="text-lg font-semibold text-gray-900">리오더 검토</h3>
                 <p className="text-2xl font-bold text-orange-600">{inventoryStats.review}개</p>
                 <p className="text-sm text-gray-600">3-7일 내 검토 필요</p>
+              </div>
+            </div>
+            {/* 리오더 검토 인사이트 */}
+            <div className="mt-4 p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+              <div className="flex items-start">
+                <div className="text-orange-600 mr-2">🔍</div>
+                <div>
+                  <div className="text-sm font-medium text-orange-900 mb-1">재고 검토 필요</div>
+                  <div className="text-xs text-orange-700">
+                    곧 재고 부족이 예상되는 상품입니다. 판매 패턴을 분석하여 
+                    적절한 발주 시점과 수량을 결정하세요.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -474,6 +601,19 @@ export default function InventoryAnalysisPage() {
                 <p className="text-sm text-gray-600">7일 이상 여유</p>
               </div>
             </div>
+            {/* 안정 상태 인사이트 */}
+            <div className="mt-4 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+              <div className="flex items-start">
+                <div className="text-green-600 mr-2">✅</div>
+                <div>
+                  <div className="text-sm font-medium text-green-900 mb-1">재고 안정 상태</div>
+                  <div className="text-xs text-green-700">
+                    충분한 재고를 보유하고 있습니다. 정기적인 모니터링을 통해 
+                    안정적인 재고 수준을 유지하세요.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -487,6 +627,19 @@ export default function InventoryAnalysisPage() {
                 <p className="text-sm text-gray-600">30일 무판매</p>
               </div>
             </div>
+            {/* 단종 후보 인사이트 */}
+            <div className="mt-4 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+              <div className="flex items-start">
+                <div className="text-purple-600 mr-2">📉</div>
+                <div>
+                  <div className="text-sm font-medium text-purple-900 mb-1">단종 검토 필요</div>
+                  <div className="text-xs text-purple-700">
+                    30일 이상 판매되지 않은 상품입니다. 마케팅 강화, 가격 조정, 
+                    또는 단종을 고려해보세요.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -494,22 +647,106 @@ export default function InventoryAnalysisPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 재고 상태별 SKU 수 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-inventory-status" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">재고 상태별 SKU 수</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">재고 분포</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-inventory-status"></canvas>
+            </div>
+            {/* 재고 상태 분포 설명 */}
+            <div className="mt-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+              <div className="flex items-start">
+                <div className="text-red-600 mr-2">📊</div>
+                <div>
+                  <div className="text-sm font-medium text-red-900 mb-1">재고 상태 분포</div>
+                  <div className="text-xs text-red-700">
+                    긴급, 검토, 안정 상태별 SKU 수를 파이 차트로 확인하여 전체 재고 상황을 한눈에 파악할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 공급일수 분포 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-supply-days" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">공급일수 분포</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">공급 기간</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-supply-days"></canvas>
+            </div>
+            {/* 공급일수 분포 설명 */}
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <div className="flex items-start">
+                <div className="text-blue-600 mr-2">📅</div>
+                <div>
+                  <div className="text-sm font-medium text-blue-900 mb-1">공급일수 분포</div>
+                  <div className="text-xs text-blue-700">
+                    현재 재고로 얼마나 오래 공급할 수 있는지 히스토그램으로 확인하여 재고 수준의 적정성을 판단할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 리오더 포인트 vs 현재 재고 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-reorder-vs-stock" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">리오더 포인트 vs 현재 재고</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">재고 비교</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-reorder-vs-stock"></canvas>
+            </div>
+            {/* 리오더 포인트 비교 설명 */}
+            <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+              <div className="flex items-start">
+                <div className="text-green-600 mr-2">⚖️</div>
+                <div>
+                  <div className="text-sm font-medium text-green-900 mb-1">리오더 포인트 비교</div>
+                  <div className="text-xs text-green-700">
+                    현재 재고와 리오더 포인트를 산점도로 비교하여 발주가 필요한 상품을 시각적으로 식별할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 일평균 판매량 vs 재고 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-daily-sales-vs-stock" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">일평균 판매량 vs 재고</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">판매-재고 관계</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-daily-sales-vs-stock"></canvas>
+            </div>
+            {/* 판매량-재고 관계 설명 */}
+            <div className="mt-3 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+              <div className="flex items-start">
+                <div className="text-purple-600 mr-2">📈</div>
+                <div>
+                  <div className="text-sm font-medium text-purple-900 mb-1">판매량-재고 관계</div>
+                  <div className="text-xs text-purple-700">
+                    일평균 판매량과 현재 재고의 관계를 확인하여 재고 회전율과 적정 재고 수준을 파악할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -114,14 +114,19 @@ export default function ABCAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           title: {
-            display: true,
-            text: `ABC 분석 (총 ${filteredABC.length}개 SKU)`
+            display: false
           },
           legend: {
             position: 'bottom',
             labels: {
+              boxWidth: 12,
+              padding: 8,
+              font: {
+                size: 11
+              },
               generateLabels: function(chart) {
                 const data = chart.data;
                 if (data.labels.length && data.datasets.length) {
@@ -164,11 +169,34 @@ export default function ABCAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'SKU 수' } }
+          y: { 
+            beginAtZero: true, 
+            title: { 
+              display: true, 
+              text: 'SKU 수',
+              font: { size: 12 }
+            },
+            ticks: {
+              font: { size: 11 }
+            }
+          },
+          x: {
+            ticks: {
+              font: { size: 11 }
+            }
+          }
         },
         plugins: {
-          title: { display: true, text: 'ABC 그룹별 SKU 수' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -219,25 +247,54 @@ export default function ABCAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           y: {
             type: 'linear',
             display: true,
             position: 'left',
-            title: { display: true, text: '매출' }
+            title: { 
+              display: true, 
+              text: '매출',
+              font: { size: 12 }
+            },
+            ticks: {
+              font: { size: 11 }
+            }
           },
           y1: {
             type: 'linear',
             display: true,
             position: 'right',
-            title: { display: true, text: '누적 비중 (%)' },
+            title: { 
+              display: true, 
+              text: '누적 비중 (%)',
+              font: { size: 12 }
+            },
             min: 0,
             max: 100,
-            grid: { drawOnChartArea: false }
+            grid: { drawOnChartArea: false },
+            ticks: {
+              font: { size: 11 }
+            }
+          },
+          x: {
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 45,
+              minRotation: 0
+            }
           }
         },
         plugins: {
-          title: { display: true, text: '파레토 차트 (TOP 20 SKU)' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -376,17 +433,83 @@ export default function ABCAnalysisPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ABC 분석 도넛 차트 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-abc-doughnut" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">ABC 분석 도넛 차트</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">매출 비중</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-abc-doughnut"></canvas>
+            </div>
+            {/* ABC 분석 설명 */}
+            <div className="mt-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+              <div className="flex items-start">
+                <div className="text-red-600 mr-2">📊</div>
+                <div>
+                  <div className="text-sm font-medium text-red-900 mb-1">ABC 분석</div>
+                  <div className="text-xs text-red-700">
+                    매출 비중에 따라 상품을 A(80%), B(15%), C(5%) 그룹으로 분류하여 
+                    우선순위를 정하고 관리 전략을 수립할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ABC 그룹별 SKU 수 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-abc-count" height="200"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">ABC 그룹별 SKU 수</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">상품 수</span>
+              </div>
+            </div>
+            <div className="h-48">
+              <canvas id="chart-abc-count"></canvas>
+            </div>
+            {/* ABC 그룹별 SKU 수 설명 */}
+            <div className="mt-3 p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+              <div className="flex items-start">
+                <div className="text-orange-600 mr-2">📈</div>
+                <div>
+                  <div className="text-sm font-medium text-orange-900 mb-1">그룹별 상품 수</div>
+                  <div className="text-xs text-orange-700">
+                    각 ABC 그룹에 속한 SKU의 개수를 확인하여 상품 포트폴리오의 
+                    집중도를 파악할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 파레토 차트 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 lg:col-span-2">
-            <canvas id="chart-pareto" height="250"></canvas>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">파레토 차트 (TOP 20 SKU)</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">80-20 법칙</span>
+              </div>
+            </div>
+            <div className="h-64">
+              <canvas id="chart-pareto"></canvas>
+            </div>
+            {/* 파레토 차트 설명 */}
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <div className="flex items-start">
+                <div className="text-blue-600 mr-2">📊</div>
+                <div>
+                  <div className="text-sm font-medium text-blue-900 mb-1">파레토 차트 (80-20 법칙)</div>
+                  <div className="text-xs text-blue-700">
+                    상위 20%의 상품이 전체 매출의 80%를 차지하는지 확인하여 
+                    핵심 상품에 집중할 수 있는지 판단할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
