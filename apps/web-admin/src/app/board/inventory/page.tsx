@@ -49,6 +49,13 @@ export default function InventoryAnalysisPage() {
       return;
     }
     
+    // 리셋 후에는 데이터 로딩을 하지 않음
+    if (insights && insights.reorder && insights.reorder.length === 0) {
+      console.log('🔍 이미 빈 데이터 상태 - 추가 로딩 차단');
+      setLoading(false);
+      return;
+    }
+    
     const loadData = async () => {
       try {
         setLoading(true);
@@ -67,7 +74,19 @@ export default function InventoryAnalysisPage() {
               ok: true,
               inventoryAnalysis: [],
               stockLevels: [],
-              turnoverAnalysis: []
+              turnoverAnalysis: [],
+              reorder: [],
+              eol: [],
+              inventoryStats: {
+                totalStockValue: 0,
+                totalStockLevel: 0,
+                avgStockLevel: 0,
+                validStockItems: 0,
+                urgent: 0,
+                review: 0,
+                stable: 0,
+                eol: 0
+              }
             });
             return;
           }
@@ -105,7 +124,19 @@ export default function InventoryAnalysisPage() {
           ok: true,
           inventoryAnalysis: [],
           stockLevels: [],
-          turnoverAnalysis: []
+          turnoverAnalysis: [],
+          reorder: [],
+          eol: [],
+          inventoryStats: {
+            totalStockValue: 0,
+            totalStockLevel: 0,
+            avgStockLevel: 0,
+            validStockItems: 0,
+            urgent: 0,
+            review: 0,
+            stable: 0,
+            eol: 0
+          }
         });
       } finally {
         setLoading(false);
