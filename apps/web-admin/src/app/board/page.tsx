@@ -80,7 +80,14 @@ export default function BoardPage() {
   useEffect(() => {
     const loadTenants = async () => {
       try {
-        const response = await fetch('/api/tenants');
+        // 캐시 무효화를 위해 timestamp 추가
+        const response = await fetch(`/api/tenants?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
         if (json.ok) {
@@ -88,6 +95,7 @@ export default function BoardPage() {
           // 첫 번째 테넌트를 자동 선택
           if (json.tenants && json.tenants.length > 0) {
             setTenantId(json.tenants[0].id);
+            console.log('[tenant] Loaded tenantId:', json.tenants[0].id);
             setIngestMsg("");
           } else {
             // 테넌트가 없으면 안내 메시지 표시
@@ -635,18 +643,15 @@ export default function BoardPage() {
       
       if (!json.ok) throw new Error(json.error || "리셋 실패");
 
-      setIngestMsg(`데이터 리셋 완료: ${json.deleted_rows}행 삭제됨 (fact: ${json.fact_deleted}, stage: ${json.stage_deleted})`);
+      setIngestMsg(`✅ 데이터 리셋 완료: ${json.deleted_rows}행 삭제됨 (fact: ${json.fact_deleted}, stage: ${json.stage_deleted})`);
       
       // 총 행수 초기화
       setTotalUploadedRows(0);
       
-      // 데이터 강제 새로고침
-      await mutate();
-      
-      // 추가로 status 데이터도 새로고침
-      if (typeof window !== 'undefined') {
+      // 성공 메시지 표시 후 강제 새로고침
+      setTimeout(() => {
         window.location.reload();
-      }
+      }, 2000);
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "데이터 리셋 오류");
