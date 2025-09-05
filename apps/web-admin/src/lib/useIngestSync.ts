@@ -1,16 +1,13 @@
 'use client';
 import { useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { strongClientReset } from './strongReset';
 import { useRouter } from 'next/navigation';
 import { useDataVersionStore } from './versionStore';
-
-const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supaAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { getSupabaseClient } from './supabaseClient';
 
 export function useIngestSync(tenantId: string, opts?: { charts?: Record<string, any> }) {
   const router = useRouter();
-  const supa = createClient(supaUrl, supaAnon);
+  const supa = getSupabaseClient();
   const { inc } = useDataVersionStore();
 
   useEffect(() => {

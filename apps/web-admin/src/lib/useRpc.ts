@@ -1,12 +1,7 @@
 'use client';
 import useSWR from 'swr';
-import { createClient } from '@supabase/supabase-js';
 import { useDataVersionStore } from './versionStore';
-
-const supa = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { getSupabaseClient } from './supabaseClient';
 
 export function useRpc<T>(
   name: string,
@@ -19,6 +14,7 @@ export function useRpc<T>(
   const { data, error, isLoading, mutate } = useSWR<T>(key, async () => {
     console.log(`🔄 RPC 호출: ${name}`, { args, version: v });
     
+    const supa = getSupabaseClient();
     // 서버 캐시를 피하기 위해 REST 경유 대신 RPC로 바로; 브라우저 캐시도 없음
     const { data, error } = await supa.rpc(name, args ?? {});
     if (error) {

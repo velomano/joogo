@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorBanner from '@/components/ErrorBanner';
 import { ensureChart, barConfig, lineConfig } from '@/lib/charts';
+import { useIngestSync } from '@/lib/useIngestSync';
 
 export default function InventoryAnalysisPage() {
   const router = useRouter();
@@ -11,6 +12,9 @@ export default function InventoryAnalysisPage() {
   const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tenantId, setTenantId] = useState<string>('');
+  
+  // 실시간 동기화 활성화
+  useIngestSync(tenantId);
 
   // 필터 상태
   const [region, setRegion] = useState('');
