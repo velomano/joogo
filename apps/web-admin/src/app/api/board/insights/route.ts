@@ -20,36 +20,36 @@ export async function GET(req: NextRequest) {
     if (!tenant) return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
 
     const sb = supaAdmin();
-    // 먼저 데이터 존재 여부 확인
-    const { data: factCheck } = await sb
-      .from('analytics.fact_sales')
-      .select('id')
-      .eq('tenant_id', tenant)
-      .limit(1);
+    // 데이터 존재 여부 확인 (주석 처리 - RPC 함수에서 처리)
+    // const { data: factCheck } = await sb
+    //   .from('analytics.fact_sales')
+    //   .select('id')
+    //   .eq('tenant_id', tenant)
+    //   .limit(1);
 
-    // 데이터가 없으면 빈 응답 반환
-    if (!factCheck || factCheck.length === 0) {
-      console.log('🔍 데이터 없음 - 빈 응답 반환');
-      return NextResponse.json({
-        ok: true,
-        tempReg: null,
-        spendReg: null,
-        abc: [],
-        reorder: [],
-        eol: [],
-        movers: [],
-        inventoryStats: {
-          totalStockValue: 0,
-          totalStockLevel: 0,
-          avgStockLevel: 0,
-          validStockItems: 0,
-          urgent: 0,
-          review: 0,
-          stable: 0,
-          eol: 0
-        }
-      });
-    }
+    // // 데이터가 없으면 빈 응답 반환
+    // if (!factCheck || factCheck.length === 0) {
+    //   console.log('🔍 데이터 없음 - 빈 응답 반환');
+    //   return NextResponse.json({
+    //     ok: true,
+    //     tempReg: null,
+    //     spendReg: null,
+    //     abc: [],
+    //     reorder: [],
+    //     eol: [],
+    //     movers: [],
+    //     inventoryStats: {
+    //       totalStockValue: 0,
+    //       totalStockLevel: 0,
+    //       avgStockLevel: 0,
+    //       validStockItems: 0,
+    //       urgent: 0,
+    //       review: 0,
+    //       stable: 0,
+    //       eol: 0
+    //     }
+    //   });
+    // }
 
     const [
       tempReg, spendReg, abc, rop, eol, movers
