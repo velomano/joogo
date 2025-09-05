@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
 
     const sb = supaAdmin();
     
-    // RPC 함수를 사용하여 데이터 삭제
-    const { data: result, error } = await sb.rpc("board_reset_tenant_data", {
+    // 강력한 RPC 함수를 사용하여 데이터 삭제
+    const { data: result, error } = await sb.rpc("board_force_reset_all_data", {
       p_tenant_id: tenant_id
     });
 
