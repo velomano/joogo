@@ -608,11 +608,12 @@ export default function BoardPage() {
 
   async function handleDataReset() {
     console.log('[reset] handleDataReset called, tenantId:', tenantId);
+    console.log('[reset] tenantId type:', typeof tenantId, 'length:', tenantId?.length);
     try {
       setErrMsg("");
       setIngestMsg("");
       
-      if (!tenantId) {
+      if (!tenantId || tenantId.trim() === '') {
         console.log('[reset] No tenantId, throwing error');
         throw new Error("테넌트 ID를 먼저 선택하세요");
       }
