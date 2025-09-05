@@ -5,6 +5,7 @@ import useSWR from "swr";
 import ErrorBanner from "@/components/ErrorBanner";
 import { ensureChart, lineConfig, barConfig, scatterConfig, doughnutConfig, scatterWithTrendConfig } from "@/lib/charts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useIngestSync } from '@/lib/useIngestSync';
 
 const arr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -51,6 +52,9 @@ const getDateRange = (period: string) => {
 export default function BoardPage() {
   const [tenantId, setTenantId] = useState<string>("");
   const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
+  
+  // 실시간 동기화 활성화
+  useIngestSync(tenantId);
   const [from, setFrom] = useState<string>(getDateRange("1week").from);
   const [to, setTo] = useState<string>(getDateRange("1week").to);
   const [period, setPeriod] = useState<string>("1week"); // 기간 선택 상태 추가 (기본값: 1주일)

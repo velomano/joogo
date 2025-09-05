@@ -39,6 +39,26 @@ const pg = require('pg');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Supabase 클라이언트 (상태 기록용)
+import { createClient } from '@supabase/supabase-js';
+
+const supa = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
+  auth: { persistSession: false }
+});
+
+async function markJob(tenantId: string, fileId: string, patch: any) {
+  try {
+    await supa
+      .from('analytics.ingest_jobs')
+      .upsert([{ tenant_id: tenantId, file_id: fileId, ...patch }], { 
+        onConflict: 'tenant_id,file_id' 
+      });
+    console.log(`[ingest] Job 상태 업데이트: ${tenantId}/${fileId}`, patch);
+  } catch (error) {
+    console.error('[ingest] Job 상태 업데이트 실패:', error);
+  }
+}
+
 // ESM main-module detection (robust for Windows paths)
 const isMain = (() => {
   const argv1 = process.argv[1] ? path.resolve(process.argv[1]) : '';
@@ -215,14 +235,29 @@ async function loop() {
           
           console.log(`Successfully inserted ${totalInserted} rows to stage_sales`);
           
+          // 스테이징 완료 상태 기록
+          await markJob(upload.tenant_id, upload.file_id, { 
+            status: 'staging', 
+            rows_staged: totalInserted 
+          });
+          
+          // 머지 시작 상태 기록
+          await markJob(upload.tenant_id, upload.file_id, { 
+            status: 'merging' 
+          });
+          
           // 머지 함수 호출
-          console.log(`Calling merge_stage_to_fact for file_id: ${upload.file_id}`);
-          const { error: mergeError } = await supabase.rpc('merge_stage_to_fact', {
+          console.log(`Calling board_merge_file for file_id: ${upload.file_id}`);
+          const { error: mergeError } = await supabase.rpc('board_merge_file', {
             p_tenant_id: upload.tenant_id,
             p_file_id: upload.file_id
           });
           
           if (mergeError) {
+            await markJob(upload.tenant_id, upload.file_id, { 
+              status: 'failed', 
+              message: mergeError.message 
+            });
             throw new Error(`Merge failed: ${mergeError.message}`);
           }
           
