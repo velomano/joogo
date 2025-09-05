@@ -52,7 +52,14 @@ export default function InventoryAnalysisPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/board/insights?tenant_id=${tenantId}&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65`);
+        // 캐시 무효화를 위해 timestamp 추가
+        const response = await fetch(`/api/board/insights?tenant_id=${tenantId}&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) {
           if (response.status === 400) {
             console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
@@ -90,6 +97,47 @@ export default function InventoryAnalysisPage() {
       channel,
       category
     });
+  };
+
+  // 강제 리셋 핸들러
+  const handleForceReset = async () => {
+    if (!tenantId) {
+      setErrMsg("테넌트 ID가 없습니다.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `정말로 "${tenantId}" 테넌트의 모든 데이터를 강제 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      setErrMsg("");
+      setLoading(true);
+      
+      const res = await fetch("/api/board/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant_id: tenantId })
+      });
+      
+      const json = await res.json();
+      console.log('[inventory-reset] API response:', json);
+      
+      if (!json.ok) throw new Error(json.error || "리셋 실패");
+
+      alert(`✅ 강제 리셋 완료: ${json.deleted_rows}행 삭제됨\n\n페이지를 새로고침합니다.`);
+      
+      // 강제 새로고침
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (e: any) {
+      setErrMsg(e?.message ?? "강제 리셋 오류");
+      setLoading(false);
+    }
   };
 
   // 재고 관련 데이터 필터링
@@ -573,12 +621,18 @@ export default function InventoryAnalysisPage() {
               </select>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-2">
             <button 
               onClick={handleApplyFilters}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
             >
               📊 조회
+            </button>
+            <button 
+              onClick={handleForceReset}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm"
+            >
+              🗑️ 강제 리셋
             </button>
           </div>
         </div>
