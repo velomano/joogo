@@ -583,38 +583,13 @@ export default function BoardPage() {
       setUploadProgress(100);
       setIngestMsg(`✅ 업로드 완료: ${json.inserted || json.rows_processed || '처리됨'}행 | 워커에서 백그라운드 처리 중...`);
       
-      // 데이터 새로고침
-      await mutate();
+      // 업로드 완료 후 즉시 UI 상태 초기화
+      setIsUploading(false);
+      setUploadProgress(0);
       
-      // 강제 새로고침 (tenantId가 있을 때만)
-      if (tenantId) {
-        try {
-          await mutate(swrKey);
-          await mutate(insightsKey);
-          await mutate(statusKey);
-        } catch (err) {
-          console.error('강제 새로고침 실패:', err);
-        }
-      }
-      
-      // 총 행수 새로고침
-      try {
-        const statusResponse = await fetch(`/api/board/status?tenant_id=${tenantId}`);
-        if (statusResponse.ok) {
-          const statusJson = await statusResponse.json();
-          if (statusJson.ok && statusJson.totalRows) {
-            setTotalUploadedRows(statusJson.totalRows);
-          }
-        }
-      } catch (err) {
-        console.error('총 행수 새로고침 실패:', err);
-      }
-      
-      // 3초 후 성공 메시지 업데이트
+      // 3초 후 완료 메시지와 새로고침 안내
       setTimeout(() => {
-        setIngestMsg("🎉 데이터 처리 완료! 차트를 확인하세요.");
-        setIsUploading(false);
-        setUploadProgress(0);
+        setIngestMsg("🎉 데이터 처리 완료! 페이지를 새로고침하여 최신 데이터를 확인하세요.");
       }, 3000);
       
     } catch (e: any) {
