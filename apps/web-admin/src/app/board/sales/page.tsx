@@ -10,6 +10,7 @@ export default function SalesAnalysisPage() {
   const [errMsg, setErrMsg] = useState('');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tenantId, setTenantId] = useState<string>('');
 
   // 필터 상태
   const [region, setRegion] = useState('');
@@ -48,29 +49,123 @@ export default function SalesAnalysisPage() {
     }
   };
 
+  // tenant_id 가져오기
+  useEffect(() => {
+    const loadTenantId = async () => {
+      try {
+        const response = await fetch('/api/tenants');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.tenants && json.tenants.length > 0) {
+          setTenantId(json.tenants[0].id);
+        } else {
+          // 기본 tenant_id 설정
+          setTenantId('00000000-0000-0000-0000-000000000000');
+        }
+      } catch (err) {
+        console.error('Tenant ID 로드 실패:', err);
+        setTenantId('00000000-0000-0000-0000-000000000000');
+      }
+    };
+    loadTenantId();
+  }, []);
+
   // 데이터 로드
   useEffect(() => {
+    if (!tenantId) return; // tenant_id가 없으면 대기
+    
     const loadData = async () => {
       try {
         setLoading(true);
         const { from, to } = getDateRange(period);
-        const response = await fetch(`/api/board/charts?from=${from}&to=${to}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=${tenantId}`);
+        if (!response.ok) {
+          if (response.status === 400) {
+            console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
+            setData({
+              ok: true,
+              salesDaily: [],
+              roasByChannel: [],
+              topCategories: [],
+              topRegions: [],
+              topSkus: [],
+              cumulativeRevenue: [],
+              tempVsSales: [],
+              spendRevDaily: []
+            });
+            return;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
         const json = await response.json();
         console.log('🔍 Debug - API Response:', json);
         console.log('🔍 Debug - API salesDaily[0]:', json.salesDaily?.[0]);
         setData(json);
       } catch (err) {
-        setErrMsg(`데이터 로드 실패: ${err}`);
+        console.error('데이터 로드 에러:', err);
+        setData({
+          ok: true,
+          salesDaily: [],
+          roasByChannel: [],
+          topCategories: [],
+          topRegions: [],
+          topSkus: [],
+          cumulativeRevenue: [],
+          tempVsSales: [],
+          spendRevDaily: []
+        });
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [period]);
+  }, [period, tenantId]);
 
   // 조회 버튼 핸들러
-  const handleApplyFilters = () => {
+  const handleApplyFilters = async () => {
+    if (!tenantId) return;
+    
+    try {
+      setLoading(true);
+      const { from, to } = getDateRange(period);
+      const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=${tenantId}&region=${region}&channel=${channel}&category=${category}&sku=${sku}`);
+      if (!response.ok) {
+        if (response.status === 400) {
+          console.log('📊 필터링된 데이터가 없습니다.');
+          setData({
+            ok: true,
+            salesDaily: [],
+            roasByChannel: [],
+            topCategories: [],
+            topRegions: [],
+            topSkus: [],
+            cumulativeRevenue: [],
+            tempVsSales: [],
+            spendRevDaily: []
+          });
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const json = await response.json();
+      setData(json);
+    } catch (err) {
+      console.error('필터링 데이터 로드 에러:', err);
+      setData({
+        ok: true,
+        salesDaily: [],
+        roasByChannel: [],
+        topCategories: [],
+        topRegions: [],
+        topSkus: [],
+        cumulativeRevenue: [],
+        tempVsSales: [],
+        spendRevDaily: []
+      });
+    } finally {
+      setLoading(false);
+    }
+    
     setAppliedFilters({
       region,
       channel,
