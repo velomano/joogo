@@ -17,30 +17,28 @@ export async function GET(req: NextRequest) {
 
     const sb = supaAdmin();
 
-    // 매출 데이터 조회
-    const { data: salesData, error: salesError } = await sb
-      .from('analytics.fact_sales')
-      .select('sale_date, qty, revenue')
-      .eq('tenant_id', tenant)
-      .gte('sale_date', from)
-      .lte('sale_date', to);
+    // RPC 함수를 사용하여 매출 데이터 조회
+    const { data: salesData, error: salesError } = await sb.rpc("board_sales_daily", {
+      p_tenant_id: tenant,
+      p_from: from,
+      p_to: to
+    });
 
     if (salesError) {
-      console.error('[status] Sales query error:', salesError);
-      throw salesError;
+      console.error('[status] Sales RPC error:', salesError);
+      console.warn('[status] Continuing with empty sales data due to error');
     }
 
-    // SKU 데이터 조회
-    const { data: skuData, error: skuError } = await sb
-      .from('analytics.fact_sales')
-      .select('sku, revenue')
-      .eq('tenant_id', tenant)
-      .gte('sale_date', from)
-      .lte('sale_date', to);
+    // RPC 함수를 사용하여 SKU 데이터 조회 (ABC 분석 함수 사용)
+    const { data: skuData, error: skuError } = await sb.rpc("board_abc_by_sku", {
+      p_tenant_id: tenant,
+      p_from: from,
+      p_to: to
+    });
 
     if (skuError) {
-      console.error('[status] SKU query error:', skuError);
-      throw skuError;
+      console.error('[status] SKU RPC error:', skuError);
+      console.warn('[status] Continuing with empty SKU data due to error');
     }
 
     // 매출 통계 계산
@@ -51,7 +49,7 @@ export async function GET(req: NextRequest) {
       avgDaily: 0
     };
 
-    if (salesData && salesData.length > 0) {
+    if (salesData && Array.isArray(salesData) && salesData.length > 0) {
       const uniqueDates = new Set(salesData.map(d => d.sale_date)).size;
       const totalRevenue = salesData.reduce((sum, d) => sum + Number(d.revenue || 0), 0);
       const totalQty = salesData.reduce((sum, d) => sum + Number(d.qty || 0), 0);
@@ -69,20 +67,16 @@ export async function GET(req: NextRequest) {
       topSkuRevenue: 0
     };
 
-    if (skuData && skuData.length > 0) {
-      const skuRevenue = skuData.reduce((acc, d) => {
-        const sku = d.sku || 'Unknown';
-        acc[sku] = (acc[sku] || 0) + Number(d.revenue || 0);
-        return acc;
-      }, {} as Record<string, number>);
-
-      const uniqueSkus = Object.keys(skuRevenue).length;
-      const topSkuEntry = Object.entries(skuRevenue).reduce((max, [sku, revenue]) => 
-        revenue > max[1] ? [sku, revenue] : max, ['N/A', 0]);
+    if (skuData && Array.isArray(skuData) && skuData.length > 0) {
+      const uniqueSkus = skuData.length;
+      const topSkuEntry = skuData.reduce((max, d) => {
+        const revenue = Number(d.revenue || 0);
+        return revenue > max.revenue ? { sku: d.sku || 'Unknown', revenue } : max;
+      }, { sku: 'N/A', revenue: 0 });
 
       sku.uniqueSkus = uniqueSkus;
-      sku.topSku = topSkuEntry[0];
-      sku.topSkuRevenue = topSkuEntry[1];
+      sku.topSku = topSkuEntry.sku;
+      sku.topSkuRevenue = topSkuEntry.revenue;
     }
 
     return NextResponse.json({

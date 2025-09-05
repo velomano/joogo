@@ -1,5 +1,4 @@
--- Add board_reset_tenant_data RPC function for data reset functionality
--- This function safely deletes all data for a specific tenant across all relevant tables
+-- Debug version of board_reset_tenant_data with detailed logging
 
 CREATE OR REPLACE FUNCTION public.board_reset_tenant_data(p_tenant_id UUID)
 RETURNS TABLE(
@@ -20,36 +19,55 @@ DECLARE
   v_uploads_deleted INTEGER := 0;
   v_jobs_deleted INTEGER := 0;
   v_total_deleted INTEGER := 0;
+  v_count_before INTEGER := 0;
 BEGIN
   -- Validate tenant_id
   IF p_tenant_id IS NULL THEN
     RAISE EXCEPTION 'tenant_id cannot be null';
   END IF;
 
+  RAISE NOTICE 'Starting reset for tenant_id: %', p_tenant_id;
+
+  -- Check count before deletion
+  SELECT COUNT(*) INTO v_count_before FROM analytics.fact_sales WHERE tenant_id = p_tenant_id;
+  RAISE NOTICE 'Found % rows in analytics.fact_sales before deletion', v_count_before;
+
   -- Delete from analytics.fact_sales
-  RAISE NOTICE 'Deleting from analytics.fact_sales for tenant_id: %', p_tenant_id;
   DELETE FROM analytics.fact_sales WHERE tenant_id = p_tenant_id;
   GET DIAGNOSTICS v_fact_deleted = ROW_COUNT;
   RAISE NOTICE 'Deleted % rows from analytics.fact_sales', v_fact_deleted;
 
   -- Delete from analytics.stage_sales
+  SELECT COUNT(*) INTO v_count_before FROM analytics.stage_sales WHERE tenant_id = p_tenant_id::text;
+  RAISE NOTICE 'Found % rows in analytics.stage_sales before deletion', v_count_before;
   DELETE FROM analytics.stage_sales WHERE tenant_id = p_tenant_id::text;
   GET DIAGNOSTICS v_stage_deleted = ROW_COUNT;
+  RAISE NOTICE 'Deleted % rows from analytics.stage_sales', v_stage_deleted;
 
   -- Delete from public.items
+  SELECT COUNT(*) INTO v_count_before FROM public.items WHERE tenant_id = p_tenant_id;
+  RAISE NOTICE 'Found % rows in public.items before deletion', v_count_before;
   DELETE FROM public.items WHERE tenant_id = p_tenant_id;
   GET DIAGNOSTICS v_items_deleted = ROW_COUNT;
+  RAISE NOTICE 'Deleted % rows from public.items', v_items_deleted;
 
   -- Delete from analytics.raw_uploads
+  SELECT COUNT(*) INTO v_count_before FROM analytics.raw_uploads WHERE tenant_id = p_tenant_id;
+  RAISE NOTICE 'Found % rows in analytics.raw_uploads before deletion', v_count_before;
   DELETE FROM analytics.raw_uploads WHERE tenant_id = p_tenant_id;
   GET DIAGNOSTICS v_uploads_deleted = ROW_COUNT;
+  RAISE NOTICE 'Deleted % rows from analytics.raw_uploads', v_uploads_deleted;
 
-  -- Delete from analytics.ingest_jobs (both schemas)
-  DELETE FROM analytics.ingest_jobs WHERE tenant_id = p_tenant_id::text;
+  -- Delete from public.ingest_jobs
+  SELECT COUNT(*) INTO v_count_before FROM public.ingest_jobs WHERE tenant_id = p_tenant_id::text;
+  RAISE NOTICE 'Found % rows in public.ingest_jobs before deletion', v_count_before;
+  DELETE FROM public.ingest_jobs WHERE tenant_id = p_tenant_id::text;
   GET DIAGNOSTICS v_jobs_deleted = ROW_COUNT;
+  RAISE NOTICE 'Deleted % rows from public.ingest_jobs', v_jobs_deleted;
 
   -- Calculate total deleted rows
   v_total_deleted := v_fact_deleted + v_stage_deleted + v_items_deleted + v_uploads_deleted + v_jobs_deleted;
+  RAISE NOTICE 'Total deleted rows: %', v_total_deleted;
 
   -- Return results
   RETURN QUERY SELECT 
@@ -62,9 +80,3 @@ BEGIN
 END;
 $$;
 
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.board_reset_tenant_data(UUID) TO authenticated;
-
--- Add comment for documentation
-COMMENT ON FUNCTION public.board_reset_tenant_data(UUID) IS 
-'Resets all data for a specific tenant across analytics and public schemas. Returns count of deleted rows from each table.';

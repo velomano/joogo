@@ -124,3 +124,4 @@ coverage/
 # Turbo
 .turbo/
 
+env-variables.txt

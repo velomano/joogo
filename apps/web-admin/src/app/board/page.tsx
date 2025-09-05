@@ -552,11 +552,13 @@ export default function BoardPage() {
   }
 
   async function handleDataReset() {
+    console.log('[reset] handleDataReset called, tenantId:', tenantId);
     try {
       setErrMsg("");
       setIngestMsg("");
       
       if (!tenantId) {
+        console.log('[reset] No tenantId, throwing error');
         throw new Error("테넌트 ID를 먼저 선택하세요");
       }
 
@@ -573,10 +575,19 @@ export default function BoardPage() {
       });
       
       const json = await res.json();
+      console.log('[reset] API response:', json);
+      
       if (!json.ok) throw new Error(json.error || "리셋 실패");
 
-      setIngestMsg(`데이터 리셋 완료: ${json.deleted_rows}행 삭제됨`);
+      setIngestMsg(`데이터 리셋 완료: ${json.deleted_rows}행 삭제됨 (fact: ${json.fact_deleted}, stage: ${json.stage_deleted})`);
+      
+      // 데이터 강제 새로고침
       await mutate();
+      
+      // 추가로 status 데이터도 새로고침
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "데이터 리셋 오류");
