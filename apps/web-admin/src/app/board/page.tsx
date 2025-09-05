@@ -87,6 +87,9 @@ export default function BoardPage() {
           // 첫 번째 테넌트를 자동 선택
           if (json.tenants && json.tenants.length > 0) {
             setTenantId(json.tenants[0].id);
+          } else {
+            // 테넌트가 없으면 안내 메시지 표시
+            setIngestMsg("데이터를 업로드하면 테넌트가 자동으로 생성됩니다.");
           }
         }
       } catch (err) {
@@ -794,18 +797,24 @@ export default function BoardPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-600 font-medium">테넌트 선택</label>
-                <select
-                  value={tenantId} 
-                  onChange={e => setTenantId(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 focus:border-blue-500 focus:outline-none mt-1"
-                >
-                  <option value="">테넌트를 선택하세요</option>
-                  {tenants.map(tenant => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name} ({new Date(tenant.created_at).toLocaleDateString()})
-                    </option>
-                  ))}
-                </select>
+                {tenants.length > 0 ? (
+                  <select
+                    value={tenantId} 
+                    onChange={e => setTenantId(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 focus:border-blue-500 focus:outline-none mt-1"
+                  >
+                    <option value="">테넌트를 선택하세요</option>
+                    {tenants.map(tenant => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.name} ({new Date(tenant.created_at).toLocaleDateString()})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 text-gray-500 mt-1">
+                    데이터를 업로드하면 테넌트가 생성됩니다
+                  </div>
+                )}
               </div>
 
 
