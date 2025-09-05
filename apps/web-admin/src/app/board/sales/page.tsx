@@ -71,7 +71,10 @@ export default function SalesAnalysisPage() {
 
   // 데이터 로드
   useEffect(() => {
-    if (!tenantId) return; // tenant_id가 없으면 대기
+    if (!tenantId) {
+      setLoading(false);
+      return; // tenant_id가 없으면 대기
+    }
     
     const loadData = async () => {
       try {

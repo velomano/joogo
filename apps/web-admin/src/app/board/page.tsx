@@ -120,9 +120,9 @@ export default function BoardPage() {
     setApplyTick(prev => prev + 1);
   }, [period, tenantId, region, channel, category, sku]);
 
-  const swrKey = applyTick > 0 ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
-  const insightsKey = applyTick > 0 ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
-  const statusKey = ["board-status", appliedFilters.tenantId] as const;
+  const swrKey = applyTick > 0 && tenantId ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const insightsKey = applyTick > 0 && tenantId ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const statusKey = tenantId ? ["board-status", appliedFilters.tenantId] as const : null;
   
   const handleApplyFilters = () => {
     setErrMsg("");

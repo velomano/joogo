@@ -44,7 +44,10 @@ export default function InventoryAnalysisPage() {
 
   // 데이터 로드
   useEffect(() => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      setLoading(false);
+      return;
+    }
     
     const loadData = async () => {
       try {
