@@ -578,7 +578,7 @@ export default function BoardPage() {
       const json = await res.json();
       setUploadProgress(80);
       
-      if (!json.ok) throw new Error(json.error || "업로드 실패");
+      if (!json.success) throw new Error(json.error || "업로드 실패");
       
       setUploadProgress(100);
       setIngestMsg(`✅ 업로드 완료: ${json.inserted || json.rows_processed || '처리됨'}행 | 워커에서 백그라운드 처리 중...`);
