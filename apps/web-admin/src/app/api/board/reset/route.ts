@@ -24,6 +24,26 @@ export async function POST(req: NextRequest) {
       throw error;
     }
 
+    // 추가로 original_data JSONB 컬럼에서도 삭제
+    const { error: jsonbError } = await sb
+      .from('analytics.fact_sales')
+      .delete()
+      .eq('tenant_id', tenant_id);
+
+    if (jsonbError) {
+      console.error("[reset] JSONB cleanup error:", jsonbError);
+    }
+
+    // original_data JSONB에서 tenant_id가 포함된 행도 삭제
+    const { error: jsonbTenantError } = await sb
+      .from('analytics.fact_sales')
+      .delete()
+      .contains('original_data', { tenant_id: tenant_id });
+
+    if (jsonbTenantError) {
+      console.error("[reset] JSONB tenant cleanup error:", jsonbTenantError);
+    }
+
     console.log(`[reset] Success: tenant=${tenant_id}, deleted=${result?.deleted_rows || 0} rows`);
 
     return NextResponse.json({
