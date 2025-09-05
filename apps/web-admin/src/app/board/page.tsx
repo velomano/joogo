@@ -487,6 +487,7 @@ export default function BoardPage() {
   }
 
 
+
   function handleTenantSelect(selectedId: string) {
     if (selectedId === "custom") {
       setTenantId(customTenantId);

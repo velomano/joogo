@@ -29,6 +29,9 @@ export default function InventoryAnalysisPage() {
         const response = await fetch('/api/board/insights?tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
+        console.log('🔍 재고 분석 API 응답:', json);
+        console.log('🔍 reorder 데이터:', json?.reorder?.length || 0);
+        console.log('🔍 eol 데이터:', json?.eol?.length || 0);
         setInsights(json);
       } catch (err) {
         setErrMsg(`데이터 로드 실패: ${err}`);
@@ -97,16 +100,27 @@ export default function InventoryAnalysisPage() {
     if (!data) return null;
     
     const reorderData = data.reorder || [];
+    const inventoryStats = data.inventoryStats || {};
+    
+    console.log('🔍 reorder 데이터 샘플:', reorderData[0]);
+    console.log('🔍 재고 통계 데이터:', inventoryStats);
+    
     const totalSkus = reorderData.length;
-    const totalStockValue = reorderData.reduce((sum: number, item: any) => 
-      sum + (Number(item.stock_on_hand || 0) * Number(item.unit_cost || 0)), 0);
-    const avgStockLevel = reorderData.reduce((sum: number, item: any) => 
-      sum + Number(item.stock_on_hand || 0), 0) / totalSkus;
-    const avgDailySales = reorderData.reduce((sum: number, item: any) => 
-      sum + Number(item.avg_daily || 0), 0) / totalSkus;
+    const { totalStockValue = 0, avgStockLevel = 0 } = inventoryStats;
+    
+    const avgDailySales = totalSkus > 0 ? reorderData.reduce((sum: number, item: any) => 
+      sum + Number(item.avg_daily || 0), 0) / totalSkus : 0;
     
     // 재고 회전율 (일평균 판매량 / 평균 재고)
     const turnoverRate = avgStockLevel > 0 ? avgDailySales / avgStockLevel : 0;
+    
+    console.log('🔍 계산된 통계:', {
+      totalSkus,
+      totalStockValue,
+      avgStockLevel,
+      avgDailySales,
+      turnoverRate
+    });
     
     return {
       totalSkus,
