@@ -4,12 +4,7 @@ import { supaAdmin } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// tiny per-process cache: key = `${tenant}|${from}|${to}`
-const _cache = new Map<string, { ts: number; payload: any }>();
-const TTL_MS = 0; // 캐시 비활성화
-
-// 캐시 초기화
-_cache.clear();
+// 캐시 완전 제거 - 실시간 데이터를 위해 캐시 사용 안함
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,17 +22,7 @@ export async function GET(req: NextRequest) {
     
     if (!tenant) return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
 
-    const key = `${tenant}|${from}|${to}`;
-    const now = Date.now();
-    const cached = _cache.get(key);
-    if (cached && now - cached.ts < TTL_MS) {
-      console.log(`[charts] Cache hit for key: ${key}`);
-      const res = NextResponse.json(cached.payload);
-      res.headers.set("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
-      return res;
-    }
-
-    console.log(`[charts] Cache miss, calling Supabase RPCs for key: ${key}`);
+    console.log(`[charts] Calling Supabase RPCs for tenant: ${tenant}`);
     const sb = supaAdmin();
     
     const [
@@ -85,11 +70,10 @@ export async function GET(req: NextRequest) {
       tempVsSales: asArr(tempVs),
       spendRevDaily: asArr(spendRev),
     };
-    _cache.set(key, { ts: now, payload });
     console.log(`[charts] Success: ${payload.salesDaily.length} daily, ${payload.roasByChannel.length} channels, ${payload.topCategories.length} categories, ${payload.topRegions.length} regions, ${payload.topSkus.length} skus, ${payload.cumulativeRevenue.length} cumulative`);
     
     const res = NextResponse.json(payload);
-    res.headers.set("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+    res.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
     return res;
   } catch (e: any) {
     console.error("[/api/board/charts] ERROR:", e?.message, e?.stack);
