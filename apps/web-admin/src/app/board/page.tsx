@@ -651,8 +651,14 @@ export default function BoardPage() {
       // 총 행수 초기화
       setTotalUploadedRows(0);
       
-      // 성공 메시지 표시 후 강제 새로고침
+      // 성공 메시지 표시 후 강제 새로고침 (캐시 무효화)
       setTimeout(() => {
+        // 모든 SWR 캐시 무효화
+        if (typeof window !== 'undefined') {
+          // localStorage와 sessionStorage 클리어
+          localStorage.clear();
+          sessionStorage.clear();
+        }
         window.location.reload();
       }, 2000);
       
