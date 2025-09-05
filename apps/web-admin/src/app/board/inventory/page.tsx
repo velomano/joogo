@@ -49,16 +49,18 @@ export default function InventoryAnalysisPage() {
       return;
     }
     
-    // 리셋 후에는 데이터 로딩을 하지 않음
-    if (insights && insights.reorder && insights.reorder.length === 0) {
-      console.log('🔍 이미 빈 데이터 상태 - 추가 로딩 차단');
-      setLoading(false);
-      return;
-    }
+    // 리셋 후에는 데이터 로딩을 하지 않음 (주석 처리)
+    // if (insights && insights.reorder && insights.reorder.length === 0) {
+    //   console.log('🔍 이미 빈 데이터 상태 - 추가 로딩 차단');
+    //   setLoading(false);
+    //   return;
+    // }
     
     const loadData = async () => {
       try {
         setLoading(true);
+        console.log('🔍 재고분석 데이터 로드 시작:', tenantId);
+        
         // 캐시 무효화를 위해 timestamp 추가
         const response = await fetch(`/api/board/insights?tenant_id=${tenantId}&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&t=${Date.now()}`, {
           cache: 'no-store',
@@ -67,6 +69,9 @@ export default function InventoryAnalysisPage() {
             'Pragma': 'no-cache'
           }
         });
+        
+        console.log('🔍 재고분석 API 응답 상태:', response.status);
+        
         if (!response.ok) {
           if (response.status === 400) {
             console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
@@ -92,7 +97,13 @@ export default function InventoryAnalysisPage() {
           }
           throw new Error(`HTTP ${response.status}`);
         }
+        
         const json = await response.json();
+        console.log('🔍 재고분석 API 응답 데이터:', {
+          ok: json.ok,
+          reorder: json.reorder?.length || 0,
+          inventoryStats: json.inventoryStats
+        });
         
         // 데이터가 비어있는지 확인하고 빈 상태로 설정
         if (!json.reorder || json.reorder.length === 0) {

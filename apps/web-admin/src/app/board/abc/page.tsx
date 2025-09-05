@@ -52,6 +52,8 @@ export default function ABCAnalysisPage() {
     const loadData = async () => {
       try {
         setLoading(true);
+        console.log('🔍 ABC분석 데이터 로드 시작:', tenantId);
+        
         const response = await fetch(`/api/board/insights?from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&tenant_id=${tenantId}&t=${Date.now()}`, {
           cache: 'no-store',
           headers: {
@@ -59,6 +61,9 @@ export default function ABCAnalysisPage() {
             'Pragma': 'no-cache'
           }
         });
+        
+        console.log('🔍 ABC분석 API 응답 상태:', response.status);
+        
         if (!response.ok) {
           if (response.status === 400) {
             console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
@@ -72,7 +77,14 @@ export default function ABCAnalysisPage() {
           }
           throw new Error(`HTTP ${response.status}`);
         }
+        
         const json = await response.json();
+        console.log('🔍 ABC분석 API 응답 데이터:', {
+          ok: json.ok,
+          abc: json.abc?.length || 0,
+          reorder: json.reorder?.length || 0
+        });
+        
         setInsights(json);
       } catch (err) {
         console.error('데이터 로드 에러:', err);

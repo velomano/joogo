@@ -191,7 +191,7 @@ export default function BoardPage() {
   const wxKey = ["weather", CITY[cityKey].nx, CITY[cityKey].ny] as const;
   const { data: wx } = useSWR(wxKey, async ([, nx, ny]) => {
     try {
-      const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
+    const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
       if (!res.ok) {
         console.warn(`기상청 API 오류: HTTP ${res.status}`);
         return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
@@ -594,22 +594,25 @@ export default function BoardPage() {
       setUploadProgress(100);
       setIngestMsg(`✅ 업로드 완료: ${json.inserted || json.rows_processed || '처리됨'}행 | 워커에서 백그라운드 처리 중...`);
       
-      // 업로드 완료 후 즉시 UI 상태 초기화
-      setIsUploading(false);
-      setUploadProgress(0);
-      
-      // 성공 모달 표시
-      const confirmed = confirm(`🎉 업로드 성공!\n\n처리된 행 수: ${json.inserted || json.rows_processed || '처리됨'}행\n\n잠시 후 바로 반영됩니다.\n\n확인을 누르면 페이지가 새로고침됩니다.`);
-      
-      if (confirmed) {
-        // 즉시 강제 리디렉션
-        window.location.reload();
-      } else {
-        // 3초 후 자동 리디렉션
-        setTimeout(() => {
+      // 2초 대기 후 상태창 완전 표시
+      setTimeout(() => {
+        // 업로드 완료 후 UI 상태 초기화
+        setIsUploading(false);
+        setUploadProgress(0);
+        
+        // 성공 모달 표시
+        const confirmed = confirm(`🎉 업로드 성공!\n\n처리된 행 수: ${json.inserted || json.rows_processed || '처리됨'}행\n\n잠시 후 바로 반영됩니다.\n\n확인을 누르면 페이지가 새로고침됩니다.`);
+        
+        if (confirmed) {
+          // 즉시 강제 리디렉션
           window.location.reload();
-        }, 3000);
-      }
+        } else {
+          // 5초 후 자동 리디렉션
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
+        }
+      }, 2000);
       
     } catch (e: any) {
       console.error("❌ 업로드 오류:", e);
@@ -676,13 +679,13 @@ export default function BoardPage() {
                 <div className="text-xs text-gray-500 mb-1">현재 날씨 · {CITY[cityKey].name}</div>
                 {wx?.ok ? (
                   <>
-                    <div className="flex items-baseline gap-3">
-                      <div className="text-xl font-semibold">{wx?.T1H ?? "–"}°</div>
-                      <div className="text-xs text-gray-600">습도 {wx?.REH ?? "–"}%</div>
-                    </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      강수 {wx?.RN1 ?? "–"}mm · 풍속 {wx?.WSD ?? "–"}m/s
-                    </div>
+                <div className="flex items-baseline gap-3">
+                  <div className="text-xl font-semibold">{wx?.T1H ?? "–"}°</div>
+                  <div className="text-xs text-gray-600">습도 {wx?.REH ?? "–"}%</div>
+                </div>
+                <div className="text-xs text-gray-600 mt-1">
+                  강수 {wx?.RN1 ?? "–"}mm · 풍속 {wx?.WSD ?? "–"}m/s
+                </div>
                   </>
                 ) : (
                   <div className="text-sm text-gray-500">
@@ -941,7 +944,7 @@ export default function BoardPage() {
               </div>
             )}
 
-            {/* 데이터 상태 카드 */}
+                    {/* 데이터 상태 카드 */}
             <div className="grid md:grid-cols-4 gap-3 mb-4">
               <div className="rounded-2xl border bg-white shadow-sm p-4">
                 <div className="text-xs text-gray-500 mb-1">📊 총 매출</div>
@@ -1040,7 +1043,7 @@ export default function BoardPage() {
                             <div className="mt-1">현재: {data?.tempVsSales?.length || 0}일</div>
                           </>
                         )}
-                      </div>
+                  </div>
                     </div>
                   </div>
                 </div>
