@@ -586,6 +586,17 @@ export default function BoardPage() {
       // 데이터 새로고침
       await mutate();
       
+      // 강제 새로고침 (tenantId가 있을 때만)
+      if (tenantId) {
+        try {
+          await mutate(swrKey);
+          await mutate(insightsKey);
+          await mutate(statusKey);
+        } catch (err) {
+          console.error('강제 새로고침 실패:', err);
+        }
+      }
+      
       // 총 행수 새로고침
       try {
         const statusResponse = await fetch(`/api/board/status?tenant_id=${tenantId}`);
