@@ -52,7 +52,13 @@ export default function ABCAnalysisPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/board/insights?from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&tenant_id=${tenantId}`);
+        const response = await fetch(`/api/board/insights?from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&tenant_id=${tenantId}&t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) {
           if (response.status === 400) {
             console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');

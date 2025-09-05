@@ -598,13 +598,18 @@ export default function BoardPage() {
       setIsUploading(false);
       setUploadProgress(0);
       
-      // 성공 팝업 표시
-      alert(`🎉 업로드 성공!\n\n처리된 행 수: ${json.inserted || json.rows_processed || '처리됨'}행\n\n잠시 후 바로 반영됩니다.`);
+      // 성공 모달 표시
+      const confirmed = confirm(`🎉 업로드 성공!\n\n처리된 행 수: ${json.inserted || json.rows_processed || '처리됨'}행\n\n잠시 후 바로 반영됩니다.\n\n확인을 누르면 페이지가 새로고침됩니다.`);
       
-      // 3초 후 강제 리디렉션 (캐시 문제 해결)
-      setTimeout(() => {
+      if (confirmed) {
+        // 즉시 강제 리디렉션
         window.location.reload();
-      }, 3000);
+      } else {
+        // 3초 후 자동 리디렉션
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
       
     } catch (e: any) {
       console.error("❌ 업로드 오류:", e);

@@ -124,9 +124,9 @@ export async function handleReset(
   try {
     console.log(`🔄 리셋 시작: ${scope} ${tenantId} ${fileId || ''}`);
     
-    const r = await fetch('/api/admin/reset', {
+    const r = await fetch('/api/board/reset', {
       method: 'POST',
-      body: JSON.stringify({ scope, tenantId, fileId, confirm: 'DELETE' }),
+      body: JSON.stringify({ tenant_id: tenantId }),
       headers: { 
         'content-type': 'application/json', 
         'cache-control': 'no-store' 

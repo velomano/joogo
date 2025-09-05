@@ -80,7 +80,13 @@ export default function SalesAnalysisPage() {
       try {
         setLoading(true);
         const { from, to } = getDateRange(period);
-        const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=${tenantId}`);
+        const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=${tenantId}&t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) {
           if (response.status === 400) {
             console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
