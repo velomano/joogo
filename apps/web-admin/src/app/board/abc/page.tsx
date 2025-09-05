@@ -4,17 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorBanner from '@/components/ErrorBanner';
 import { ensureChart, doughnutConfig, barConfig } from '@/lib/charts';
-import { useIngestSync } from '@/lib/useIngestSync';
+import { useRpc } from '@/lib/useRpc';
 
 export default function ABCAnalysisPage() {
   const router = useRouter();
   const [errMsg, setErrMsg] = useState('');
-  const [insights, setInsights] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [tenantId, setTenantId] = useState<string>('');
   
-  // 실시간 동기화 활성화
-  useIngestSync(tenantId);
+  // 실시간 동기화는 전역 IngestBridge에서 처리
 
   // 필터 상태
   const [region, setRegion] = useState('');
@@ -46,64 +43,44 @@ export default function ABCAnalysisPage() {
     loadTenantId();
   }, []);
 
-  // 데이터 로드
-  useEffect(() => {
-    if (!tenantId) {
-      setLoading(false);
-      return;
-    }
+  // useRpc로 데이터 로딩 통일
+  const { data: abcData, error: abcError, isLoading: abcLoading } = useRpc<any[]>(
+    'board_abc_by_sku',
+    tenantId ? {
+      p_tenant_id: tenantId,
+      p_from: '2025-01-01',
+      p_to: '2025-12-31',
+    } : null,
+    [tenantId]
+  );
+
+  const { data: reorderData, error: reorderError, isLoading: reorderLoading } = useRpc<any[]>(
+    'board_reorder_points',
+    tenantId ? {
+      p_tenant_id: tenantId,
+      p_from: '2025-01-01',
+      p_to: '2025-12-31',
+      p_lead_time: 7,
+      p_z_score: 1.65,
+    } : null,
+    [tenantId]
+  );
+
+  // 통합된 insights 데이터
+  const insights = useMemo(() => {
+    if (!tenantId) return null;
     
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        console.log('🔍 ABC분석 데이터 로드 시작:', tenantId);
-        
-        const response = await fetch(`/api/board/insights?from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&tenant_id=${tenantId}&t=${Date.now()}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        console.log('🔍 ABC분석 API 응답 상태:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 400) {
-            console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
-            setInsights({
-              ok: true,
-              abcAnalysis: [],
-              topSkus: [],
-              categoryAnalysis: []
-            });
-            return;
-          }
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const json = await response.json();
-        console.log('🔍 ABC분석 API 응답 데이터:', {
-          ok: json.ok,
-          abc: json.abc?.length || 0,
-          reorder: json.reorder?.length || 0
-        });
-        
-        setInsights(json);
-      } catch (err) {
-        console.error('데이터 로드 에러:', err);
-        setInsights({
-          ok: true,
-          abcAnalysis: [],
-          topSkus: [],
-          categoryAnalysis: []
-        });
-      } finally {
-        setLoading(false);
-      }
+    return {
+      ok: true,
+      abcAnalysis: abcData || [],
+      topSkus: [], // TODO: 별도 RPC 함수 필요
+      categoryAnalysis: [], // TODO: 별도 RPC 함수 필요
+      reorder: reorderData || [],
     };
-    loadData();
-  }, [tenantId]);
+  }, [tenantId, abcData, reorderData]);
+
+  const error = abcError || reorderError;
+  const loading = abcLoading || reorderLoading;
 
   // 조회 버튼 핸들러
   const handleApplyFilters = () => {
@@ -116,9 +93,9 @@ export default function ABCAnalysisPage() {
 
   // ABC 데이터 필터링
   const filteredABC = useMemo(() => {
-    if (!insights?.abc) return [];
+    if (!insights?.abcAnalysis) return [];
     
-    return insights.abc.filter((item: any) => {
+    return insights.abcAnalysis.filter((item: any) => {
       if (appliedFilters.region && item.region !== appliedFilters.region) return false;
       if (appliedFilters.channel && item.channel !== appliedFilters.channel) return false;
       if (appliedFilters.category && item.category !== appliedFilters.category) return false;
@@ -128,7 +105,7 @@ export default function ABCAnalysisPage() {
 
   // ABC 그룹별 통계
   const abcStats = useMemo(() => {
-    const groups = { A: [], B: [], C: [] };
+    const groups: { A: any[], B: any[], C: any[] } = { A: [], B: [], C: [] };
     filteredABC.forEach((item: any) => {
       if (groups[item.grade as keyof typeof groups]) {
         groups[item.grade as keyof typeof groups].push(item);
@@ -195,18 +172,18 @@ export default function ABCAnalysisPage() {
               },
               generateLabels: function(chart) {
                 const data = chart.data;
-                if (data.labels.length && data.datasets.length) {
-                  return data.labels.map((label, i) => {
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: any, i: number) => {
                     const dataset = data.datasets[0];
-                    const value = dataset.data[i];
-                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                    const value = dataset.data[i] as number;
+                    const total = (dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
                     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                     
                     return {
                       text: `${label}: ${value.toLocaleString()}원 (${percentage}%)`,
-                      fillStyle: dataset.backgroundColor[i],
-                      strokeStyle: dataset.borderColor,
-                      lineWidth: dataset.borderWidth,
+                      fillStyle: (dataset.backgroundColor as any[])[i],
+                      strokeStyle: Array.isArray(dataset.borderColor) ? (dataset.borderColor as any[])[i] : (dataset.borderColor as string),
+                      lineWidth: dataset.borderWidth as number,
                       hidden: false,
                       index: i
                     };
@@ -269,7 +246,11 @@ export default function ABCAnalysisPage() {
 
     // 3. 파레토 차트 (누적 매출 비중)
     const sortedABC = [...filteredABC].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0));
-    const cumulativeData = [];
+    const cumulativeData: Array<{
+      sku: string;
+      revenue: number;
+      cumulative: string;
+    }> = [];
     let cumulative = 0;
     const totalRevenue = sortedABC.reduce((sum, item) => sum + Number(item.revenue || 0), 0);
     
@@ -301,7 +282,7 @@ export default function ABCAnalysisPage() {
             label: '누적 비중 (%)',
             data: top20.map((_, index) => {
               const cumulative = top20.slice(0, index + 1).reduce((sum, item) => sum + Number(item.revenue || 0), 0);
-              return (cumulative / totalRevenue * 100).toFixed(1);
+              return Number((cumulative / totalRevenue * 100).toFixed(1));
             }),
             type: 'line',
             borderColor: '#ff6b6b',

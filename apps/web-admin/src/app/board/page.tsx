@@ -5,7 +5,7 @@ import useSWR from "swr";
 import ErrorBanner from "@/components/ErrorBanner";
 import { ensureChart, lineConfig, barConfig, scatterConfig, doughnutConfig, scatterWithTrendConfig } from "@/lib/charts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useIngestSync } from '@/lib/useIngestSync';
+import { useRpc } from '@/lib/useRpc';
 
 const arr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -53,8 +53,7 @@ export default function BoardPage() {
   const [tenantId, setTenantId] = useState<string>("");
   const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
   
-  // 실시간 동기화 활성화
-  useIngestSync(tenantId);
+  // 실시간 동기화는 전역 IngestBridge에서 처리
   const [from, setFrom] = useState<string>(getDateRange("1week").from);
   const [to, setTo] = useState<string>(getDateRange("1week").to);
   const [period, setPeriod] = useState<string>("1week"); // 기간 선택 상태 추가 (기본값: 1주일)
@@ -213,60 +212,91 @@ export default function BoardPage() {
     errorRetryCount: 0
   });
 
-  const { data, error, isLoading, mutate } = useSWR(
-    swrKey,
-    async ([, t, f, to_, rg, ch, ca, s]) => {
-      if (!t) return null; // tenantId가 없으면 null 반환
-      try {
-        const qs = new URLSearchParams({ from: f, to: to_, tenant_id: t });
-        if (rg) qs.set("region", rg);
-        if (ch) qs.set("channel", ch);
-        if (ca) qs.set("category", ca);
-        if (s)  qs.set("sku", s);
-        const url = `/api/board/charts?${qs.toString()}`;
-        const res = await fetch(url, { headers: { "x-tenant-id": t } });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        
-        const json = await res.json();
-        
-        // 디버깅 로그 추가
-        console.log('📊 Board 데이터 로드:', {
-          tempVsSales: json?.tempVsSales?.length || 0,
-          spendRevDaily: json?.spendRevDaily?.length || 0,
-          salesDaily: json?.salesDaily?.length || 0,
-          tenantId: t,
-          url
-        });
-        
-        return {
-          ok: !!json?.ok,
-          salesDaily: arr(json?.salesDaily),
-          roasByChannel: arr(json?.roasByChannel),
-          topCategories: arr(json?.topCategories),
-          topRegions: arr(json?.topRegions),
-          topSkus: arr(json?.topSkus),
-          cumulativeRevenue: arr(json?.cumulativeRevenue),
-          tempVsSales: arr(json?.tempVsSales),
-          spendRevDaily: arr(json?.spendRevDaily),
-        };
-      } catch (err) {
-        console.error("❌ API 요청 실패:", err);
-        throw err;
-      }
-    },
+  // useRpc로 데이터 로딩 통일
+  const { data: salesDaily, error: salesError, isLoading: salesLoading } = useRpc<any[]>(
+    'board_sales_daily',
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-      dedupingInterval: 15000,
-      keepPreviousData: true,
-      shouldRetryOnError: false,
-      errorRetryCount: 0,
-    }
+      p_from: from || null,
+      p_to: to || null,
+      p_region: appliedFilters.region ? [appliedFilters.region] : null,
+      p_channel: appliedFilters.channel ? [appliedFilters.channel] : null,
+      p_category: appliedFilters.category ? [appliedFilters.category] : null,
+      p_sku: appliedFilters.sku ? [appliedFilters.sku] : null,
+    },
+    [tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku]
   );
+
+  const { data: roasByChannel, error: roasError, isLoading: roasLoading } = useRpc<any[]>(
+    'board_roas_by_channel',
+    {
+      p_from: from || null,
+      p_to: to || null,
+      p_region: appliedFilters.region ? [appliedFilters.region] : null,
+      p_channel: appliedFilters.channel ? [appliedFilters.channel] : null,
+      p_category: appliedFilters.category ? [appliedFilters.category] : null,
+      p_sku: appliedFilters.sku ? [appliedFilters.sku] : null,
+    },
+    [tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku]
+  );
+
+  const { data: topCategories, error: categoriesError, isLoading: categoriesLoading } = useRpc<any[]>(
+    'board_top_categories',
+    {
+      p_from: from || null,
+      p_to: to || null,
+      p_region: appliedFilters.region ? [appliedFilters.region] : null,
+      p_channel: appliedFilters.channel ? [appliedFilters.channel] : null,
+      p_category: appliedFilters.category ? [appliedFilters.category] : null,
+      p_sku: appliedFilters.sku ? [appliedFilters.sku] : null,
+    },
+    [tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku]
+  );
+
+  const { data: topRegions, error: regionsError, isLoading: regionsLoading } = useRpc<any[]>(
+    'board_top_regions',
+    {
+      p_from: from || null,
+      p_to: to || null,
+      p_region: appliedFilters.region ? [appliedFilters.region] : null,
+      p_channel: appliedFilters.channel ? [appliedFilters.channel] : null,
+      p_category: appliedFilters.category ? [appliedFilters.category] : null,
+      p_sku: appliedFilters.sku ? [appliedFilters.sku] : null,
+    },
+    [tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku]
+  );
+
+  const { data: topSkus, error: skusError, isLoading: skusLoading } = useRpc<any[]>(
+    'board_top_skus',
+    {
+      p_from: from || null,
+      p_to: to || null,
+      p_region: appliedFilters.region ? [appliedFilters.region] : null,
+      p_channel: appliedFilters.channel ? [appliedFilters.channel] : null,
+      p_category: appliedFilters.category ? [appliedFilters.category] : null,
+      p_sku: appliedFilters.sku ? [appliedFilters.sku] : null,
+    },
+    [tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku]
+  );
+
+  // 통합된 데이터 객체
+  const data = useMemo(() => {
+    if (!tenantId) return null;
+    
+    return {
+      ok: true,
+      salesDaily: arr(salesDaily),
+      roasByChannel: arr(roasByChannel),
+      topCategories: arr(topCategories),
+      topRegions: arr(topRegions),
+      topSkus: arr(topSkus),
+      cumulativeRevenue: [], // TODO: RPC 함수 필요
+      tempVsSales: [], // TODO: RPC 함수 필요
+      spendRevDaily: [], // TODO: RPC 함수 필요
+    };
+  }, [tenantId, salesDaily, roasByChannel, topCategories, topRegions, topSkus]);
+
+  const error = salesError || roasError || categoriesError || regionsError || skusError;
+  const isLoading = salesLoading || roasLoading || categoriesLoading || regionsLoading || skusLoading;
 
   useEffect(() => {
     if (error) {
@@ -604,18 +634,10 @@ export default function BoardPage() {
         setIsUploading(false);
         setUploadProgress(0);
         
-        // 성공 모달 표시
-        const confirmed = confirm(`🎉 업로드 성공!\n\n처리된 행 수: ${json.inserted || json.rows_processed || '처리됨'}행\n\n잠시 후 바로 반영됩니다.\n\n확인을 누르면 페이지가 새로고침됩니다.`);
+        // 팝업 제거: 실시간 신호만 믿는 구조로 단순화
+        setIngestMsg(`🎉 머지 완료! 데이터 갱신 중...`);
         
-        if (confirmed) {
-          // 즉시 강제 리디렉션
-          window.location.reload();
-        } else {
-          // 5초 후 자동 리디렉션
-          setTimeout(() => {
-            window.location.reload();
-          }, 5000);
-        }
+        // 아무 것도 하지 않음: 전역 브리지(useIngestSync)가 이미 invalidate+refresh 실행
       }, 2000);
       
     } catch (e: any) {
@@ -1004,7 +1026,7 @@ export default function BoardPage() {
                     <div className="flex-1">
                       <div className="text-sm font-medium text-blue-900 mb-2">날씨가 판매에 미치는 영향</div>
                       <div className="text-xs text-blue-700">
-                        {data?.tempVsSales?.length >= 30 ? (
+                        {data?.tempVsSales?.length && data.tempVsSales.length >= 30 ? (
                           (() => {
                             const tempData = arr(data.tempVsSales);
                             const tempReg = insights?.tempReg;
@@ -1059,7 +1081,7 @@ export default function BoardPage() {
                     <div className="flex-1">
                       <div className="text-sm font-medium text-green-900 mb-2">마케팅 비용의 효과</div>
                       <div className="text-xs text-green-700">
-                        {data?.spendRevDaily?.length >= 14 ? (
+                        {data?.spendRevDaily?.length && data.spendRevDaily.length >= 14 ? (
                           (() => {
                             const spendData = arr(data.spendRevDaily);
                             const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
@@ -1116,7 +1138,7 @@ export default function BoardPage() {
                     <div className="flex-1">
                       <div className="text-sm font-medium text-purple-900 mb-2">특별 요인 및 이벤트 영향</div>
                       <div className="text-xs text-purple-700">
-                        {data?.salesDaily?.length >= 7 ? (
+                        {data?.salesDaily?.length && data.salesDaily.length >= 7 ? (
                           (() => {
                             const salesData = arr(data.salesDaily);
                             const revenues = salesData.map((item: any) => Number(item.revenue || 0));
@@ -1185,7 +1207,7 @@ export default function BoardPage() {
               <canvas id="chart-temp-vs-sales" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.tempVsSales?.length > 0 ? (
+              {data?.tempVsSales?.length && data.tempVsSales.length > 0 ? (
                 (() => {
                   const tempData = arr(data.tempVsSales);
                   const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.tavg || 0), 0) / tempData.length;
@@ -1210,7 +1232,7 @@ export default function BoardPage() {
               <canvas id="chart-spend-vs-rev" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.spendRevDaily?.length > 0 ? (
+              {data?.spendRevDaily?.length && data.spendRevDaily.length > 0 ? (
                 (() => {
                   const spendData = arr(data.spendRevDaily);
                   const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
@@ -1239,7 +1261,7 @@ export default function BoardPage() {
               <canvas id="chart-sales-by-date" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.salesDaily?.length > 0 ? (
+              {data?.salesDaily?.length && data.salesDaily.length > 0 ? (
                 (() => {
                   const sales = arr(data.salesDaily);
                   const totalRevenue = sales.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -1266,7 +1288,7 @@ export default function BoardPage() {
               <canvas id="chart-roas-by-channel" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.roasByChannel?.length > 0 ? (
+              {data?.roasByChannel?.length && data.roasByChannel.length > 0 ? (
                 (() => {
                   const channels = arr(data.roasByChannel);
                   const bestChannel = channels.reduce((best: any, item: any) => 
@@ -1300,7 +1322,7 @@ export default function BoardPage() {
               <canvas id="chart-cum-revenue" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.cumulativeRevenue?.length > 0 ? (
+              {data?.cumulativeRevenue?.length && data.cumulativeRevenue.length > 0 ? (
                 (() => {
                   const cumData = arr(data.cumulativeRevenue);
                   const totalCum = cumData[cumData.length - 1]?.cum_revenue || 0;
@@ -1318,7 +1340,7 @@ export default function BoardPage() {
               <canvas id="chart-top-categories" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topCategories?.length > 0 ? (
+              {data?.topCategories?.length && data.topCategories.length > 0 ? (
                 (() => {
                   const categories = arr(data.topCategories);
                   const total = categories.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -1336,7 +1358,7 @@ export default function BoardPage() {
               <canvas id="chart-top-regions" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topRegions?.length > 0 ? (
+              {data?.topRegions?.length && data.topRegions.length > 0 ? (
                 (() => {
                   const regions = arr(data.topRegions);
                   const total = regions.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -1354,7 +1376,7 @@ export default function BoardPage() {
               <canvas id="chart-top-skus" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topSkus?.length > 0 ? (
+              {data?.topSkus?.length && data.topSkus.length > 0 ? (
                 (() => {
                   const skus = arr(data.topSkus);
                   const total = skus.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);

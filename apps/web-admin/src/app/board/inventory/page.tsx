@@ -4,17 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorBanner from '@/components/ErrorBanner';
 import { ensureChart, barConfig, lineConfig } from '@/lib/charts';
-import { useIngestSync } from '@/lib/useIngestSync';
+import { useRpc } from '@/lib/useRpc';
 
 export default function InventoryAnalysisPage() {
   const router = useRouter();
   const [errMsg, setErrMsg] = useState('');
-  const [insights, setInsights] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [tenantId, setTenantId] = useState<string>('');
   
-  // 실시간 동기화 활성화
-  useIngestSync(tenantId);
+  // 실시간 동기화는 전역 IngestBridge에서 처리
 
   // 필터 상태
   const [region, setRegion] = useState('');
@@ -46,119 +43,55 @@ export default function InventoryAnalysisPage() {
     loadTenantId();
   }, []);
 
-  // 데이터 로드
-  useEffect(() => {
-    if (!tenantId) {
-      setLoading(false);
-      return;
-    }
+  // useRpc로 데이터 로딩 통일
+  const { data: reorderData, error: reorderError, isLoading: reorderLoading } = useRpc<any[]>(
+    'board_reorder_points',
+    tenantId ? {
+      p_tenant_id: tenantId,
+      p_from: '2025-01-01',
+      p_to: '2025-12-31',
+      p_lead_time: 7,
+      p_z_score: 1.65,
+    } : null,
+    [tenantId]
+  );
+
+  const { data: eolData, error: eolError, isLoading: eolLoading } = useRpc<any[]>(
+    'board_eol_candidates',
+    tenantId ? {
+      p_tenant_id: tenantId,
+      p_from: '2025-01-01',
+      p_limit: 100,
+    } : null,
+    [tenantId]
+  );
+
+  // 통합된 insights 데이터
+  const insights = useMemo(() => {
+    if (!tenantId) return null;
     
-    // 리셋 후에는 데이터 로딩을 하지 않음 (주석 처리)
-    // if (insights && insights.reorder && insights.reorder.length === 0) {
-    //   console.log('🔍 이미 빈 데이터 상태 - 추가 로딩 차단');
-    //   setLoading(false);
-    //   return;
-    // }
-    
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        console.log('🔍 재고분석 데이터 로드 시작:', tenantId);
-        
-        // 캐시 무효화를 위해 timestamp 추가
-        const response = await fetch(`/api/board/insights?tenant_id=${tenantId}&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65&t=${Date.now()}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        console.log('🔍 재고분석 API 응답 상태:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 400) {
-            console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
-            setInsights({
-              ok: true,
-              inventoryAnalysis: [],
-              stockLevels: [],
-              turnoverAnalysis: [],
-              reorder: [],
-              eol: [],
-              inventoryStats: {
-                totalStockValue: 0,
-                totalStockLevel: 0,
-                avgStockLevel: 0,
-                validStockItems: 0,
-                urgent: 0,
-                review: 0,
-                stable: 0,
-                eol: 0
-              }
-            });
-            return;
-          }
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const json = await response.json();
-        console.log('🔍 재고분석 API 응답 데이터:', {
-          ok: json.ok,
-          reorder: json.reorder?.length || 0,
-          inventoryStats: json.inventoryStats
-        });
-        
-        // 데이터가 비어있는지 확인하고 빈 상태로 설정
-        if (!json.reorder || json.reorder.length === 0) {
-          console.log('🔍 데이터 없음 - 빈 상태로 설정');
-          setInsights({
-            ok: true,
-            inventoryAnalysis: [],
-            stockLevels: [],
-            turnoverAnalysis: [],
-            reorder: [],
-            eol: [],
-            inventoryStats: {
-              totalStockValue: 0,
-              totalStockLevel: 0,
-              avgStockLevel: 0,
-              validStockItems: 0,
-              urgent: 0,
-              review: 0,
-              stable: 0,
-              eol: 0
-            }
-          });
-        } else {
-          setInsights(json);
-        }
-      } catch (err) {
-        console.error('데이터 로드 에러:', err);
-        setInsights({
-          ok: true,
-          inventoryAnalysis: [],
-          stockLevels: [],
-          turnoverAnalysis: [],
-          reorder: [],
-          eol: [],
-          inventoryStats: {
-            totalStockValue: 0,
-            totalStockLevel: 0,
-            avgStockLevel: 0,
-            validStockItems: 0,
-            urgent: 0,
-            review: 0,
-            stable: 0,
-            eol: 0
-          }
-        });
-      } finally {
-        setLoading(false);
+    return {
+      ok: true,
+      inventoryAnalysis: [], // TODO: 별도 RPC 함수 필요
+      stockLevels: [], // TODO: 별도 RPC 함수 필요
+      turnoverAnalysis: [], // TODO: 별도 RPC 함수 필요
+      reorder: reorderData || [],
+      eol: eolData || [],
+      inventoryStats: {
+        totalStockValue: 0,
+        totalStockLevel: 0,
+        avgStockLevel: 0,
+        validStockItems: 0,
+        urgent: 0,
+        review: 0,
+        stable: 0,
+        eol: 0
       }
     };
-    loadData();
-  }, [tenantId]);
+  }, [tenantId, reorderData, eolData]);
+
+  const error = reorderError || eolError;
+  const loading = reorderLoading || eolLoading;
 
   // 조회 버튼 핸들러
   const handleApplyFilters = () => {
@@ -184,7 +117,6 @@ export default function InventoryAnalysisPage() {
 
     try {
       setErrMsg("");
-      setLoading(true);
       
       // 새로운 강력한 리셋 API 사용
       const { handleReset } = await import('@/lib/strongReset');
@@ -192,7 +124,6 @@ export default function InventoryAnalysisPage() {
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "강제 리셋 오류");
-      setLoading(false);
     }
   };
 

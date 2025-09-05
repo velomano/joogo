@@ -1,63 +1,73 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { getSupabaseBrowser } from './supabaseBrowser';
+import { bumpVersion } from './versionStore';
 import { strongClientReset } from './strongReset';
 import { useRouter } from 'next/navigation';
-import { bumpVersion } from './versionStore';
 
-const chMap: Record<string, boolean> = {}; // tenant별 중복 구독 방지
+let channels: { jobs?: any; ver?: any } = {};
 
-export function useIngestSync(tenantId: string, opts?: { charts?: Record<string, any> }) {
-  const router = useRouter();
+export function useIngestSync(tenantId: string) {
   const supa = getSupabaseBrowser();
-  const onceRef = useRef(false);
+  const router = useRouter();
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!tenantId) return;
-    if (chMap[tenantId]) return; // 이미 구독 중
-    chMap[tenantId] = true;
+    if (!tenantId || startedRef.current) return;
+    startedRef.current = true;
 
-    console.log('🔄 실시간 동기화 시작:', tenantId);
+    let cancelled = false;
+    (async () => {
+      // ✅ 세션 대기 (로그인되어 있으면 access_token 부착됨)
+      const { data: { session } } = await supa.auth.getSession();
 
-    const jobs = supa.channel(`jobs:${tenantId}`)
-      .on('postgres_changes', {
-        event: '*', schema: 'analytics', table: 'ingest_jobs',
-        filter: `tenant_id=eq.${tenantId}`
-      }, async (payload) => {
-        const row: any = payload.new || payload.old || {};
-        console.log('📊 ingest_jobs 이벤트:', row);
-        if (row.status === 'merged') await invalidateAll();
-      }).subscribe();
+      // DEV 폴백: 세션이 없고 환경이 개발이면 그냥 진행 (RLS는 폴백 정책으로 허용)
+      if (!session && process.env.NEXT_PUBLIC_DEV_REALTIME_FALLBACK !== 'true') {
+        console.warn('[ingest] no auth session; realtime subscribe skipped');
+        return;
+      }
+      if (cancelled) return;
 
-    const ver = supa.channel(`ver:${tenantId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'analytics', table: 'data_version',
-        filter: `tenant_id=eq.${tenantId}`
-      }, async () => { 
-        console.log('📊 data_version 이벤트');
-        await invalidateAll(); 
-      }).subscribe();
+      console.log('[ingest] Starting subscription for tenant:', tenantId);
 
-    async function invalidateAll() {
-      console.log('🔄 전 페이지 무효화 시작');
-      
-      // 전역 버전 증가 → 모든 SWR 키 재계산
-      bumpVersion();
-      
-      // 차트/스토리지/캐시 정리
-      await strongClientReset({ charts: opts?.charts });
-      
-      // RSC 재실행
-      router.refresh();
-      
-      console.log('✅ 전 페이지 무효화 완료');
-    }
+      channels.jobs = supa.channel(`jobs:${tenantId}`)
+        .on('postgres_changes', {
+          event: '*', schema: 'analytics', table: 'ingest_jobs', filter: `tenant_id=eq.${tenantId}`
+        }, async (payload) => {
+          const row: any = payload.new || payload.old || {};
+          console.log('📊 ingest_jobs 이벤트:', row);
+          if (row.status === 'merged') {
+            console.log('[ingest] merged received → invalidate');
+            bumpVersion();
+            await strongClientReset({});
+            router.refresh();
+          }
+        }).subscribe();
 
+      channels.ver = supa.channel(`ver:${tenantId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'analytics', table: 'data_version', filter: `tenant_id=eq.${tenantId}`
+        }, async (payload) => {
+          console.log('[ingest] data_version 이벤트:', payload);
+          bumpVersion();
+          await strongClientReset({});
+          router.refresh();
+        }).subscribe();
+    })();
+
+    const off = () => {
+      if (channels.jobs) supa.removeChannel(channels.jobs);
+      if (channels.ver) supa.removeChannel(channels.ver);
+      channels = {};
+      startedRef.current = false;
+    };
+    // StrictMode 대응: 언마운트 즉시 해제하지 않고 페이지 종료 시 해제
+    window.addEventListener('pagehide', off);
+    window.addEventListener('beforeunload', off);
     return () => {
-      console.log('🔄 실시간 동기화 종료');
-      supa.removeChannel(jobs);
-      supa.removeChannel(ver);
-      delete chMap[tenantId];
+      cancelled = true;
+      window.removeEventListener('pagehide', off);
+      window.removeEventListener('beforeunload', off);
     };
   }, [tenantId]);
 }

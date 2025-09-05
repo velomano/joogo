@@ -1,19 +1,27 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import IngestBridge from './ingest-bridge';
 
 export const metadata: Metadata = {
   title: 'Joogo WMS/OMS',
   description: 'Warehouse Management System and Order Management System',
 };
 
-export default function RootLayout({
+async function getTenantIdFromServer(): Promise<string> {
+  // 개발용 고정 테넌트 ID 사용
+  return '00000000-0000-0000-0000-000000000001';
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const tenantId = await getTenantIdFromServer();
   return (
     <html lang="ko">
       <body className="min-h-screen bg-gray-50">
+        <IngestBridge tenantId={tenantId} />
         {/* Modern Navigation Bar */}
         <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
