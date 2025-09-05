@@ -74,7 +74,31 @@ export default function InventoryAnalysisPage() {
           throw new Error(`HTTP ${response.status}`);
         }
         const json = await response.json();
-        setInsights(json);
+        
+        // 데이터가 비어있는지 확인하고 빈 상태로 설정
+        if (!json.reorder || json.reorder.length === 0) {
+          console.log('🔍 데이터 없음 - 빈 상태로 설정');
+          setInsights({
+            ok: true,
+            inventoryAnalysis: [],
+            stockLevels: [],
+            turnoverAnalysis: [],
+            reorder: [],
+            eol: [],
+            inventoryStats: {
+              totalStockValue: 0,
+              totalStockLevel: 0,
+              avgStockLevel: 0,
+              validStockItems: 0,
+              urgent: 0,
+              review: 0,
+              stable: 0,
+              eol: 0
+            }
+          });
+        } else {
+          setInsights(json);
+        }
       } catch (err) {
         console.error('데이터 로드 에러:', err);
         setInsights({
@@ -219,7 +243,16 @@ export default function InventoryAnalysisPage() {
 
   // 기본 재고 통계 정보 계산
   const calculateInventoryStats = (data: any) => {
-    if (!data) return null;
+    if (!data || !data.reorder || data.reorder.length === 0) {
+      console.log('🔍 데이터 없음 - 빈 통계 반환');
+      return {
+        totalSkus: 0,
+        totalStockValue: 0,
+        avgStockLevel: 0,
+        avgDailySales: 0,
+        turnoverRate: 0
+      };
+    }
     
     const reorderData = data.reorder || [];
     const inventoryStats = data.inventoryStats || {};
