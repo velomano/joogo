@@ -113,15 +113,8 @@ export default function SalesAnalysisPage() {
     if (!data) return null;
     
     const salesDaily = data.salesDaily || [];
-    console.log('🔍 Debug - salesDaily data:', salesDaily);
-    console.log('🔍 Debug - first item:', salesDaily[0]);
-    console.log('🔍 Debug - first item keys:', Object.keys(salesDaily[0] || {}));
-    console.log('🔍 Debug - first item qty value:', salesDaily[0]?.qty);
-    
     const totalRevenue = salesDaily.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
     const totalQuantity = salesDaily.reduce((sum: number, item: any) => sum + Number(item.qty || 0), 0);
-    
-    console.log('🔍 Debug - totalQuantity:', totalQuantity);
     const totalOrders = salesDaily.reduce((sum: number, item: any) => sum + Number(item.orders || 0), 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     

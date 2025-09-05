@@ -105,7 +105,6 @@ export async function GET(req: NextRequest) {
       inventoryStats,         // totalStockValue, avgStockLevel, validStockItems
     };
 
-    console.log('🔍 재고 통계 계산 결과:', inventoryStats);
 
     return NextResponse.json(payload);
   } catch (e: any) {

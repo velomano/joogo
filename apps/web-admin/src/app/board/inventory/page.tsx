@@ -29,9 +29,6 @@ export default function InventoryAnalysisPage() {
         const response = await fetch('/api/board/insights?tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
-        console.log('🔍 재고 분석 API 응답:', json);
-        console.log('🔍 reorder 데이터:', json?.reorder?.length || 0);
-        console.log('🔍 eol 데이터:', json?.eol?.length || 0);
         setInsights(json);
       } catch (err) {
         setErrMsg(`데이터 로드 실패: ${err}`);
