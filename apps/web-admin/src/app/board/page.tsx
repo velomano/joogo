@@ -49,7 +49,7 @@ const getDateRange = (period: string) => {
 };
 
 export default function BoardPage() {
-  const [tenantId, setTenantId] = useState<string>("00000000-0000-0000-0000-000000000000");
+  const [tenantId, setTenantId] = useState<string>("");
   const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
   const [from, setFrom] = useState<string>(getDateRange("1week").from);
   const [to, setTo] = useState<string>(getDateRange("1week").to);
@@ -87,9 +87,10 @@ export default function BoardPage() {
           // 첫 번째 테넌트를 자동 선택
           if (json.tenants && json.tenants.length > 0) {
             setTenantId(json.tenants[0].id);
+            setIngestMsg("");
           } else {
             // 테넌트가 없으면 안내 메시지 표시
-            setIngestMsg("데이터를 업로드하면 테넌트가 자동으로 생성됩니다.");
+            setIngestMsg("📁 CSV 파일을 업로드하여 데이터를 분석하세요. 테넌트가 자동으로 생성됩니다.");
           }
         }
       } catch (err) {
@@ -837,7 +838,41 @@ export default function BoardPage() {
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 p-4 overflow-y-auto">
 
-                    {/* 데이터 상태 카드 */}
+                    {/* 데이터 상태 표시 */}
+            {!tenantId ? (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                  <span className="text-sm font-medium text-blue-700">데이터 없음</span>
+                </div>
+                <div className="mt-2 text-xs text-blue-600">
+                  CSV 파일을 업로드하여 데이터를 분석하세요. 테넌트가 자동으로 생성됩니다.
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) ? '데이터 있음' : '데이터 없음'}
+                    </span>
+                  </div>
+                  {(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) && (
+                    <div className="text-xs text-gray-500">
+                      {status?.sales?.days || 0}일 | {new Date().toLocaleString('ko-KR')}
+                    </div>
+                  )}
+                </div>
+                {!(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) && (
+                  <div className="mt-2 text-xs text-gray-600">
+                    CSV 파일을 업로드하여 데이터를 분석하세요.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 데이터 상태 카드 */}
             <div className="grid md:grid-cols-4 gap-3 mb-4">
               <div className="rounded-2xl border bg-white shadow-sm p-4">
                 <div className="text-xs text-gray-500 mb-1">📊 총 매출</div>

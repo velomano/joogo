@@ -5,17 +5,23 @@ import { supaAdmin } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
   try {
-    // 기본 테넌트 ID 반환 (데이터가 없을 때)
-    // 실제 데이터가 업로드되면 테넌트 목록이 표시됨
+    // 실제 데이터베이스에서 테넌트 목록 조회
+    const { data: tenants, error } = await supaAdmin
+      .from('tenants')
+      .select('id, name, created_at')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Tenants fetch error:', error);
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Failed to fetch tenants' 
+      }, { status: 500 });
+    }
+    
     return NextResponse.json({
       ok: true,
-      tenants: [
-        {
-          id: "00000000-0000-0000-0000-000000000000",
-          name: "Default Tenant",
-          is_default: true
-        }
-      ]
+      tenants: tenants || []
     });
 
   } catch (e: any) {

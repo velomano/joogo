@@ -32,11 +32,11 @@ export default function ABCAnalysisPage() {
         if (json.tenants && json.tenants.length > 0) {
           setTenantId(json.tenants[0].id);
         } else {
-          setTenantId('00000000-0000-0000-0000-000000000000');
+          setTenantId('');
         }
       } catch (err) {
         console.error('Tenant ID 로드 실패:', err);
-        setTenantId('00000000-0000-0000-0000-000000000000');
+        setTenantId('');
       }
     };
     loadTenantId();
