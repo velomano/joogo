@@ -49,7 +49,7 @@ const getDateRange = (period: string) => {
 };
 
 export default function BoardPage() {
-  const [tenantId, setTenantId] = useState<string>("");
+  const [tenantId, setTenantId] = useState<string>("00000000-0000-0000-0000-000000000000");
   const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
   const [from, setFrom] = useState<string>(getDateRange("1week").from);
   const [to, setTo] = useState<string>(getDateRange("1week").to);

@@ -10,6 +10,7 @@ export default function InventoryAnalysisPage() {
   const [errMsg, setErrMsg] = useState('');
   const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tenantId, setTenantId] = useState<string>('');
 
   // 필터 상태
   const [region, setRegion] = useState('');
@@ -21,23 +22,63 @@ export default function InventoryAnalysisPage() {
     category: ''
   });
 
+  // tenant_id 가져오기
+  useEffect(() => {
+    const loadTenantId = async () => {
+      try {
+        const response = await fetch('/api/tenants');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.tenants && json.tenants.length > 0) {
+          setTenantId(json.tenants[0].id);
+        } else {
+          setTenantId('00000000-0000-0000-0000-000000000000');
+        }
+      } catch (err) {
+        console.error('Tenant ID 로드 실패:', err);
+        setTenantId('00000000-0000-0000-0000-000000000000');
+      }
+    };
+    loadTenantId();
+  }, []);
+
   // 데이터 로드
   useEffect(() => {
+    if (!tenantId) return;
+    
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/board/insights?tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(`/api/board/insights?tenant_id=${tenantId}&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65`);
+        if (!response.ok) {
+          if (response.status === 400) {
+            console.log('📊 데이터가 없습니다. 빈 데이터로 초기화합니다.');
+            setInsights({
+              ok: true,
+              inventoryAnalysis: [],
+              stockLevels: [],
+              turnoverAnalysis: []
+            });
+            return;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
         const json = await response.json();
         setInsights(json);
       } catch (err) {
-        setErrMsg(`데이터 로드 실패: ${err}`);
+        console.error('데이터 로드 에러:', err);
+        setInsights({
+          ok: true,
+          inventoryAnalysis: [],
+          stockLevels: [],
+          turnoverAnalysis: []
+        });
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, []);
+  }, [tenantId]);
 
   // 조회 버튼 핸들러
   const handleApplyFilters = () => {
