@@ -473,6 +473,28 @@ export default function SalesAnalysisPage() {
           </div>
         </div>
 
+        {/* 데이터 상태 표시 */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${(data?.salesDaily?.length || 0) > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+              <span className="text-sm font-medium text-gray-700">
+                {(data?.salesDaily?.length || 0) > 0 ? '데이터 있음' : '데이터 없음'}
+              </span>
+            </div>
+            {(data?.salesDaily?.length || 0) > 0 && (
+              <div className="text-xs text-gray-500">
+                {data?.salesDaily?.length || 0}행 | {new Date().toLocaleString('ko-KR')}
+              </div>
+            )}
+          </div>
+          {(data?.salesDaily?.length || 0) === 0 && (
+            <div className="mt-2 text-xs text-gray-600">
+              메인 페이지에서 CSV 파일을 업로드하여 데이터를 분석하세요.
+            </div>
+          )}
+        </div>
+
         {/* 기본 통계 정보 */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
