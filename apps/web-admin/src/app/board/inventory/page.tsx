@@ -129,6 +129,26 @@ export default function InventoryAnalysisPage() {
 
       alert(`✅ 강제 리셋 완료: ${json.deleted_rows}행 삭제됨\n\n페이지를 새로고침합니다.`);
       
+      // 데이터 강제 초기화
+      setInsights({
+        ok: true,
+        inventoryAnalysis: [],
+        stockLevels: [],
+        turnoverAnalysis: [],
+        reorder: [],
+        eol: [],
+        inventoryStats: {
+          totalStockValue: 0,
+          totalStockLevel: 0,
+          avgStockLevel: 0,
+          validStockItems: 0,
+          urgent: 0,
+          review: 0,
+          stable: 0,
+          eol: 0
+        }
+      });
+      
       // 강제 새로고침
       setTimeout(() => {
         window.location.reload();
