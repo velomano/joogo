@@ -6,7 +6,7 @@ import { supaAdmin } from "@/lib/supabase/server";
 export async function GET(req: NextRequest) {
   try {
     // 실제 데이터베이스에서 테넌트 목록 조회
-    const { data: tenants, error } = await supaAdmin
+    const { data: tenants, error } = await supaAdmin()
       .from('tenants')
       .select('id, name, created_at')
       .order('created_at', { ascending: false });
