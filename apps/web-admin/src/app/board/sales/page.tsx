@@ -54,7 +54,7 @@ export default function SalesAnalysisPage() {
       try {
         setLoading(true);
         const { from, to } = getDateRange(period);
-        const response = await fetch(`/api/board/charts?from=${from}&to=${to}&tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00`);
+        const response = await fetch(`/api/board/charts?from=${from}&to=${to}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
         console.log('🔍 Debug - API Response:', json);

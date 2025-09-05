@@ -7,12 +7,12 @@ import {
   OrderItem,
   OrderCsvRow,
 } from '@joogo/shared';
-import { MockOrderAdapter } from '../adapters/mock';
+// MockOrderAdapter 제거 - 실제 데이터만 사용
 
 export class OrdersService {
   private supabase;
   private logger: Logger;
-  private mockAdapter: MockOrderAdapter;
+  // Mock 어댑터 제거
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -25,7 +25,6 @@ export class OrdersService {
     }
     
     this.supabase = createClient(supabaseUrl, supabaseServiceKey);
-    this.mockAdapter = new MockOrderAdapter();
   }
 
   async importOrders(tenantId: string): Promise<{ imported: number; errors: string[] }> {
@@ -212,19 +211,10 @@ export class OrdersService {
     try {
       this.logger.info(`Starting order sync for tenant: ${tenantId}, channel: ${channel}`);
 
-      let synced = 0;
-
-      switch (channel) {
-        case 'mock':
-          synced = await this.mockAdapter.generateOrders(tenantId, since);
-          break;
-        default:
-          throw new Error(`Unsupported channel: ${channel}`);
-      }
-
-      this.logger.info(`Order sync completed: ${synced} orders synced`);
+      // Mock 데이터 생성 제거 - 실제 데이터만 사용
+      this.logger.warn(`Order sync not supported for channel: ${channel}. Only real data uploads are supported.`);
       
-      return { synced };
+      return { synced: 0 };
     } catch (error) {
       this.logger.error('Order sync error:', error);
       throw error;

@@ -26,7 +26,7 @@ export default function ABCAnalysisPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/board/insights?tenant_id=84949b3c-2cb7-4c42-b9f9-d1f37d371e00&from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65');
+        const response = await fetch('/api/board/insights?from=2025-01-01&to=2025-12-31&lead_time=7&z=1.65');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
         setInsights(json);

@@ -8,12 +8,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const arr = (v: any) => (Array.isArray(v) ? v : []);
 
-// 하드코딩된 테넌트 옵션들
-const TENANT_OPTIONS = [
-  { id: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00", name: "메인 테넌트 (샘플 데이터)" },
-  { id: "dev-tenant", name: "개발 테넌트" },
-  { id: "test-tenant", name: "테스트 테넌트" },
-];
+// 테넌트 옵션은 동적으로 데이터베이스에서 로드
 
 // 도시별 기상청 좌표
 const CITY = {
@@ -54,7 +49,8 @@ const getDateRange = (period: string) => {
 };
 
 export default function BoardPage() {
-  const [tenantId, setTenantId] = useState<string>("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
+  const [tenantId, setTenantId] = useState<string>("");
+  const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
   const [from, setFrom] = useState<string>(getDateRange("1week").from);
   const [to, setTo] = useState<string>(getDateRange("1week").to);
   const [period, setPeriod] = useState<string>("1week"); // 기간 선택 상태 추가 (기본값: 1주일)
@@ -62,7 +58,6 @@ export default function BoardPage() {
   const [ingestMsg, setIngestMsg] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [applyTick, setApplyTick] = useState(1);
-  const [customTenantId, setCustomTenantId] = useState<string>("");
   const [cityKey, setCityKey] = useState<keyof typeof CITY>("SEOUL");
   const [region, setRegion] = useState<string>("");
   const [channel, setChannel] = useState<string>("");
@@ -71,7 +66,7 @@ export default function BoardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState({
-    tenantId: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00",
+    tenantId: "",
     from: getDateRange("1week").from,
     to: getDateRange("1week").to,
     region: "",
@@ -79,6 +74,28 @@ export default function BoardPage() {
     category: "",
     sku: ""
   });
+
+  // 테넌트 목록 로드
+  useEffect(() => {
+    const loadTenants = async () => {
+      try {
+        const response = await fetch('/api/tenants');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.ok) {
+          setTenants(json.tenants || []);
+          // 첫 번째 테넌트를 자동 선택
+          if (json.tenants && json.tenants.length > 0) {
+            setTenantId(json.tenants[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('테넌트 목록 로드 실패:', err);
+        setErrMsg(`테넌트 목록 로드 실패: ${err}`);
+      }
+    };
+    loadTenants();
+  }, []);
 
   // 기간 변경 시 날짜 업데이트 및 자동 적용
   useEffect(() => {
@@ -536,20 +553,6 @@ export default function BoardPage() {
 
 
 
-  function handleTenantSelect(selectedId: string) {
-    if (selectedId === "custom") {
-      setTenantId(customTenantId);
-    } else {
-      setTenantId(selectedId);
-      setCustomTenantId("");
-    }
-  }
-
-  function handleCustomTenantApply() {
-    if (customTenantId.trim()) {
-      setTenantId(customTenantId.trim());
-    }
-  }
 
   async function handleDataReset() {
     console.log('[reset] handleDataReset called, tenantId:', tenantId);
@@ -790,38 +793,21 @@ export default function BoardPage() {
             <h3 className="text-sm font-medium mb-3 text-gray-700">테넌트 선택</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-600 font-medium">프리셋 테넌트</label>
+                <label className="text-xs text-gray-600 font-medium">테넌트 선택</label>
                 <select
-                  value={TENANT_OPTIONS.find(t => t.id === tenantId)?.id || "custom"} 
-                  onChange={e => handleTenantSelect(e.target.value)}
+                  value={tenantId} 
+                  onChange={e => setTenantId(e.target.value)}
                   className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 focus:border-blue-500 focus:outline-none mt-1"
                 >
-                  {TENANT_OPTIONS.map(tenant => (
-                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                  <option value="">테넌트를 선택하세요</option>
+                  {tenants.map(tenant => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name} ({new Date(tenant.created_at).toLocaleDateString()})
+                    </option>
                   ))}
-                  <option value="custom">직접 입력...</option>
                 </select>
               </div>
 
-              <div>
-                <label className="text-xs text-gray-600 font-medium">직접 입력</label>
-                <div className="flex gap-1 mt-1">
-                  <input
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none" 
-                    placeholder="UUID 또는 테넌트 ID" 
-                    value={customTenantId} 
-                    onChange={e => setCustomTenantId(e.target.value)}
-                    onKeyPress={e => e.key === 'Enter' && handleCustomTenantApply()}
-                  />
-                  <button
-                    onClick={handleCustomTenantApply}
-                    className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm transition-colors"
-                    disabled={!customTenantId.trim()}
-                  >
-                    적용
-                  </button>
-                </div>
-              </div>
 
               <div>
                 <label className="text-xs text-gray-600 font-medium">현재 선택</label>
