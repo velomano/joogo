@@ -169,6 +169,7 @@ export default function BoardPage() {
   };
 
   const { data: insights } = useSWR(insightsKey, async ([, t, f, to_, rg, ch, ca, s]) => {
+    if (!t) return null; // tenantId가 없으면 null 반환
     const qs = new URLSearchParams({ tenant_id: t, from: f, to: to_, lead_time: "7", z: "1.65" });
     if (rg) qs.set("region", rg);
     if (ch) qs.set("channel", ch);
@@ -180,6 +181,7 @@ export default function BoardPage() {
   }, { revalidateOnFocus: false, dedupingInterval: 15000 });
 
   const { data: status } = useSWR(statusKey, async ([, t]) => {
+    if (!t) return null; // tenantId가 없으면 null 반환
     const url = `/api/board/status?tenant_id=${t}`;
     const r = await fetch(url);
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
@@ -210,6 +212,7 @@ export default function BoardPage() {
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
     async ([, t, f, to_, rg, ch, ca, s]) => {
+      if (!t) return null; // tenantId가 없으면 null 반환
       try {
         const qs = new URLSearchParams({ from: f, to: to_, tenant_id: t });
         if (rg) qs.set("region", rg);
