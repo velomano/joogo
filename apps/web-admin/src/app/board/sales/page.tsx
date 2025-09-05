@@ -223,30 +223,50 @@ export default function SalesAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           y: {
             type: 'linear',
             display: true,
             position: 'left',
-            title: { display: true, text: '매출' }
+            title: { 
+              display: true, 
+              text: '매출',
+              font: { size: 11 }
+            },
+            ticks: {
+              font: { size: 10 }
+            }
           },
           y1: {
             type: 'linear',
             display: true,
             position: 'right',
-            title: { display: true, text: '판매량' },
+            title: { 
+              display: true, 
+              text: '판매량',
+              font: { size: 11 }
+            },
+            ticks: {
+              font: { size: 10 }
+            },
             grid: { drawOnChartArea: false }
           },
           x: {
             ticks: {
-              maxTicksLimit: period === '1year' ? 12 : period === '6months' ? 8 : 15
+              maxTicksLimit: period === '1year' ? 12 : period === '6months' ? 8 : 15,
+              font: { size: 10 }
             }
           }
         },
         plugins: {
           title: { 
-            display: true, 
-            text: `일자별 매출 및 판매량 추이 (${period === '1month' ? '1개월' : period === '3months' ? '3개월' : period === '6months' ? '6개월' : '1년'})` 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
           }
         }
       }
@@ -268,11 +288,29 @@ export default function SalesAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'ROAS' } }
+          y: { 
+            beginAtZero: true, 
+            title: { 
+              display: true, 
+              text: 'ROAS',
+              font: { size: 11 }
+            },
+            ticks: {
+              font: { size: 10 }
+            }
+          }
         },
         plugins: {
-          title: { display: true, text: '채널별 ROAS' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -293,9 +331,17 @@ export default function SalesAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: '카테고리별 매출 비중' },
-          legend: { position: 'bottom' }
+          title: { 
+            display: false
+          },
+          legend: { 
+            position: 'bottom',
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -316,11 +362,29 @@ export default function SalesAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: '매출' } }
+          y: { 
+            beginAtZero: true, 
+            title: { 
+              display: true, 
+              text: '매출',
+              font: { size: 11 }
+            },
+            ticks: {
+              font: { size: 10 }
+            }
+          }
         },
         plugins: {
-          title: { display: true, text: '지역별 매출' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -341,11 +405,36 @@ export default function SalesAnalysisPage() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: '매출' } }
+          y: { 
+            beginAtZero: true, 
+            title: { 
+              display: true, 
+              text: '매출',
+              font: { size: 11 }
+            },
+            ticks: {
+              font: { size: 10 }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 0,
+              font: { size: 10 }
+            }
+          }
         },
         plugins: {
-          title: { display: true, text: 'TOP SKU 매출' }
+          title: { 
+            display: false
+          },
+          legend: {
+            labels: {
+              font: { size: 11 }
+            }
+          }
         }
       }
     });
@@ -541,27 +630,27 @@ export default function SalesAnalysisPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 일자별 매출 추이 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-sales-trend" height="200"></canvas>
+            <canvas id="chart-sales-trend" className="h-64"></canvas>
           </div>
 
           {/* 채널별 ROAS */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-roas-by-channel" height="200"></canvas>
+            <canvas id="chart-roas-by-channel" className="h-48"></canvas>
           </div>
 
           {/* 카테고리별 매출 비중 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-category-revenue" height="200"></canvas>
+            <canvas id="chart-category-revenue" className="h-48"></canvas>
           </div>
 
           {/* 지역별 매출 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <canvas id="chart-region-revenue" height="200"></canvas>
+            <canvas id="chart-region-revenue" className="h-48"></canvas>
           </div>
 
           {/* TOP SKU 매출 */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 lg:col-span-2">
-            <canvas id="chart-top-skus" height="200"></canvas>
+            <canvas id="chart-top-skus" className="h-64"></canvas>
           </div>
         </div>
       </div>

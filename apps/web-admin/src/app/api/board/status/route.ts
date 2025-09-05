@@ -1,63 +1,101 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supaAdmin } from '@/lib/supabase/server';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+import { NextRequest, NextResponse } from "next/server";
+import { supaAdmin } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenant_id') || '84949b3c-2cb7-4c42-b9f9-d1f37d371e00';
+    const url = new URL(req.url);
+    const tenant = url.searchParams.get("tenant_id") || "";
+    const from = url.searchParams.get("from") || "2025-01-01";
+    const to = url.searchParams.get("to") || "2025-12-31";
+    
+    if (!tenant) {
+      return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
+    }
 
     const sb = supaAdmin();
-    
-    // 기본 통계 조회
-    const [salesStats, skuStats, uploadStats] = await Promise.all([
-      // 판매 통계 - 퍼블릭 래퍼 함수 사용
-      sb.rpc("board_sales_daily", { 
-        p_tenant_id: tenantId,
-        p_from: "2025-01-01", 
-        p_to: "2025-12-31" 
-      })
-        .then(({ data, error }) => {
-          if (error) throw error;
-          console.log('[BOARD/STATUS] RPC data sample:', data?.slice(0, 3));
-          console.log('[BOARD/STATUS] RPC data keys:', data?.[0] ? Object.keys(data[0]) : 'no data');
-          const totalRevenue = data?.reduce((sum: number, row: any) => sum + Number(row.revenue || 0), 0) || 0;
-          const totalQty = data?.reduce((sum: number, row: any) => sum + Number(row.qty || 0), 0) || 0;
-          console.log('[BOARD/STATUS] Calculated totals:', { totalRevenue, totalQty, rowCount: data?.length });
-          const avgDaily = data?.length ? totalRevenue / data.length : 0;
-          return { totalRevenue, totalQty, avgDaily, days: data?.length || 0 };
-        }),
+
+    // 매출 데이터 조회
+    const { data: salesData, error: salesError } = await sb
+      .from('analytics.fact_sales')
+      .select('sale_date, qty, revenue')
+      .eq('tenant_id', tenant)
+      .gte('sale_date', from)
+      .lte('sale_date', to);
+
+    if (salesError) {
+      console.error('[status] Sales query error:', salesError);
+      throw salesError;
+    }
+
+    // SKU 데이터 조회
+    const { data: skuData, error: skuError } = await sb
+      .from('analytics.fact_sales')
+      .select('sku, revenue')
+      .eq('tenant_id', tenant)
+      .gte('sale_date', from)
+      .lte('sale_date', to);
+
+    if (skuError) {
+      console.error('[status] SKU query error:', skuError);
+      throw skuError;
+    }
+
+    // 매출 통계 계산
+    const sales = {
+      totalRevenue: 0,
+      totalQty: 0,
+      days: 0,
+      avgDaily: 0
+    };
+
+    if (salesData && salesData.length > 0) {
+      const uniqueDates = new Set(salesData.map(d => d.sale_date)).size;
+      const totalRevenue = salesData.reduce((sum, d) => sum + Number(d.revenue || 0), 0);
+      const totalQty = salesData.reduce((sum, d) => sum + Number(d.qty || 0), 0);
       
-      // SKU 통계 - RPC 함수 사용
-      sb.rpc("board_top_skus", { p_tenant_id: tenantId, p_from: "2025-01-01", p_to: "2025-12-31", p_limit: 100 })
-        .then(({ data, error }) => {
-          if (error) throw error;
-          const uniqueSkus = data?.length || 0;
-          const topSku = data?.[0];
-          return { uniqueSkus, topSku: topSku?.sku || 'N/A', topSkuRevenue: Number(topSku?.revenue || 0) };
-        }),
-      
-      // 업로드 상태 - 기본값 반환
-      Promise.resolve({
-        latest: null,
-        totalSize: 0,
-        count: 0,
-        status: 'COMPLETED'
-      })
-    ]);
+      sales.totalRevenue = totalRevenue;
+      sales.totalQty = totalQty;
+      sales.days = uniqueDates;
+      sales.avgDaily = uniqueDates > 0 ? totalRevenue / uniqueDates : 0;
+    }
+
+    // SKU 통계 계산
+    const sku = {
+      uniqueSkus: 0,
+      topSku: 'N/A',
+      topSkuRevenue: 0
+    };
+
+    if (skuData && skuData.length > 0) {
+      const skuRevenue = skuData.reduce((acc, d) => {
+        const sku = d.sku || 'Unknown';
+        acc[sku] = (acc[sku] || 0) + Number(d.revenue || 0);
+        return acc;
+      }, {} as Record<string, number>);
+
+      const uniqueSkus = Object.keys(skuRevenue).length;
+      const topSkuEntry = Object.entries(skuRevenue).reduce((max, [sku, revenue]) => 
+        revenue > max[1] ? [sku, revenue] : max, ['N/A', 0]);
+
+      sku.uniqueSkus = uniqueSkus;
+      sku.topSku = topSkuEntry[0];
+      sku.topSkuRevenue = topSkuEntry[1];
+    }
 
     return NextResponse.json({
       ok: true,
-      sales: salesStats,
-      sku: skuStats,
-      upload: uploadStats,
-      lastUpdated: new Date().toISOString()
+      sales,
+      sku
     });
 
-  } catch (error: any) {
-    console.error('[BOARD/STATUS] Error:', error);
-    return NextResponse.json({ 
+  } catch (e: any) {
+    console.error('[/api/board/status] ERROR:', e?.message, e?.stack);
+    return NextResponse.json({
       ok: false,
-      error: error.message || 'Status check failed' 
+      error: e?.message ?? "status error"
     }, { status: 500 });
   }
 }

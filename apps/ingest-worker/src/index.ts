@@ -13,7 +13,7 @@ import { parse } from 'csv-parse/sync';
 import { fileURLToPath as fileURLToPath2 } from 'url';
 const __filename2 = fileURLToPath2(import.meta.url);
 const __dirname2 = path.dirname(__filename2);
-const envPath = path.join(__dirname2, '..', 'env');
+const envPath = path.join(__dirname2, '..', '.env');
 
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
