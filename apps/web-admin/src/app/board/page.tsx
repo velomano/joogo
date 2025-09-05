@@ -635,32 +635,12 @@ export default function BoardPage() {
       
       if (!confirmed) return;
 
-      const res = await fetch("/api/board/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant_id: tenantId })
-      });
-      
-      const json = await res.json();
-      console.log('[reset] API response:', json);
-      
-      if (!json.ok) throw new Error(json.error || "리셋 실패");
-
-      setIngestMsg(`✅ 데이터 리셋 완료: ${json.deleted_rows}행 삭제됨 (fact: ${json.fact_deleted}, stage: ${json.stage_deleted})`);
+      // 새로운 강력한 리셋 API 사용
+      const { handleReset } = await import('@/lib/strongReset');
+      await handleReset('tenant', tenantId);
       
       // 총 행수 초기화
       setTotalUploadedRows(0);
-      
-      // 성공 메시지 표시 후 강제 새로고침 (캐시 무효화)
-      setTimeout(() => {
-        // 모든 SWR 캐시 무효화
-        if (typeof window !== 'undefined') {
-          // localStorage와 sessionStorage 클리어
-          localStorage.clear();
-          sessionStorage.clear();
-        }
-        window.location.reload();
-      }, 2000);
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "데이터 리셋 오류");

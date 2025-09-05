@@ -171,43 +171,9 @@ export default function InventoryAnalysisPage() {
       setErrMsg("");
       setLoading(true);
       
-      const res = await fetch("/api/board/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant_id: tenantId })
-      });
-      
-      const json = await res.json();
-      console.log('[inventory-reset] API response:', json);
-      
-      if (!json.ok) throw new Error(json.error || "리셋 실패");
-
-      alert(`✅ 강제 리셋 완료: ${json.deleted_rows}행 삭제됨\n\n페이지를 새로고침합니다.`);
-      
-      // 데이터 강제 초기화
-      setInsights({
-        ok: true,
-        inventoryAnalysis: [],
-        stockLevels: [],
-        turnoverAnalysis: [],
-        reorder: [],
-        eol: [],
-        inventoryStats: {
-          totalStockValue: 0,
-          totalStockLevel: 0,
-          avgStockLevel: 0,
-          validStockItems: 0,
-          urgent: 0,
-          review: 0,
-          stable: 0,
-          eol: 0
-        }
-      });
-      
-      // 강제 새로고침
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // 새로운 강력한 리셋 API 사용
+      const { handleReset } = await import('@/lib/strongReset');
+      await handleReset('tenant', tenantId);
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "강제 리셋 오류");
