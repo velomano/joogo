@@ -1,0 +1,16 @@
+# 환경변수 설정 가이드
+# 실제 값들은 팀 슬랩에서 확인하세요
+
+# Cloudflare 설정
+CLOUDFLARE_API_TOKEN=실제값은_팀슬랩에서_확인
+CLOUDFLARE_ACCOUNT_ID=실제값은_팀슬랩에서_확인
+CLOUDFLARE_PROJECT_NAME=joogo-wms-oms
+
+# Supabase 설정
+NEXT_PUBLIC_SUPABASE_URL=실제값은_팀슬랩에서_확인
+NEXT_PUBLIC_SUPABASE_ANON_KEY=실제값은_팀슬랩에서_확인
+SUPABASE_SERVICE_ROLE_KEY=실제값은_팀슬랩에서_확인
+
+# 기상청 API 설정
+KMA_SERVICE_KEY=실제값은_팀슬랩에서_확인
+KMA_BASE_URL=https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0
