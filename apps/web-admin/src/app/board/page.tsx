@@ -65,6 +65,7 @@ export default function BoardPage() {
   const [sku, setSku] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [totalUploadedRows, setTotalUploadedRows] = useState<number | null>(null);
   const [appliedFilters, setAppliedFilters] = useState({
     tenantId: "",
     from: getDateRange("1week").from,
@@ -100,6 +101,26 @@ export default function BoardPage() {
     };
     loadTenants();
   }, []);
+
+  // 총 업로드된 행수 로드
+  useEffect(() => {
+    const loadTotalRows = async () => {
+      if (!tenantId) return;
+      
+      try {
+        const response = await fetch(`/api/board/status?tenant_id=${tenantId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.ok && json.totalRows) {
+          setTotalUploadedRows(json.totalRows);
+        }
+      } catch (err) {
+        console.error('총 행수 로드 실패:', err);
+        setTotalUploadedRows(null);
+      }
+    };
+    loadTotalRows();
+  }, [tenantId]);
 
   // 기간 변경 시 날짜 업데이트 및 자동 적용
   useEffect(() => {
@@ -159,9 +180,24 @@ export default function BoardPage() {
 
   const wxKey = ["weather", CITY[cityKey].nx, CITY[cityKey].ny] as const;
   const { data: wx } = useSWR(wxKey, async ([, nx, ny]) => {
-    const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
-    return await res.json();
-  }, { dedupingInterval: 5 * 60 * 1000, revalidateOnFocus: false });
+    try {
+      const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
+      if (!res.ok) {
+        console.warn(`기상청 API 오류: HTTP ${res.status}`);
+        return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
+      }
+      const data = await res.json();
+      return data.ok ? data : { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
+    } catch (error) {
+      console.warn('기상청 API 호출 실패:', error);
+      return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
+    }
+  }, { 
+    dedupingInterval: 5 * 60 * 1000, 
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+    errorRetryCount: 0
+  });
 
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
@@ -180,6 +216,16 @@ export default function BoardPage() {
         }
         
         const json = await res.json();
+        
+        // 디버깅 로그 추가
+        console.log('📊 Board 데이터 로드:', {
+          tempVsSales: json?.tempVsSales?.length || 0,
+          spendRevDaily: json?.spendRevDaily?.length || 0,
+          salesDaily: json?.salesDaily?.length || 0,
+          tenantId: t,
+          url
+        });
+        
         return {
           ok: !!json?.ok,
           salesDaily: arr(json?.salesDaily),
@@ -540,6 +586,19 @@ export default function BoardPage() {
       // 데이터 새로고침
       await mutate();
       
+      // 총 행수 새로고침
+      try {
+        const statusResponse = await fetch(`/api/board/status?tenant_id=${tenantId}`);
+        if (statusResponse.ok) {
+          const statusJson = await statusResponse.json();
+          if (statusJson.ok && statusJson.totalRows) {
+            setTotalUploadedRows(statusJson.totalRows);
+          }
+        }
+      } catch (err) {
+        console.error('총 행수 새로고침 실패:', err);
+      }
+      
       // 3초 후 성공 메시지 업데이트
       setTimeout(() => {
         setIngestMsg("🎉 데이터 처리 완료! 차트를 확인하세요.");
@@ -588,6 +647,9 @@ export default function BoardPage() {
 
       setIngestMsg(`데이터 리셋 완료: ${json.deleted_rows}행 삭제됨 (fact: ${json.fact_deleted}, stage: ${json.stage_deleted})`);
       
+      // 총 행수 초기화
+      setTotalUploadedRows(0);
+      
       // 데이터 강제 새로고침
       await mutate();
       
@@ -623,13 +685,21 @@ export default function BoardPage() {
               </select>
               <div className="rounded-lg border px-3 py-2 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-1">현재 날씨 · {CITY[cityKey].name}</div>
-                <div className="flex items-baseline gap-3">
-                  <div className="text-xl font-semibold">{wx?.T1H ?? "–"}°</div>
-                  <div className="text-xs text-gray-600">습도 {wx?.REH ?? "–"}%</div>
-                </div>
-                <div className="text-xs text-gray-600 mt-1">
-                  강수 {wx?.RN1 ?? "–"}mm · 풍속 {wx?.WSD ?? "–"}m/s
-                </div>
+                {wx?.ok ? (
+                  <>
+                    <div className="flex items-baseline gap-3">
+                      <div className="text-xl font-semibold">{wx?.T1H ?? "–"}°</div>
+                      <div className="text-xs text-gray-600">습도 {wx?.REH ?? "–"}%</div>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      강수 {wx?.RN1 ?? "–"}mm · 풍속 {wx?.WSD ?? "–"}m/s
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-gray-500">
+                    기상 데이터를 불러올 수 없습니다
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -680,6 +750,16 @@ export default function BoardPage() {
                           className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 총 업로드된 행수 표시 */}
+                  {totalUploadedRows !== null && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center text-xs text-green-700">
+                        <span className="mr-1">📊</span>
+                        <span>총 업로드된 행수: <strong>{totalUploadedRows.toLocaleString()}개</strong></span>
                       </div>
                     </div>
                   )}
@@ -917,15 +997,182 @@ export default function BoardPage() {
               </div>
             </div>
 
-            {/* Insight 카드 */}
-            <div className="grid md:grid-cols-3 gap-3 mb-4">
-              {tipCards.map((t,i)=>(
-                <div key={i} className="rounded-2xl border bg-white shadow-sm p-4">
-                  <div className="text-xs text-gray-500 mb-1">Insight</div>
-                  <div className="font-semibold mb-1">{t.title}</div>
-                  <div className="text-sm text-gray-700">{t.body}</div>
+            {/* 종합 인사이트 섹션 */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">📊 종합 인사이트</h2>
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* 날씨 영향 분석 */}
+                <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <div className="flex items-start">
+                    <div className="text-blue-600 mr-3 text-xl">🌡️</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-blue-900 mb-2">날씨가 판매에 미치는 영향</div>
+                      <div className="text-xs text-blue-700">
+                        {data?.tempVsSales?.length >= 30 ? (
+                          (() => {
+                            const tempData = arr(data.tempVsSales);
+                            const tempReg = insights?.tempReg;
+                            const correlation = tempReg?.r2 ? Number(tempReg.r2) : 0;
+                            const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.tavg || 0), 0) / tempData.length;
+                            
+                            if (correlation >= 0.7) {
+                              return (
+                                <>
+                                  <div className="font-medium text-green-700 mb-1">✅ 강한 상관관계 발견!</div>
+                                  <div>온도가 판매량에 <strong>{(correlation * 100).toFixed(1)}%</strong>의 영향을 미칩니다.</div>
+                                  <div className="mt-1">• 평균기온 {avgTemp.toFixed(1)}°C에서 최적 판매</div>
+                                  <div>• 계절별 재고 관리와 마케팅 전략 수립 권장</div>
+                                </>
+                              );
+                            } else if (correlation >= 0.3) {
+                              return (
+                                <>
+                                  <div className="font-medium text-yellow-700 mb-1">⚠️ 중간 수준의 상관관계</div>
+                                  <div>온도가 판매량에 <strong>{(correlation * 100).toFixed(1)}%</strong>의 영향을 미칩니다.</div>
+                                  <div className="mt-1">• 다른 요인들도 함께 고려 필요</div>
+                                  <div>• 더 긴 기간 데이터로 재분석 권장</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-gray-700 mb-1">ℹ️ 약한 상관관계</div>
+                                  <div>온도와 판매량 간 상관관계가 <strong>{(correlation * 100).toFixed(1)}%</strong>로 낮습니다.</div>
+                                  <div className="mt-1">• 다른 요인(가격, 마케팅, 이벤트 등)이 더 중요</div>
+                                  <div>• 온도보다는 다른 변수 분석에 집중</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 30일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.tempVsSales?.length || 0}일</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-              ))}
+                </div>
+
+                {/* 마케팅 효과 분석 */}
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
+                  <div className="flex items-start">
+                    <div className="text-green-600 mr-3 text-xl">💰</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-green-900 mb-2">마케팅 비용의 효과</div>
+                      <div className="text-xs text-green-700">
+                        {data?.spendRevDaily?.length >= 14 ? (
+                          (() => {
+                            const spendData = arr(data.spendRevDaily);
+                            const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
+                            const totalRev = spendData.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                            const avgRoas = totalSpend > 0 ? (totalRev / totalSpend) : 0;
+                            const spendReg = insights?.spendReg;
+                            const efficiency = spendReg?.slope ? Number(spendReg.slope) : 0;
+                            
+                            if (avgRoas >= 3.0) {
+                              return (
+                                <>
+                                  <div className="font-medium text-green-700 mb-1">✅ 매우 효과적인 마케팅!</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고비 증가 시 매출 {efficiency.toFixed(0)}원 증가 예상</div>
+                                  <div>• 현재 마케팅 전략 유지 및 확대 권장</div>
+                                </>
+                              );
+                            } else if (avgRoas >= 2.0) {
+                              return (
+                                <>
+                                  <div className="font-medium text-yellow-700 mb-1">⚠️ 보통 수준의 효과</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고비 증가 시 매출 {efficiency.toFixed(0)}원 증가 예상</div>
+                                  <div>• 광고 전략 개선 및 타겟팅 최적화 필요</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-red-700 mb-1">❌ 비효율적인 마케팅</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고 전략 전면 재검토 필요</div>
+                                  <div>• 타겟팅, 크리에이티브, 채널 변경 고려</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 14일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.spendRevDaily?.length || 0}일</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 특별 이벤트/요인 분석 */}
+                <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+                  <div className="flex items-start">
+                    <div className="text-purple-600 mr-3 text-xl">📈</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-purple-900 mb-2">특별 요인 및 이벤트 영향</div>
+                      <div className="text-xs text-purple-700">
+                        {data?.salesDaily?.length >= 7 ? (
+                          (() => {
+                            const salesData = arr(data.salesDaily);
+                            const revenues = salesData.map((item: any) => Number(item.revenue || 0));
+                            const avgRevenue = revenues.reduce((sum: number, rev: number) => sum + rev, 0) / revenues.length;
+                            const maxRevenue = Math.max(...revenues);
+                            const minRevenue = Math.min(...revenues);
+                            const maxDay = salesData.find((item: any) => Number(item.revenue || 0) === maxRevenue);
+                            const minDay = salesData.find((item: any) => Number(item.revenue || 0) === minRevenue);
+                            const variance = ((maxRevenue - minRevenue) / avgRevenue) * 100;
+                            
+                            if (variance >= 50) {
+                              return (
+                                <>
+                                  <div className="font-medium text-purple-700 mb-1">📊 높은 변동성 발견!</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 최고 매출: {maxDay?.sale_date} ({maxRevenue.toLocaleString()}원)</div>
+                                  <div>• 최저 매출: {minDay?.sale_date} ({minRevenue.toLocaleString()}원)</div>
+                                  <div className="mt-1 text-orange-600">→ 특별 이벤트나 외부 요인 영향 가능성 높음</div>
+                                </>
+                              );
+                            } else if (variance >= 20) {
+                              return (
+                                <>
+                                  <div className="font-medium text-blue-700 mb-1">📈 보통 수준의 변동성</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 안정적인 판매 패턴 유지</div>
+                                  <div>• 계절성이나 주기적 요인 영향</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-gray-700 mb-1">📊 낮은 변동성</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 매우 안정적인 판매 패턴</div>
+                                  <div>• 예측 가능한 수요 패턴</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 7일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.salesDaily?.length || 0}일</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
         {/* 산점도 2개 */}
@@ -954,19 +1201,6 @@ export default function BoardPage() {
                 })()
               ) : "데이터 없음"}
             </div>
-            {/* 온도 영향도 인사이트 카드 */}
-            <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-              <div className="flex items-start">
-                <div className="text-blue-600 mr-2">💡</div>
-                <div>
-                  <div className="text-sm font-medium text-blue-900 mb-1">온도가 판매에 미치는 영향</div>
-                  <div className="text-xs text-blue-700">
-                    R² 값이 0.7 이상이면 온도가 판매량에 강한 영향을 미칩니다. 
-                    계절별 재고 관리와 마케팅 전략 수립에 활용하세요.
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           <div className="rounded-2xl border bg-white shadow-sm p-4">
             <div className="flex items-center justify-between mb-2">
@@ -991,19 +1225,6 @@ export default function BoardPage() {
                   return `💰 총 광고비: ${totalSpend.toLocaleString()}원 | 총 매출: ${totalRev.toLocaleString()}원 | 평균 ROAS: ${avgRoas.toFixed(2)} | 광고 효율성: ${efficiency}원/원`;
                 })()
               ) : "데이터 없음"}
-            </div>
-            {/* 광고 효율성 인사이트 카드 */}
-            <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
-              <div className="flex items-start">
-                <div className="text-green-600 mr-2">💰</div>
-                <div>
-                  <div className="text-sm font-medium text-green-900 mb-1">광고 투자 효율성 분석</div>
-                  <div className="text-xs text-green-700">
-                    ROAS가 3.0 이상이면 효율적인 광고입니다. 추세선의 기울기가 클수록 
-                    광고비 증가에 따른 매출 증가 효과가 큽니다.
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1035,18 +1256,6 @@ export default function BoardPage() {
                   return `📈 일평균 매출 ${avgDaily.toLocaleString()}원 | 최고일 대비 최저일 ${variance.toFixed(0)}% 차이 | ${maxDay?.sale_date}에 최고 매출 달성`;
                 })()
               ) : "데이터 없음"}
-            </div>
-            {/* 일자별 매출 설명 */}
-            <div className="mt-3 p-3 bg-cyan-50 rounded-lg border-l-4 border-cyan-400">
-              <div className="flex items-start">
-                <div className="text-cyan-600 mr-2">📅</div>
-                <div>
-                  <div className="text-sm font-medium text-cyan-900 mb-1">일자별 매출 추이</div>
-                  <div className="text-xs text-cyan-700">
-                    시간에 따른 매출 변화를 확인하여 계절성, 주기성, 특별 이벤트의 영향을 파악할 수 있습니다.
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
           <div className="rounded-2xl p-4 border bg-white shadow-sm">

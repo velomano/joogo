@@ -79,10 +79,16 @@ export async function GET(req: NextRequest) {
       sku.topSkuRevenue = topSkuEntry.revenue;
     }
 
+    // 총 행수 조회 - board_sales_daily 함수의 총 qty 합계를 사용 (실제 판매된 상품 수량)
+    const totalRowsCount = salesData && Array.isArray(salesData) 
+      ? salesData.reduce((sum, d) => sum + Number(d.qty || 0), 0) 
+      : 0;
+
     return NextResponse.json({
       ok: true,
       sales,
-      sku
+      sku,
+      totalRows: totalRowsCount
     });
 
   } catch (e: any) {

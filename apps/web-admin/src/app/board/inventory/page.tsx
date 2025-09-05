@@ -168,6 +168,12 @@ export default function InventoryAnalysisPage() {
     // 재고 회전율 (일평균 판매량 / 평균 재고)
     const turnoverRate = avgStockLevel > 0 ? avgDailySales / avgStockLevel : 0;
     
+    console.log('🔍 재고 회전율 계산:', {
+      avgDailySales,
+      avgStockLevel,
+      turnoverRate
+    });
+    
     console.log('🔍 계산된 통계:', {
       totalSkus,
       totalStockValue,

@@ -5,6 +5,8 @@ export async function GET() {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "MISSING",
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "SET" : "MISSING",
     DATABASE_URL: process.env.DATABASE_URL ? "SET" : "MISSING",
+    KMA_SERVICE_KEY: process.env.KMA_SERVICE_KEY ? "SET" : "MISSING",
+    KMA_BASE_URL: process.env.KMA_BASE_URL ? "SET" : "MISSING",
     NODE_ENV: process.env.NODE_ENV || "undefined"
   };
 
