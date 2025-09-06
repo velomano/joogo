@@ -19,8 +19,10 @@ as $$
 declare s bigint := 0; f bigint := 0;
 begin
   perform analytics.with_tenant_lock(p_tenant_id, 'file');
-  delete from analytics.fact_sales  where tenant_id=p_tenant_id and file_id=p_file_id;  get diagnostics f = row_count;
-  delete from analytics.stage_sales where tenant_id=p_tenant_id and file_id=p_file_id;  get diagnostics s = row_count;
+  delete from analytics.fact_sales  where tenant_id=p_tenant_id and file_id=p_file_id;  
+  get diagnostics f = row_count;
+  delete from analytics.stage_sales where tenant_id=p_tenant_id and file_id=p_file_id;  
+  get diagnostics s = row_count;
   return query select s, f;
 end $$;
 
@@ -32,6 +34,7 @@ language plpgsql
 security definer
 as $$
 declare s bigint := 0; f bigint := 0; i bigint := 0; u bigint := 0; j bigint := 0;
+        temp_count bigint;
 begin
   perform analytics.with_tenant_lock(p_tenant_id, 'tenant');
   
@@ -41,7 +44,8 @@ begin
   
   -- analytics.fact_sales 삭제 (original_data JSONB 내 tenant_id)
   delete from analytics.fact_sales where original_data->>'tenant_id' = p_tenant_id::text;
-  get diagnostics f = f + row_count;
+  get diagnostics temp_count = row_count;
+  f := f + temp_count;
   
   -- analytics.stage_sales 삭제
   delete from analytics.stage_sales where tenant_id=p_tenant_id::text;  

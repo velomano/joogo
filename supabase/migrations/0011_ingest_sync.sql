@@ -2,7 +2,8 @@
 set role postgres;
 
 -- 1) 업로드/머지 진행상태 테이블 (Realtime 구독용)
-create table if not exists analytics.ingest_jobs (
+drop table if exists analytics.ingest_jobs cascade;
+create table analytics.ingest_jobs (
   tenant_id uuid not null,
   file_id uuid not null,
   status text not null check (status in ('uploading','staging','merging','merged','failed')),
@@ -94,6 +95,7 @@ grant execute on function analytics.bump_data_version(uuid) to service_role;
 
 -- 4) merge 함수 내에서 마지막에 버전 증가 + ingest_jobs 갱신 호출
 -- board_merge_file 함수 수정
+drop function if exists public.board_merge_file(uuid, uuid);
 create or replace function public.board_merge_file(p_tenant_id uuid, p_file_id uuid)
 returns table(rows_merged bigint)
 language plpgsql

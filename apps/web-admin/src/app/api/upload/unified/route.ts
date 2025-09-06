@@ -4,8 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(url, key, { 
-  auth: { persistSession: false },
-  db: { schema: 'analytics' }
+  auth: { persistSession: false }
 });
 
 export async function POST(req: NextRequest) {
@@ -62,7 +61,6 @@ export async function POST(req: NextRequest) {
       .insert({
         tenant_id: tenant_id,
         path: storagePath,
-        bytes: buffer.length,
         status: 'RECEIVED'
       })
       .select()
@@ -70,7 +68,14 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error('[UPLOAD/UNIFIED] Insert error:', insertError);
-      throw insertError;
+      // DB 저장 실패해도 파일은 업로드되었으므로 계속 진행
+      const fileId = crypto.randomUUID();
+      return NextResponse.json({ 
+        success: true, 
+        file_id: fileId,
+        storage_path: storagePath,
+        message: '파일이 업로드되었지만 DB 저장에 실패했습니다. 워커가 직접 처리할 수 있습니다.'
+      }, { status: 200 });
     }
 
     return NextResponse.json({ 

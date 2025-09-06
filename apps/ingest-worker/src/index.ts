@@ -8,15 +8,21 @@ import { Readable } from 'stream';
 import copyFrom from 'pg-copy-streams';
 import fs from 'fs';
 import { parse } from 'csv-parse/sync';
+import { buildHeaderMap, toNum, toDateISO } from './mapping.js';
 
 // .env 파일 직접 로딩
 import { fileURLToPath as fileURLToPath2 } from 'url';
 const __filename2 = fileURLToPath2(import.meta.url);
 const __dirname2 = path.dirname(__filename2);
-const envPath = path.join(__dirname2, '..', 'env');
+const envPath = path.join(__dirname2, '..', '.env');
+
+console.log('[ingest] Looking for .env file at:', envPath);
+console.log('[ingest] File exists:', fs.existsSync(envPath));
 
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
+  console.log('[ingest] .env content:', envContent);
+  
   envContent.split('\n').forEach(line => {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith('#')) {
@@ -24,6 +30,7 @@ if (fs.existsSync(envPath)) {
       if (key && valueParts.length > 0) {
         const value = valueParts.join('=').trim();
         process.env[key] = value;
+        console.log(`[ingest] Set ${key}=${value.substring(0, 20)}...`);
       }
     }
   });
@@ -41,10 +48,6 @@ const __dirname = path.dirname(__filename);
 
 // Supabase 클라이언트 (상태 기록용)
 import { createClient } from '@supabase/supabase-js';
-
-const supa = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
-  auth: { persistSession: false }
-});
 
 async function markJob(tenantId: string, fileId: string, patch: any) {
   try {
@@ -80,10 +83,13 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 // PostgreSQL 풀 제거 - Supabase 클라이언트만 사용
 
 // Supabase 클라이언트 (Storage 접근용)
-import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-  db: { schema: 'analytics' }
+  auth: { persistSession: false }
+});
+
+// Supabase 클라이언트 (상태 기록용)
+const supa = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false }
 });
 
 console.log('[ingest] Supabase client config:', {
@@ -121,8 +127,16 @@ async function setTenant(tenant: string) {
   }
 }
 
-// CSV 스트리밍 파싱 함수 (배치 처리)
-async function parseCSVStreaming(content: string, batchSize: number = 1000): Promise<any[][]> {
+// CSV 스트리밍 파싱 함수 (배치 처리 + 헤더 매핑)
+async function parseCSVStreaming(
+  content: string, 
+  tenantId: string, 
+  batchSize: number = 1000
+): Promise<{
+  batches: any[][];
+  hasRequired: boolean;
+  finalHeaders: string[];
+}> {
   try {
     const rows = parse(content, {
       columns: true,
@@ -130,13 +144,63 @@ async function parseCSVStreaming(content: string, batchSize: number = 1000): Pro
       trim: true
     });
     
-    // 배치로 나누기
-    const batches: any[][] = [];
-    for (let i = 0; i < rows.length; i += batchSize) {
-      batches.push(rows.slice(i, i + batchSize));
+    if (rows.length === 0) {
+      return { batches: [], hasRequired: false, finalHeaders: [] };
     }
     
-    return batches;
+    // 첫 번째 행에서 헤더 추출
+    const rawHeaders = Object.keys(rows[0]);
+    console.log(`[parse] Raw headers:`, rawHeaders);
+    
+    // DB 기반 헤더 매핑
+    const { finalHeaders, hasRequired, mappingResult } = await buildHeaderMap(tenantId, rawHeaders);
+    
+    if (!hasRequired) {
+      throw new Error(`Missing required columns. Required: date, region, channel, sku, qty. Found: ${finalHeaders.join(', ')}`);
+    }
+    
+    console.log(`[parse] Mapped headers:`, finalHeaders);
+    console.log(`[parse] Mapping result:`, mappingResult);
+    
+    // 매핑된 헤더로 데이터 변환
+    const mappedRows = rows.map((row: any) => {
+      const mappedRow: any = {};
+      
+      // 매핑 결과에 따라 데이터 변환
+      Object.entries(mappingResult).forEach(([field, columnIndex]) => {
+        const rawValue = rawHeaders[columnIndex] ? row[rawHeaders[columnIndex]] : undefined;
+        
+        switch (field) {
+          case 'sales_date':
+            mappedRow.sales_date = toDateISO(rawValue) || rawValue || '';
+            break;
+          case 'qty':
+            mappedRow.qty = toNum(rawValue) || 0;
+            break;
+          case 'revenue':
+            mappedRow.revenue = toNum(rawValue) || 0;
+            break;
+          case 'cost':
+            mappedRow.cost = toNum(rawValue) || 0;
+            break;
+          default:
+            mappedRow[field] = rawValue || '';
+        }
+      });
+      
+      // extras에 원본 데이터 저장
+      mappedRow.extras = JSON.stringify(row);
+      
+      return mappedRow;
+    });
+    
+    // 배치로 나누기
+    const batches: any[][] = [];
+    for (let i = 0; i < mappedRows.length; i += batchSize) {
+      batches.push(mappedRows.slice(i, i + batchSize));
+    }
+    
+    return { batches, hasRequired, finalHeaders };
   } catch (error) {
     console.error('[parse] CSV parsing error:', error);
     throw error;
@@ -150,20 +214,31 @@ async function loop() {
     try {
       console.log("Polling for new uploads...");
       
-      // analytics.raw_uploads에서 RECEIVED 상태인 작업들 가져오기
-      console.log("Fetching uploads from analytics.raw_uploads...");
-      const { data: uploads, error } = await supabase
-        .from('raw_uploads')
-        .select('*')
-        .eq('status', 'RECEIVED')
-        .limit(10);
+      // Storage에서 incoming 폴더의 파일들 조회
+      console.log("Fetching files from storage...");
+      const { data: files, error } = await supabase.storage
+        .from('ingest')
+        .list('incoming', { limit: 10 });
       
       if (error) {
-        console.error("Failed to fetch uploads:", error);
-        console.error("Error details:", JSON.stringify(error, null, 2));
+        console.error("Failed to fetch files from storage:", error);
         await new Promise(r => setTimeout(r, POLL_MS));
         continue;
       }
+
+      if (!files || files.length === 0) {
+        console.log("No files found in storage");
+        await new Promise(r => setTimeout(r, POLL_MS));
+        continue;
+      }
+
+      // 파일들을 uploads 형태로 변환
+      const uploads = files.map(file => ({
+        file_id: file.name.split('_')[0] || crypto.randomUUID(),
+        tenant_id: '00000000-0000-0000-0000-000000000001', // 기본 테넌트
+        path: `incoming/${file.name}`,
+        status: 'RECEIVED'
+      }));
       
       console.log("Query result:", { uploads: uploads?.length || 0, error: !!error });
       
@@ -199,38 +274,40 @@ async function loop() {
           
           // 파일 내용 읽기
           const fileContent = await fileData.text();
-          const batches = await parseCSVStreaming(fileContent, 1000);
+          const { batches, hasRequired, finalHeaders } = await parseCSVStreaming(fileContent, upload.tenant_id, 1000);
           
-          console.log(`Parsed ${batches.flat().length} rows from ${upload.filename} in ${batches.length} batches`);
+          if (!hasRequired) {
+            throw new Error(`CSV validation failed: Missing required columns. Headers: ${finalHeaders.join(', ')}`);
+          }
           
-          // analytics.stage_sales에 데이터 삽입 (배치별로)
+          console.log(`Parsed ${batches.flat().length} rows from ${upload.path} in ${batches.length} batches`);
+          console.log(`Headers mapped successfully: ${finalHeaders.join(', ')}`);
+          
+          // public.sales에 데이터 직접 삽입 (배치별로)
           let totalInserted = 0;
           for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex];
-            const stageData = batch.map((row, i) => ({
+            const salesData = batch.map((row, i) => ({
               tenant_id: upload.tenant_id,
-              file_id: upload.file_id,
-              row_num: totalInserted + i + 1,
-              sku: row.sku || row.barcode || '',
-              sale_date: row.sale_date || row.date || '', // 텍스트로 저장
-              qty: row.qty || row.quantity || '0', // 텍스트로 저장
-              revenue: row.revenue || row.sales || '0', // 텍스트로 저장
-              channel: row.channel || '',
-              region: row.region || '',
-              category: row.category || '',
-              extras: JSON.stringify(row)
+              sale_date: row.sales_date || new Date().toISOString().split('T')[0],
+              barcode: parseInt(row.sku) || 0,
+              productname: row.category || '',
+              qty: parseInt(row.qty) || 0,
+              unit_price: parseFloat(row.revenue) / (parseInt(row.qty) || 1) || 0,
+              revenue: parseFloat(row.revenue) || 0,
+              channel: (row.channel || 'online').toString().toLowerCase()
             }));
             
             const { error: insertError } = await supabase
-              .from('stage_sales')
-              .insert(stageData);
+              .from('sales')
+              .insert(salesData);
             
             if (insertError) {
               throw new Error(`Batch insert failed: ${insertError.message}`);
             }
             
-            totalInserted += stageData.length;
-            console.log(`Inserted batch ${batchIndex + 1}/${batches.length} (${stageData.length} rows)`);
+            totalInserted += salesData.length;
+            console.log(`Inserted batch ${batchIndex + 1}/${batches.length} (${salesData.length} rows)`);
           }
           
           console.log(`Successfully inserted ${totalInserted} rows to stage_sales`);

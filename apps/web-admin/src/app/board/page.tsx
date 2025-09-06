@@ -194,7 +194,7 @@ export default function BoardPage() {
   const wxKey = ["weather", CITY[cityKey].nx, CITY[cityKey].ny] as const;
   const { data: wx } = useSWR(wxKey, async ([, nx, ny]) => {
     try {
-    const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
+      const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
       if (!res.ok) {
         console.warn(`기상청 API 오류: HTTP ${res.status}`);
         return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
