@@ -33,3 +33,23 @@ export async function handleReset(options: ResetOptions): Promise<void> {
     throw error;
   }
 }
+
+// 클라이언트 사이드 리셋 함수
+export async function strongClientReset(tenantId: string): Promise<void> {
+  try {
+    const response = await fetch('/api/board/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantId, hard: true })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    console.log('✅ 클라이언트 리셋 완료');
+  } catch (error) {
+    console.error('❌ 클라이언트 리셋 실패:', error);
+    throw error;
+  }
+}
