@@ -1,0 +1,9 @@
+name = "mock-ads"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+workers_dev = true
+port = 8789
+[vars]
+ADS_SEED = "joogo-ads-seed"
+ADS_CHANNELS = "naver,coupang,google,meta"
+ADS_LAMBDA_PER_HOUR = "120"   # avg impressions packets per hour (scaled in code)

@@ -5,6 +5,9 @@ import useSWR from "swr";
 import ErrorBanner from "@/components/ErrorBanner";
 import { ensureChart, lineConfig, barConfig, scatterConfig, doughnutConfig, scatterWithTrendConfig } from "@/lib/charts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+// import SourceChips from "@/components/analytics/SourceChips";
+// import MockBadge from "@/components/analytics/MockBadge";
+// import { SummaryCardGroup } from "@/components/analytics/cards/Cards";
 
 const arr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -754,8 +757,14 @@ export default function BoardPage() {
 
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 p-4 overflow-y-auto">
+          {/* 헤더 영역 */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              판매 분석 대시보드
+            </h1>
+          </div>
 
-                    {/* 데이터 상태 카드 */}
+          {/* 기존 데이터 상태 카드 */}
             <div className="grid md:grid-cols-4 gap-3 mb-4">
               <div className="rounded-2xl border bg-white shadow-sm p-4">
                 <div className="text-xs text-gray-500 mb-1">📊 총 매출</div>
