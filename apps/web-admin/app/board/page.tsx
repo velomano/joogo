@@ -828,7 +828,7 @@ export default function BoardPage() {
               <canvas id="chart-temp-vs-sales" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.tempVsSales?.length > 0 ? (
+              {data?.tempVsSales && data.tempVsSales.length > 0 ? (
                 (() => {
                   const tempData = arr(data.tempVsSales);
                   const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.tavg || 0), 0) / tempData.length;
