@@ -31,5 +31,20 @@ jobs:
       - name: TypeScript check
         run: pnpm -w tsc --noEmit
         
-      - name: Build web-admin
-        run: pnpm turbo run build --filter=@joogo/web-admin
+      - name: Prepare env for CI
+        run: cp apps/web-admin/.env.ci apps/web-admin/.env.local
+        
+      - name: Build web-admin (Cloudflare Next)
+        run: npx --yes @cloudflare/next-on-pages@1 build --root ./apps/web-admin
+        
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: joogo
+          directory: .vercel/output/static
+          wranglerVersion: '4.35.0'
+          functionsDirectory: .vercel/output/functions
+          branch: ${{ github.ref_name }}
+          workingDirectory: .
