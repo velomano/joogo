@@ -847,7 +847,7 @@ export default function BoardPage() {
               <canvas id="chart-spend-vs-rev" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.spendRevDaily?.length > 0 ? (
+              {data?.spendRevDaily && data.spendRevDaily.length > 0 ? (
                 (() => {
                   const spendData = arr(data.spendRevDaily);
                   const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
