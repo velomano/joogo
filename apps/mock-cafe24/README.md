@@ -11,9 +11,11 @@ curl http://127.0.0.1:8787/health
 curl "http://127.0.0.1:8787/api/v2/admin/products?limit=1&embed=variants,inventories"
 ```
 
-## Endpoints (subset)
+## Endpoints
 
-- `GET /api/v2/admin/products?limit&offset&fields&embed=variants,inventories`
-- `GET /api/v2/admin/products/:product_no?embed=...`
-- `GET /api/v2/admin/orders?limit&offset&fields=...`
-- `GET /api/v2/admin/orders/:order_no`
+- `GET /` - 서비스 정보 및 엔드포인트 목록
+- `GET /health` - 헬스체크
+- `GET /api/v2/admin/products?limit&offset&fields&embed=variants,inventories` - 상품 목록
+- `GET /api/v2/admin/products/:product_no?embed=...` - 상품 상세
+- `GET /api/v2/admin/orders?limit&offset&fields=...` - 주문 목록
+- `GET /api/v2/admin/orders/:order_no` - 주문 상세

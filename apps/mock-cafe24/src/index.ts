@@ -5,6 +5,17 @@ import { applyFields, slice } from "./utils";
 
 const app = new Hono();
 
+// Root
+app.get("/", (c) => c.json({ 
+  service: "Mock Cafe24 Provider", 
+  version: "0.1.0",
+  endpoints: {
+    health: "/health",
+    products: "/api/v2/admin/products",
+    orders: "/api/v2/admin/orders"
+  }
+}));
+
 // Health
 app.get("/health", (c) => c.json({ ok: true, ts: new Date().toISOString() }));
 
