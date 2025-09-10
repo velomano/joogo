@@ -13,3 +13,7 @@ export function supaClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   return createClient(url, key, { auth: { persistSession: false } });
 }
+
+/** 기존 코드가 기대하는 이름 대응 */
+export function supa() { return supaServer(); }
+export default supaServer;
