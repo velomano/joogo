@@ -39,6 +39,7 @@ jobs:
         run: npx -y @cloudflare/next-on-pages@1 build
         
       - name: Deploy to Cloudflare Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
