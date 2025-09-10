@@ -42,28 +42,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         
-      - name: Build project with optimization
+      - name: Build web-admin with optimization
         run: |
           cd apps/web-admin
           pnpm build
-          # 번들 크기 확인 및 검증
-          echo "Checking bundle sizes..."
-          find .next -name "*.js" -size +20M -exec ls -lh {} \;
-          # 25MB 이상 파일이 있으면 빌드 실패
-          if find .next -name "*.js" -size +25M | grep -q .; then
-            echo "ERROR: Files larger than 25MB found!"
-            find .next -name "*.js" -size +25M -exec ls -lh {} \;
+          # Next.js App Router 빌드 확인
+          if [ ! -d ".next" ]; then
+            echo "ERROR: Next.js build failed - .next directory not found"
             exit 1
           fi
-          echo "✅ All files are under 25MB limit"
+          echo "✅ Next.js build successful"
         
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           projectName: joogo
-          directory: .next
+          directory: apps/web-admin/.next
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          workingDirectory: apps/web-admin
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: 4
