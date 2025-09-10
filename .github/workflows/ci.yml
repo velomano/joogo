@@ -37,9 +37,12 @@ jobs:
       - name: Build (Cloudflare Next)
         working-directory: apps/web-admin
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key' }}
-        run: npx -y @cloudflare/next-on-pages@1
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          node -e "console.log('has url?', !!process.env.NEXT_PUBLIC_SUPABASE_URL, 'has key?', !!process.env.SUPABASE_SERVICE_ROLE_KEY)"
+          pnpm dlx @cloudflare/next-on-pages@1
 
       - name: Deploy to Cloudflare Pages (wrangler CLI)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

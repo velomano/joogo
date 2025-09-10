@@ -27,7 +27,7 @@ export function supaAdmin() {
 
   // 디버깅을 위해 임시로 활성화
   if (process.env.NODE_ENV !== "production") {
-    console.log(`[supaAdmin] url=${mask(urlPick.value)} key=${keyPick.name}=${mask(keyPick.value)} runtime=node`);
+    console.log(`[supaAdmin] url=${mask(urlPick.value)} key=${keyPick.name}=${mask(keyPick.value)} runtime=edge`);
   }
 
   return createClient(urlPick.value, keyPick.value, {
