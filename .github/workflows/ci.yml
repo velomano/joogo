@@ -47,5 +47,4 @@ jobs:
           npx wrangler@4.35.0 pages deploy \
             apps/web-admin/.vercel/output/static \
             --project-name=joogo \
-            --branch="${{ github.ref_name }}" \
-            --functions=apps/web-admin/.vercel/output/functions
+            --branch="${{ github.ref_name }}"
