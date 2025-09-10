@@ -1,0 +1,7 @@
+name = "mock-cafe24"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+route = ""
+workers_dev = true
+[vars]
+MOCK_SEED = "2025-09-10"

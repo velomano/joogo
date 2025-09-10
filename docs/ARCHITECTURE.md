@@ -60,3 +60,14 @@
 
 ## Health 집계 흐름
 Web(App Router) → /api/health → 각 MCP /health 병렬 호출 → JSON 집계 응답
+
+## Mock Provider (개발용)
+- **apps/mock-cafe24**: Cafe24 Admin API 스타일의 Mock 서버
+- **목적**: 실제 쇼핑몰 API 키 없이도 개발/테스트 가능
+- **엔드포인트**: 
+  - `GET /api/v2/admin/products` (상품 목록)
+  - `GET /api/v2/admin/orders` (주문 목록)
+  - `GET /health` (헬스체크)
+- **실행**: `pnpm --filter @joogo/mock-cafe24 dev` → `http://127.0.0.1:8787`
+- **연결**: `ingest-worker`에서 `PROVIDER_MODE=mock` 설정 시 사용
+- **확장**: 나중에 Naver/Coupang Mock도 동일한 인터페이스로 추가 가능
