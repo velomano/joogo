@@ -35,7 +35,8 @@ jobs:
         run: cp apps/web-admin/.env.ci apps/web-admin/.env.local
         
       - name: Build web-admin (Cloudflare Next)
-        run: npx --yes @cloudflare/next-on-pages@1 build --root ./apps/web-admin
+        working-directory: apps/web-admin
+        run: npx -y @cloudflare/next-on-pages@1 build
         
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -43,8 +44,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: joogo
-          directory: .vercel/output/static
           wranglerVersion: '4.35.0'
-          functionsDirectory: .vercel/output/functions
+          directory: apps/web-admin/.vercel/output/static
+          functionsDirectory: apps/web-admin/.vercel/output/functions
           branch: ${{ github.ref_name }}
-          workingDirectory: .
