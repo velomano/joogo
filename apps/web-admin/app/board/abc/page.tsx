@@ -62,7 +62,7 @@ export default function ABCAnalysisPage() {
 
   // ABC 그룹별 통계
   const abcStats = useMemo(() => {
-    const groups = { A: [], B: [], C: [] };
+    const groups: { A: any[], B: any[], C: any[] } = { A: [], B: [], C: [] };
     filteredABC.forEach((item: any) => {
       if (groups[item.grade as keyof typeof groups]) {
         groups[item.grade as keyof typeof groups].push(item);
