@@ -1,5 +1,5 @@
 // ✅ 빌드 시 프리렌더/정적수집 막기
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
