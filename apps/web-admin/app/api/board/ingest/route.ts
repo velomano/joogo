@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../lib/supabase/server";
+import { supaAdmin } from "../../../../lib/supabase/server";
 
 async function csvParseSync(text: string) {
   const mod = await import("csv-parse/sync");

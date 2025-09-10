@@ -1,5 +1,5 @@
 export const runtime = "edge";
-import { supa } from "../../../lib/db";
+import { supa } from "../../../../lib/db";
 
 export async function POST() {
   const client = supa();
