@@ -9,7 +9,7 @@ export async function GET() {
     const cs = process.env.DATABASE_URL;
     if (!cs) return NextResponse.json({ ok: false, error: "DATABASE_URL missing" }, { status: 400 });
 
-    const client = new Client({
+    const client = new (Client as any)({
       connectionString: cs.includes("sslmode=") ? cs : cs + (cs.includes("?") ? "&" : "?") + "sslmode=require",
       ssl: { rejectUnauthorized: false }
     });
