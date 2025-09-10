@@ -6,7 +6,14 @@ import { supaAdmin } from "../../../../lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenant_id } = await req.json();
+    let tenant_id;
+    try {
+      const body = await req.json();
+      tenant_id = body?.tenant_id;
+    } catch (jsonError) {
+      // JSON 파싱 실패 시 기본값 사용
+      tenant_id = '00000000-0000-0000-0000-000000000001';
+    }
     
     if (!tenant_id) {
       return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
