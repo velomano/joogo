@@ -16,8 +16,8 @@
     "build:analyze": "ANALYZE=true pnpm build",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules",
-    "deploy:cloudflare": "pnpm build && wrangler pages deploy apps/web-admin/.next --project-name=joogo-wms-oms",
-    "deploy:cloudflare:staging": "pnpm build && wrangler pages deploy apps/web-admin/.next --project-name=joogo-wms-oms --env=staging"
+    "deploy:cloudflare": "echo 'Use GitHub Actions for deployment'",
+    "deploy:cloudflare:staging": "echo 'Use GitHub Actions for deployment'"
   },
   "devDependencies": {
     "@types/node": "^20.19.11",
