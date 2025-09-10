@@ -1,0 +1,12 @@
+name = "mock-cafe24"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+route = ""
+workers_dev = true
+port = 8787
+[vars]
+MOCK_SEED = "2025-09-10"
+SIM_MODE = "static"            # static | realtime  (default: static)
+SIM_SEED = "joogo-mock-seed"   # deterministic seed for reproducible streams
+SIM_ORDERS_PER_HOUR = "12"     # average arrival rate (lambda)
+SIM_START_ISO = "2025-08-28T00:00:00+09:00"  # generation window start (KST)

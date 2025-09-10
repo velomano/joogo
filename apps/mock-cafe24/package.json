@@ -1,0 +1,20 @@
+{
+  "name": "@joogo/mock-cafe24",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "node -e \"console.log('mock-cafe24 ready')\""
+  },
+  "dependencies": {
+    "hono": "^4.4.12",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "wrangler": "3.74.0",
+    "typescript": "5.6.2"
+  }
+}

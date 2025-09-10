@@ -60,3 +60,21 @@
 
 ## Health 집계 흐름
 Web(App Router) → /api/health → 각 MCP /health 병렬 호출 → JSON 집계 응답
+
+## Mock Providers (개발용)
+- **apps/mock-cafe24**: Cafe24 Admin API 스타일의 Mock 서버
+  - **목적**: 실제 쇼핑몰 API 키 없이도 개발/테스트 가능
+  - **모드**: `static` (고정 데이터) / `realtime` (시뮬레이션)
+  - **실행**: `pnpm --filter @joogo/mock-cafe24 dev` → `http://127.0.0.1:8787`
+- **apps/mock-ads**: 광고비 데이터 Mock 서버
+  - **채널**: 네이버/쿠팡/구글/메타 광고비 시뮬레이션
+  - **실행**: `pnpm --filter @joogo/mock-ads dev` → `http://127.0.0.1:8789`
+- **apps/mock-weather**: 날씨 데이터 Mock 서버
+  - **데이터**: 온도/습도/강수량/풍속 시뮬레이션
+  - **실행**: `pnpm --filter @joogo/mock-weather dev` → `http://127.0.0.1:8790`
+
+## External Signals (외부 신호)
+- **광고비 데이터**: `analytics.marketing_ad_spend` 테이블에 저장
+- **날씨 데이터**: `analytics.weather_hourly` 테이블에 저장
+- **통합 분석**: `analytics.fact_attribution` 뷰로 판매-광고-날씨 데이터 조인
+- **실제 연동**: 나중에 실제 API (Naver SearchAd, 기상청 등)로 전환 가능
