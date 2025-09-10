@@ -41,6 +41,9 @@ export default function RootLayout({
                   <a href="/board/inventory" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors duration-200">
                     재고 분석
                   </a>
+                  <a href="/upload-logs" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200">
+                    업로드 로그
+                  </a>
                 </div>
               </div>
               
