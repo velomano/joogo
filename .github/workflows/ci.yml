@@ -45,12 +45,11 @@ jobs:
         
       - name: Deploy to Cloudflare Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: joogo
-          wranglerVersion: '4.35.0'
-          directory: apps/web-admin/.vercel/output/static
-          functionsDirectory: apps/web-admin/.vercel/output/functions
-          branch: ${{ github.ref_name }}
+        run: |
+          npx wrangler@4.35.0 pages deploy apps/web-admin/.vercel/output/static \
+            --project-name=joogo \
+            --branch=${{ github.ref_name }} \
+            --compatibility-date=2024-01-01
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
