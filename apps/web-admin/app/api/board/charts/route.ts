@@ -54,8 +54,17 @@ export async function GET(req: NextRequest) {
       sb.rpc("board_sales_daily", { p_tenant_id: tenant, p_from: from, p_to: to }),
       sb.rpc("board_roas_by_channel", { p_tenant_id: tenant, p_from: from, p_to: to }),
       sb.rpc("board_top_categories", { p_tenant_id: tenant, p_from: from, p_to: to, p_limit: 10 }),
-      sb.rpc("board_top_regions", { p_tenant_id: tenant, p_from: from, p_to: to, p_limit: 10 }),
-      sb.rpc("board_top_skus", { p_tenant_id: tenant, p_from: from, p_to: to, p_limit: 10 }),
+      sb.rpc("board_top_categories", { p_tenant_id: tenant, p_from: from, p_to: to, p_limit: 10 }),
+      sb.rpc("board_top_skus", { 
+        p_tenant_id: tenant, 
+        p_from: from, 
+        p_to: to, 
+        p_limit: 10,
+        p_region: null,
+        p_channel: null,
+        p_category: null,
+        p_sku: null
+      }),
       sb.rpc("board_cumulative_revenue", { p_tenant_id: tenant, p_from: from, p_to: to }),
       sb.rpc("board_temp_vs_sales", { p_tenant_id: tenant, p_from: from, p_to: to }),
       sb.rpc("board_spend_rev_daily", { p_tenant_id: tenant, p_from: from, p_to: to })

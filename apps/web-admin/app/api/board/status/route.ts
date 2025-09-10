@@ -32,7 +32,16 @@ export async function GET(req: NextRequest) {
         }),
       
       // SKU 통계 - RPC 함수 사용
-      sb.rpc("board_top_skus", { p_tenant_id: tenantId, p_from: "2025-01-01", p_to: "2025-12-31", p_limit: 100 })
+      sb.rpc("board_top_skus", { 
+        p_tenant_id: tenantId, 
+        p_from: "2025-01-01", 
+        p_to: "2025-12-31", 
+        p_limit: 100,
+        p_region: null,
+        p_channel: null,
+        p_category: null,
+        p_sku: null
+      })
         .then(({ data, error }) => {
           if (error) throw error;
           const uniqueSkus = data?.length || 0;
