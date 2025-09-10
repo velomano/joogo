@@ -870,9 +870,9 @@ export default function BoardPage() {
               <canvas id="chart-sales-by-date" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.salesDaily?.length > 0 ? (
+              {(data?.salesDaily?.length ?? 0) > 0 ? (
                 (() => {
-                  const sales = arr(data.salesDaily);
+                  const sales = arr(data?.salesDaily ?? []);
                   const totalRevenue = sales.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
                   const avgDaily = totalRevenue / sales.length;
                   const maxDay = sales.reduce((max: any, item: any) => 
@@ -891,7 +891,7 @@ export default function BoardPage() {
               <canvas id="chart-roas-by-channel" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.roasByChannel?.length > 0 ? (
+              {data?.roasByChannel && data.roasByChannel.length > 0 ? (
                 (() => {
                   const channels = arr(data.roasByChannel);
                   const bestChannel = channels.reduce((best: any, item: any) => 
@@ -913,7 +913,7 @@ export default function BoardPage() {
               <canvas id="chart-cum-revenue" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.cumulativeRevenue?.length > 0 ? (
+              {data?.cumulativeRevenue && data.cumulativeRevenue.length > 0 ? (
                 (() => {
                   const cumData = arr(data.cumulativeRevenue);
                   const totalCum = cumData[cumData.length - 1]?.cum_revenue || 0;
@@ -931,7 +931,7 @@ export default function BoardPage() {
               <canvas id="chart-top-categories" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topCategories?.length > 0 ? (
+              {data?.topCategories && data.topCategories.length > 0 ? (
                 (() => {
                   const categories = arr(data.topCategories);
                   const total = categories.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -949,7 +949,7 @@ export default function BoardPage() {
               <canvas id="chart-top-regions" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topRegions?.length > 0 ? (
+              {data?.topRegions && data.topRegions.length > 0 ? (
                 (() => {
                   const regions = arr(data.topRegions);
                   const total = regions.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -967,7 +967,7 @@ export default function BoardPage() {
               <canvas id="chart-top-skus" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topSkus?.length > 0 ? (
+              {data?.topSkus && data.topSkus.length > 0 ? (
                 (() => {
                   const skus = arr(data.topSkus);
                   const total = skus.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
