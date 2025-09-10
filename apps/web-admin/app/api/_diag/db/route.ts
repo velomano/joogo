@@ -1,23 +1,20 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
-import { NextResponse } from "next/server";
-import { Client } from "pg";
+import { supaServer } from "@/lib/db";
 
 export async function GET() {
   try {
-    const cs = process.env.DATABASE_URL;
-    if (!cs) return NextResponse.json({ ok: false, error: "DATABASE_URL missing" }, { status: 400 });
+    const supa = supaServer();
+    const { data, error } = await supa
+      .from("analytics.fact_sales_hourly")
+      .select("count")
+      .limit(1);
 
-    const client = new (Client as any)({
-      connectionString: cs.includes("sslmode=") ? cs : cs + (cs.includes("?") ? "&" : "?") + "sslmode=require",
-      ssl: { rejectUnauthorized: false }
+    if (error) throw error;
+    return new Response(JSON.stringify({ ok: true, count: data?.[0]?.count ?? 0 }), {
+      headers: { "content-type": "application/json" }
     });
-    await client.connect();
-    const r = await client.query("select current_user, now()");
-    await client.end();
-    return NextResponse.json({ ok: true, whoami: r.rows?.[0] });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message ?? "db error" }, { status: 500 });
+    return new Response(JSON.stringify({ ok: false, error: String(e?.message ?? e) }), { status: 500 });
   }
 }
