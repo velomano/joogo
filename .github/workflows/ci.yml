@@ -36,7 +36,12 @@ jobs:
         
       - name: Build web-admin (Cloudflare Next)
         working-directory: apps/web-admin
-        run: npx -y @cloudflare/next-on-pages@latest build
+        run: npx -y @cloudflare/next-on-pages@latest
+        
+      - name: Check output
+        run: |
+          ls -la apps/web-admin/.vercel/output/static
+          ls -la apps/web-admin/.vercel/output/functions || true
         
       - name: Deploy to Cloudflare Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
