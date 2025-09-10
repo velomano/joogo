@@ -5,9 +5,6 @@ export const revalidate = 0;
 import { NextRequest, NextResponse } from "next/server";
 import { supaAdmin } from "../../../../lib/supabase/server";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 // tiny per-process cache: key = `${tenant}|${from}|${to}`
 const _cache = new Map<string, { ts: number; payload: any }>();
 const TTL_MS = 0; // 캐시 비활성화
