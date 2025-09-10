@@ -6,7 +6,7 @@ import { supaAdmin } from "../../../../lib/supabase/server";
 
 // Mock 데이터 생성 함수
 function generateMockData(hours: number = 24) {
-  const data = [];
+  const data: any[] = [];
   const now = new Date();
   
   for (let i = 0; i < hours; i++) {
