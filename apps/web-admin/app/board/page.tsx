@@ -3,20 +3,14 @@
 import { useEffect, useState, useMemo } from "react";
 import useSWR from "swr";
 import ErrorBanner from "@/components/ErrorBanner";
+import { FileUpload } from "@/components/FileUpload";
 import { ensureChart, lineConfig, barConfig, scatterConfig, doughnutConfig, scatterWithTrendConfig } from "@/lib/charts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-// import SourceChips from "@/components/analytics/SourceChips";
-// import MockBadge from "@/components/analytics/MockBadge";
-// import { SummaryCardGroup } from "@/components/analytics/cards/Cards";
+import { useRpc } from '@/lib/useRpc';
 
 const arr = (v: any) => (Array.isArray(v) ? v : []);
 
-// 하드코딩된 테넌트 옵션들
-const TENANT_OPTIONS = [
-  { id: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00", name: "메인 테넌트 (샘플 데이터)" },
-  { id: "dev-tenant", name: "개발 테넌트" },
-  { id: "test-tenant", name: "테스트 테넌트" },
-];
+// 테넌트 옵션은 동적으로 데이터베이스에서 로드
 
 // 도시별 기상청 좌표
 const CITY = {
@@ -28,35 +22,138 @@ const CITY = {
   GWANGJU: { name: "광주", nx: "58", ny: "74" }
 } as const;
 
+// 기간별 날짜 계산 함수
+const getDateRange = (period: string) => {
+  const today = new Date();
+  const to = today.toISOString().split('T')[0];
+  
+  switch (period) {
+    case '1week':
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(today.getDate() - 7);
+      return { from: oneWeekAgo.toISOString().split('T')[0], to };
+    case '1month':
+      const oneMonthAgo = new Date(today);
+      oneMonthAgo.setMonth(today.getMonth() - 1);
+      return { from: oneMonthAgo.toISOString().split('T')[0], to };
+    case '3months':
+      const threeMonthsAgo = new Date(today);
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
+      return { from: threeMonthsAgo.toISOString().split('T')[0], to };
+    case '6months':
+      const sixMonthsAgo = new Date(today);
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+      return { from: sixMonthsAgo.toISOString().split('T')[0], to };
+    case '1year':
+    default:
+      return { from: '2025-01-01', to: '2025-12-31' };
+  }
+};
+
 export default function BoardPage() {
-  const [tenantId, setTenantId] = useState<string>("84949b3c-2cb7-4c42-b9f9-d1f37d371e00");
-  const [from, setFrom] = useState<string>("2025-01-01");
-  const [to, setTo] = useState<string>("2025-12-31");
+  const [tenantId, setTenantId] = useState<string>("");
+  const [tenants, setTenants] = useState<Array<{id: string, name: string, created_at: string}>>([]);
+  
+  // 실시간 동기화는 전역 IngestBridge에서 처리
+  // 기본 기간을 1년으로 설정 (실제 데이터 범위에 맞춤)
+  const [from, setFrom] = useState<string>(getDateRange("1year").from);
+  const [to, setTo] = useState<string>(getDateRange("1year").to);
+  const [period, setPeriod] = useState<string>("1year"); // 기간 선택 상태 추가 (기본값: 1년)
   const [errMsg, setErrMsg] = useState("");
   const [ingestMsg, setIngestMsg] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [applyTick, setApplyTick] = useState(1);
-  const [customTenantId, setCustomTenantId] = useState<string>("");
   const [cityKey, setCityKey] = useState<keyof typeof CITY>("SEOUL");
   const [region, setRegion] = useState<string>("");
   const [channel, setChannel] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [sku, setSku] = useState<string>("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [totalUploadedRows, setTotalUploadedRows] = useState<number | null>(null);
   const [appliedFilters, setAppliedFilters] = useState({
-    tenantId: "84949b3c-2cb7-4c42-b9f9-d1f37d371e00",
-    from: "2025-01-01",
-    to: "2025-12-31",
+    tenantId: "",
+    from: getDateRange("1year").from,
+    to: getDateRange("1year").to,
     region: "",
     channel: "",
     category: "",
     sku: ""
   });
 
-  const swrKey = applyTick > 0 ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
-  const insightsKey = applyTick > 0 ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
-  const statusKey = ["board-status", appliedFilters.tenantId] as const;
+  // 테넌트 목록 로드
+  useEffect(() => {
+    const loadTenants = async () => {
+      try {
+        // 캐시 무효화를 위해 timestamp 추가
+        const response = await fetch(`/api/tenants?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.ok) {
+          setTenants(json.tenants || []);
+          // 첫 번째 테넌트를 자동 선택
+          if (json.tenants && json.tenants.length > 0) {
+            setTenantId(json.tenants[0].id);
+            console.log('[tenant] Loaded tenantId:', json.tenants[0].id);
+            setIngestMsg("");
+          } else {
+            // 테넌트가 없으면 안내 메시지 표시
+            setIngestMsg("📁 CSV 파일을 업로드하여 데이터를 분석하세요. 테넌트가 자동으로 생성됩니다.");
+          }
+        }
+      } catch (err) {
+        console.error('테넌트 목록 로드 실패:', err);
+        setErrMsg(`테넌트 목록 로드 실패: ${err}`);
+      }
+    };
+    loadTenants();
+  }, []);
+
+  // 총 업로드된 행수 로드
+  useEffect(() => {
+    const loadTotalRows = async () => {
+      if (!tenantId) return;
+      
+      try {
+        const response = await fetch(`/api/board/status?tenant_id=${tenantId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+        if (json.ok && json.totalRows) {
+          setTotalUploadedRows(json.totalRows);
+        }
+      } catch (err) {
+        console.error('총 행수 로드 실패:', err);
+        setTotalUploadedRows(null);
+      }
+    };
+    loadTotalRows();
+  }, [tenantId]);
+
+  // 기간 변경 시 날짜 업데이트 및 자동 적용
+  useEffect(() => {
+    const dateRange = getDateRange(period);
+    setFrom(dateRange.from);
+    setTo(dateRange.to);
+    
+    // 기간 변경 시 자동으로 필터 적용
+    setAppliedFilters({
+      tenantId,
+      from: dateRange.from,
+      to: dateRange.to,
+      region,
+      channel,
+      category,
+      sku
+    });
+    setApplyTick(prev => prev + 1);
+  }, [period, tenantId, region, channel, category, sku]);
+
+  const swrKey = applyTick > 0 && tenantId ? ["board-charts", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const insightsKey = applyTick > 0 && tenantId ? ["board-insights", appliedFilters.tenantId, appliedFilters.from, appliedFilters.to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] as const : null;
+  const statusKey = tenantId ? ["board-status", appliedFilters.tenantId] as const : null;
   
   const handleApplyFilters = () => {
     setErrMsg("");
@@ -74,6 +171,7 @@ export default function BoardPage() {
   };
 
   const { data: insights } = useSWR(insightsKey, async ([, t, f, to_, rg, ch, ca, s]) => {
+    if (!t) return null; // tenantId가 없으면 null 반환
     const qs = new URLSearchParams({ tenant_id: t, from: f, to: to_, lead_time: "7", z: "1.65" });
     if (rg) qs.set("region", rg);
     if (ch) qs.set("channel", ch);
@@ -85,6 +183,7 @@ export default function BoardPage() {
   }, { revalidateOnFocus: false, dedupingInterval: 15000 });
 
   const { data: status } = useSWR(statusKey, async ([, t]) => {
+    if (!t) return null; // tenantId가 없으면 null 반환
     const url = `/api/board/status?tenant_id=${t}`;
     const r = await fetch(url);
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
@@ -93,53 +192,71 @@ export default function BoardPage() {
 
   const wxKey = ["weather", CITY[cityKey].nx, CITY[cityKey].ny] as const;
   const { data: wx } = useSWR(wxKey, async ([, nx, ny]) => {
-    const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
-    return await res.json();
-  }, { dedupingInterval: 5 * 60 * 1000, revalidateOnFocus: false });
-
-  const { data, error, isLoading, mutate } = useSWR(
-    swrKey,
-    async ([, t, f, to_, rg, ch, ca, s]) => {
-      try {
-        const qs = new URLSearchParams({ from: f, to: to_, tenant_id: t });
-        if (rg) qs.set("region", rg);
-        if (ch) qs.set("channel", ch);
-        if (ca) qs.set("category", ca);
-        if (s)  qs.set("sku", s);
-        const url = `/api/board/charts?${qs.toString()}`;
-        const res = await fetch(url, { headers: { "x-tenant-id": t } });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        
-        const json = await res.json();
-        return {
-          ok: !!json?.ok,
-          salesDaily: arr(json?.salesDaily),
-          roasByChannel: arr(json?.roasByChannel),
-          topCategories: arr(json?.topCategories),
-          topRegions: arr(json?.topRegions),
-          topSkus: arr(json?.topSkus),
-          cumulativeRevenue: arr(json?.cumulativeRevenue),
-          tempVsSales: arr(json?.tempVsSales),
-          spendRevDaily: arr(json?.spendRevDaily),
-        };
-      } catch (err) {
-        console.error("❌ API 요청 실패:", err);
-        throw err;
+    try {
+      const res = await fetch(`/api/weather/current?nx=${nx}&ny=${ny}`);
+      if (!res.ok) {
+        console.warn(`기상청 API 오류: HTTP ${res.status}`);
+        return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
       }
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-      dedupingInterval: 15000,
-      keepPreviousData: true,
-      shouldRetryOnError: false,
-      errorRetryCount: 0,
+      const data = await res.json();
+      return data.ok ? data : { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
+    } catch (error) {
+      console.warn('기상청 API 호출 실패:', error);
+      return { ok: false, T1H: null, REH: null, RN1: null, WSD: null };
     }
+  }, { 
+    dedupingInterval: 5 * 60 * 1000, 
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+    errorRetryCount: 0
+  });
+
+  // 조건부 호출: tenantId, from, to가 모두 있을 때만 실행
+  const enabled = Boolean(tenantId && from && to);
+  
+  console.log('[charts] Enabled check:', { tenantId, from, to, enabled });
+  
+  // charts API를 사용하여 모든 데이터를 한 번에 가져오기
+  const { data: chartsData, error: chartsError, isLoading: chartsLoading } = useSWR(
+    enabled ? ["board-charts", tenantId, from, to, appliedFilters.region, appliedFilters.channel, appliedFilters.category, appliedFilters.sku] : null,
+    async ([, t, f, to_, rg, ch, ca, s]) => {
+      if (!t) return null;
+      console.log('[charts] Fetching data:', { t, f, to_, rg, ch, ca, s });
+      const qs = new URLSearchParams({ tenant_id: t, from: f, to: to_ });
+      if (rg) qs.set("region", rg);
+      if (ch) qs.set("channel", ch);
+      if (ca) qs.set("category", ca);
+      if (s) qs.set("sku", s);
+      const url = `/api/board/charts?${qs.toString()}`;
+      console.log('[charts] Fetching URL:', url);
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+      const result = await r.json();
+      console.log('[charts] Fetch result:', { salesDaily: result.salesDaily?.length, topCategories: result.topCategories?.length });
+      return result;
+    },
+    { revalidateOnFocus: false, dedupingInterval: 15000 }
   );
+
+  // 통합된 데이터 객체
+  const data = useMemo(() => {
+    if (!tenantId || !chartsData) return null;
+    
+    return {
+      ok: true,
+      salesDaily: arr(chartsData.salesDaily),
+      roasByChannel: arr(chartsData.roasByChannel),
+      topCategories: arr(chartsData.topCategories),
+      topRegions: arr(chartsData.topRegions),
+      topSkus: arr(chartsData.topSkus),
+      cumulativeRevenue: arr(chartsData.cumulativeRevenue),
+      tempVsSales: arr(chartsData.tempVsSales),
+      spendRevDaily: arr(chartsData.spendRevDaily),
+    };
+  }, [tenantId, chartsData]);
+
+  const error = chartsError;
+  const isLoading = chartsLoading;
 
   useEffect(() => {
     if (error) {
@@ -170,21 +287,33 @@ export default function BoardPage() {
   };
 
   useEffect(() => {
-    if (!data) return;
+    if (!data) {
+      console.log('[charts] No data available');
+      return;
+    }
+    
+    console.log('[charts] Data available:', {
+      salesDaily: data.salesDaily?.length,
+      topCategories: data.topCategories?.length,
+      topRegions: data.topRegions?.length,
+      cumulativeRevenue: data.cumulativeRevenue?.length
+    });
     
     const filteredData = applyClientFilters(data);
     
     // 기본 차트들
     const labels = arr(filteredData.salesDaily).map((r: any) => r.sale_date);
     const values = arr(filteredData.salesDaily).map((r: any) => Number(r.revenue || 0));
+    console.log('[charts] Sales daily data:', { labels: labels.length, values: values.length });
     ensureChart("chart-sales-by-date", lineConfig(labels, "일자별 매출", values));
 
     const chLabels = arr(filteredData.roasByChannel).map((r: any) => r.channel);
-    const chValues = arr(filteredData.roasByChannel).map((r: any) => Number(r.avg_roas || 0));
+    const chValues = arr(filteredData.roasByChannel).map((r: any) => Number(r.roas || 0));
+    console.log('[charts] ROAS data:', { labels: chLabels.length, values: chValues.length, sample: filteredData.roasByChannel[0] });
     ensureChart("chart-roas-by-channel", barConfig(chLabels, "채널별 ROAS(평균)", chValues));
 
-    const cumL = arr(filteredData.cumulativeRevenue).map((r: any) => r.sale_date);
-    const cumV = arr(filteredData.cumulativeRevenue).map((r: any) => Number(r.cum_revenue || 0));
+    const cumL = arr(filteredData.cumulativeRevenue).map((r: any) => r.date);
+    const cumV = arr(filteredData.cumulativeRevenue).map((r: any) => Number(r.revenue || 0));
     ensureChart("chart-cum-revenue", lineConfig(cumL, "누적 매출", cumV));
 
     ensureChart(
@@ -252,10 +381,12 @@ export default function BoardPage() {
 
     // 온도와 판매량/매출 시계열 선그래프
     const tempVsSales = as(filteredData.tempVsSales);
-    const labels = tempVsSales.map((r: any) => r.sale_date);
-    const tempValues = tempVsSales.map((r: any) => Number(r.tavg || 0));
+    console.log('[charts] tempVsSales data:', { length: tempVsSales.length, sample: tempVsSales[0] });
+    const labels = tempVsSales.map((r: any) => r.date);
+    const tempValues = tempVsSales.map((r: any) => Number(r.temp || 0));
     const qtyValues = tempVsSales.map((r: any) => Number(r.qty || 0));
     const revValues = tempVsSales.map((r: any) => Number(r.revenue || 0));
+    console.log('[charts] tempVsSales processed:', { labels: labels.length, tempValues: tempValues.length });
     
     ensureChart("chart-temp-vs-sales", {
       type: 'line',
@@ -316,9 +447,11 @@ export default function BoardPage() {
 
     // 광고비 vs 매출 시계열 선그래프
     const spendRevData = as(filteredData.spendRevDaily);
-    const spendLabels = spendRevData.map((r: any) => r.sale_date);
+    console.log('[charts] spendRevDaily data:', { length: spendRevData.length, sample: spendRevData[0] });
+    const spendLabels = spendRevData.map((r: any) => r.date);
     const spendValues = spendRevData.map((r: any) => Number(r.spend || 0));
     const revenueValues = spendRevData.map((r: any) => Number(r.revenue || 0));
+    console.log('[charts] spendRevDaily processed:', { labels: spendLabels.length, spendValues: spendValues.length });
     const roasValues = spendRevData.map((r: any) => {
       const spend = Number(r.spend || 0);
       const revenue = Number(r.revenue || 0);
@@ -432,85 +565,20 @@ export default function BoardPage() {
     }
   }, [data, insights, region, channel, category, sku]);
 
-  async function handleUpload() {
-    try {
-      setErrMsg("");
-      setIngestMsg("");
-      setIsUploading(true);
-      setUploadProgress(0);
-      
-      if (!tenantId) throw new Error("tenant_id를 입력하세요");
-      if (!file) throw new Error("CSV 파일을 선택하세요");
-      
-      // 파일 크기 확인 (1만개 행 = 약 1-2MB 예상)
-      const fileSizeMB = file.size / (1024 * 1024);
-      console.log(`📁 파일 크기: ${fileSizeMB.toFixed(2)}MB, 예상 행 수: ${Math.round(fileSizeMB * 5000)}개`);
-      
-      setUploadProgress(10);
-      setIngestMsg("📤 파일 업로드 중...");
-      
-      const fd = new FormData();
-      fd.append("tenant_id", tenantId);
-      fd.append("file", file);
-      
-      setUploadProgress(30);
-      setIngestMsg("🔄 서버에서 처리 중...");
-      
-      const res = await fetch("/api/upload/unified", { method: "POST", body: fd });
-      setUploadProgress(60);
-      
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-      
-      const json = await res.json();
-      setUploadProgress(80);
-      
-      if (!json.ok) throw new Error(json.error || "업로드 실패");
-      
-      setUploadProgress(100);
-      setIngestMsg(`✅ 업로드 완료: ${json.inserted || json.rows_processed || '처리됨'}행 | 워커에서 백그라운드 처리 중...`);
-      
-      // 데이터 새로고침
-      await mutate();
-      
-      // 3초 후 성공 메시지 업데이트
-      setTimeout(() => {
-        setIngestMsg("🎉 데이터 처리 완료! 차트를 확인하세요.");
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 3000);
-      
-    } catch (e: any) {
-      console.error("❌ 업로드 오류:", e);
-      setErrMsg(e?.message ?? "업로드 오류");
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  }
+  // 기존 업로드 로직 제거 - FileUpload 컴포넌트 사용
 
 
-  function handleTenantSelect(selectedId: string) {
-    if (selectedId === "custom") {
-      setTenantId(customTenantId);
-    } else {
-      setTenantId(selectedId);
-      setCustomTenantId("");
-    }
-  }
 
-  function handleCustomTenantApply() {
-    if (customTenantId.trim()) {
-      setTenantId(customTenantId.trim());
-    }
-  }
 
   async function handleDataReset() {
+    console.log('[reset] handleDataReset called, tenantId:', tenantId);
+    console.log('[reset] tenantId type:', typeof tenantId, 'length:', tenantId?.length);
     try {
       setErrMsg("");
       setIngestMsg("");
       
-      if (!tenantId) {
+      if (!tenantId || tenantId.trim() === '') {
+        console.log('[reset] No tenantId, throwing error');
         throw new Error("테넌트 ID를 먼저 선택하세요");
       }
 
@@ -520,17 +588,29 @@ export default function BoardPage() {
       
       if (!confirmed) return;
 
-      const res = await fetch("/api/board/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant_id: tenantId })
+      // API 라우트를 통한 리셋 호출
+      const res = await fetch('/api/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, hard: true }), // 하드 리셋 플래그
       });
-      
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "리셋 실패");
 
-      setIngestMsg(`데이터 리셋 완료: ${json.deleted_rows}행 삭제됨`);
-      await mutate();
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        console.error('❌ 리셋 실패:', data?.error || res.statusText);
+        setErrMsg(data?.error || '리셋 실패');
+        return;
+      }
+      console.log('✅ 리셋 성공');
+      
+      // 총 행수 초기화
+      setTotalUploadedRows(0);
+      
+      // SWR 캐시 무효화하여 데이터 새로고침
+      if (typeof window !== 'undefined') {
+        // 모든 SWR 캐시 무효화
+        window.location.reload();
+      }
       
     } catch (e: any) {
       setErrMsg(e?.message ?? "데이터 리셋 오류");
@@ -559,6 +639,8 @@ export default function BoardPage() {
               </select>
               <div className="rounded-lg border px-3 py-2 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-1">현재 날씨 · {CITY[cityKey].name}</div>
+                {wx?.ok ? (
+                  <>
                 <div className="flex items-baseline gap-3">
                   <div className="text-xl font-semibold">{wx?.T1H ?? "–"}°</div>
                   <div className="text-xs text-gray-600">습도 {wx?.REH ?? "–"}%</div>
@@ -566,6 +648,12 @@ export default function BoardPage() {
                 <div className="text-xs text-gray-600 mt-1">
                   강수 {wx?.RN1 ?? "–"}mm · 풍속 {wx?.WSD ?? "–"}m/s
                 </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-gray-500">
+                    기상 데이터를 불러올 수 없습니다
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -575,60 +663,16 @@ export default function BoardPage() {
             <h3 className="text-sm font-medium mb-3 text-gray-700">데이터 관리</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-600">CSV 업로드</label>
-                <div className="space-y-2 mt-1">
-                  <input 
-                    type="file" 
-                    accept=".csv,text/csv" 
-                    onChange={e => setFile(e.target.files?.[0] ?? null)} 
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm" 
-                  />
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={handleUpload} 
-                      className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                        isUploading 
-                          ? 'bg-blue-50 border-blue-300 text-blue-600 cursor-not-allowed' 
-                          : 'hover:bg-gray-50 border-gray-300'
-                      }`}
-                      disabled={isLoading || isUploading || !file}
-                    >
-                      {isUploading ? '⏳ 업로드 중...' : '📤 업로드'}
-                    </button>
-                    <button 
-                      onClick={handleDataReset} 
-                      className="flex-1 px-3 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium" 
-                      disabled={isLoading || isUploading || !tenantId}
-                    >
-                      🗑️ 리셋
-                    </button>
-                  </div>
-                  
-                  {/* 업로드 진행률 표시 */}
-                  {isUploading && (
-                    <div className="mt-2">
-                      <div className="flex justify-between text-xs text-gray-600 mb-1">
-                        <span>업로드 진행률</span>
-                        <span>{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* 파일 정보 표시 */}
-                  {file && (
-                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      📁 <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(2)}MB)
-                      <br />
-                      예상 행 수: {Math.round(file.size / 1024 / 1024 * 5000)}개
-                    </div>
-                  )}
-                </div>
+                <FileUpload tenantId={tenantId} />
+              </div>
+              <div>
+                <button 
+                  onClick={handleDataReset} 
+                  className="w-full px-3 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium" 
+                  disabled={isLoading || !tenantId}
+                >
+                  🗑️ 데이터 리셋
+                </button>
               </div>
             </div>
           </div>
@@ -636,6 +680,33 @@ export default function BoardPage() {
           {/* 필터 섹션 */}
           <div className="mb-6">
             <h3 className="text-sm font-medium mb-3 text-gray-700">필터</h3>
+            
+            {/* 기간 선택 버튼 */}
+            <div className="mb-4">
+              <label className="text-xs text-gray-600 mb-2 block">분석 기간</label>
+              <div className="flex gap-1 flex-wrap">
+                {[
+                  { value: '1week', label: '1주일' },
+                  { value: '1month', label: '한달' },
+                  { value: '3months', label: '3개월' },
+                  { value: '6months', label: '6개월' },
+                  { value: '1year', label: '1년' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPeriod(option.value)}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      period === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-600">시작 날짜</label>
@@ -706,38 +777,27 @@ export default function BoardPage() {
             <h3 className="text-sm font-medium mb-3 text-gray-700">테넌트 선택</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-600 font-medium">프리셋 테넌트</label>
-                <select
-                  value={TENANT_OPTIONS.find(t => t.id === tenantId)?.id || "custom"} 
-                  onChange={e => handleTenantSelect(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 focus:border-blue-500 focus:outline-none mt-1"
-                >
-                  {TENANT_OPTIONS.map(tenant => (
-                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
-                  ))}
-                  <option value="custom">직접 입력...</option>
-                </select>
+                <label className="text-xs text-gray-600 font-medium">테넌트 선택</label>
+                {tenants.length > 0 ? (
+                  <select
+                    value={tenantId} 
+                    onChange={e => setTenantId(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 focus:border-blue-500 focus:outline-none mt-1"
+                  >
+                    <option value="">테넌트를 선택하세요</option>
+                    {tenants.map(tenant => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.name} ({new Date(tenant.created_at).toLocaleDateString()})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 text-gray-500 mt-1">
+                    데이터를 업로드하면 테넌트가 생성됩니다
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="text-xs text-gray-600 font-medium">직접 입력</label>
-                <div className="flex gap-1 mt-1">
-                  <input
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none" 
-                    placeholder="UUID 또는 테넌트 ID" 
-                    value={customTenantId} 
-                    onChange={e => setCustomTenantId(e.target.value)}
-                    onKeyPress={e => e.key === 'Enter' && handleCustomTenantApply()}
-                  />
-                  <button
-                    onClick={handleCustomTenantApply}
-                    className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm transition-colors"
-                    disabled={!customTenantId.trim()}
-                  >
-                    적용
-                  </button>
-                </div>
-              </div>
 
               <div>
                 <label className="text-xs text-gray-600 font-medium">현재 선택</label>
@@ -757,14 +817,42 @@ export default function BoardPage() {
 
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 p-4 overflow-y-auto">
-          {/* 헤더 영역 */}
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              판매 분석 대시보드
-            </h1>
-          </div>
 
-          {/* 기존 데이터 상태 카드 */}
+                    {/* 데이터 상태 표시 */}
+            {!tenantId ? (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                  <span className="text-sm font-medium text-blue-700">데이터 없음</span>
+                </div>
+                <div className="mt-2 text-xs text-blue-600">
+                  CSV 파일을 업로드하여 데이터를 분석하세요. 테넌트가 자동으로 생성됩니다.
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) ? '데이터 있음' : '데이터 없음'}
+                    </span>
+                  </div>
+                  {(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) && (
+                    <div className="text-xs text-gray-500">
+                      {status?.sales?.days || 0}일 | {new Date().toLocaleString('ko-KR')}
+                    </div>
+                  )}
+                </div>
+                {!(status?.sales?.totalRevenue && Number(status.sales.totalRevenue) > 0) && (
+                  <div className="mt-2 text-xs text-gray-600">
+                    CSV 파일을 업로드하여 데이터를 분석하세요.
+                  </div>
+                )}
+              </div>
+            )}
+
+                    {/* 데이터 상태 카드 */}
             <div className="grid md:grid-cols-4 gap-3 mb-4">
               <div className="rounded-2xl border bg-white shadow-sm p-4">
                 <div className="text-xs text-gray-500 mb-1">📊 총 매출</div>
@@ -797,41 +885,214 @@ export default function BoardPage() {
               </div>
               
               <div className="rounded-2xl border bg-white shadow-sm p-4">
-                <div className="text-xs text-gray-500 mb-1">📁 업로드 상태</div>
+                <div className="text-xs text-gray-500 mb-1">📦 총 재고수량</div>
                 <div className="font-semibold text-lg mb-1">
-                  {status?.upload?.status === 'COMPLETED' ? '✅ 완료' : 
-                   status?.upload?.status === 'PROCESSING' ? '⏳ 처리중' :
-                   status?.upload?.status === 'FAILED' ? '❌ 실패' : '📤 대기'}
+                  {status?.inventory?.totalOnHand ? 
+                    `${status.inventory.totalOnHand.toLocaleString()}개` : 
+                    '0개'}
                 </div>
                 <div className="text-sm text-gray-600">
-                  {status?.upload?.count || 0}개 파일 ({((status?.upload?.totalSize || 0) / 1024 / 1024).toFixed(1)}MB)
+                  {status?.inventory?.totalSkus || 0}개 SKU
                 </div>
               </div>
             </div>
 
-            {/* Insight 카드 */}
-            <div className="grid md:grid-cols-3 gap-3 mb-4">
-              {tipCards.map((t,i)=>(
-                <div key={i} className="rounded-2xl border bg-white shadow-sm p-4">
-                  <div className="text-xs text-gray-500 mb-1">Insight</div>
-                  <div className="font-semibold mb-1">{t.title}</div>
-                  <div className="text-sm text-gray-700">{t.body}</div>
+            {/* 종합 인사이트 섹션 */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">📊 종합 인사이트</h2>
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* 날씨 영향 분석 */}
+                <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <div className="flex items-start">
+                    <div className="text-blue-600 mr-3 text-xl">🌡️</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-blue-900 mb-2">날씨가 판매에 미치는 영향</div>
+                      <div className="text-xs text-blue-700">
+                        {data?.tempVsSales?.length && data.tempVsSales.length >= 30 ? (
+                          (() => {
+                            const tempData = arr(data.tempVsSales);
+                            const tempReg = insights?.tempReg;
+                            const correlation = tempReg?.r2 ? Number(tempReg.r2) : 0;
+                            const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.temp || 0), 0) / tempData.length;
+                            
+                            if (correlation >= 0.7) {
+                              return (
+                                <>
+                                  <div className="font-medium text-green-700 mb-1">✅ 강한 상관관계 발견!</div>
+                                  <div>온도가 판매량에 <strong>{(correlation * 100).toFixed(1)}%</strong>의 영향을 미칩니다.</div>
+                                  <div className="mt-1">• 평균기온 {avgTemp.toFixed(1)}°C에서 최적 판매</div>
+                                  <div>• 계절별 재고 관리와 마케팅 전략 수립 권장</div>
+                                </>
+                              );
+                            } else if (correlation >= 0.3) {
+                              return (
+                                <>
+                                  <div className="font-medium text-yellow-700 mb-1">⚠️ 중간 수준의 상관관계</div>
+                                  <div>온도가 판매량에 <strong>{(correlation * 100).toFixed(1)}%</strong>의 영향을 미칩니다.</div>
+                                  <div className="mt-1">• 다른 요인들도 함께 고려 필요</div>
+                                  <div>• 더 긴 기간 데이터로 재분석 권장</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-gray-700 mb-1">ℹ️ 약한 상관관계</div>
+                                  <div>온도와 판매량 간 상관관계가 <strong>{(correlation * 100).toFixed(1)}%</strong>로 낮습니다.</div>
+                                  <div className="mt-1">• 다른 요인(가격, 마케팅, 이벤트 등)이 더 중요</div>
+                                  <div>• 온도보다는 다른 변수 분석에 집중</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 30일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.tempVsSales?.length || 0}일</div>
+                          </>
+                        )}
                   </div>
-              ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 마케팅 효과 분석 */}
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
+                  <div className="flex items-start">
+                    <div className="text-green-600 mr-3 text-xl">💰</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-green-900 mb-2">마케팅 비용의 효과</div>
+                      <div className="text-xs text-green-700">
+                        {data?.spendRevDaily?.length && data.spendRevDaily.length >= 14 ? (
+                          (() => {
+                            const spendData = arr(data.spendRevDaily);
+                            const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
+                            const totalRev = spendData.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
+                            const avgRoas = totalSpend > 0 ? (totalRev / totalSpend) : 0;
+                            const spendReg = insights?.spendReg;
+                            const efficiency = spendReg?.slope ? Number(spendReg.slope) : 0;
+                            
+                            if (avgRoas >= 3.0) {
+                              return (
+                                <>
+                                  <div className="font-medium text-green-700 mb-1">✅ 매우 효과적인 마케팅!</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고비 증가 시 매출 {efficiency.toFixed(0)}원 증가 예상</div>
+                                  <div>• 현재 마케팅 전략 유지 및 확대 권장</div>
+                                </>
+                              );
+                            } else if (avgRoas >= 2.0) {
+                              return (
+                                <>
+                                  <div className="font-medium text-yellow-700 mb-1">⚠️ 보통 수준의 효과</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고비 증가 시 매출 {efficiency.toFixed(0)}원 증가 예상</div>
+                                  <div>• 광고 전략 개선 및 타겟팅 최적화 필요</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-red-700 mb-1">❌ 비효율적인 마케팅</div>
+                                  <div>ROAS <strong>{avgRoas.toFixed(1)}</strong>로 광고비 1원당 {avgRoas.toFixed(1)}원 수익</div>
+                                  <div className="mt-1">• 광고 전략 전면 재검토 필요</div>
+                                  <div>• 타겟팅, 크리에이티브, 채널 변경 고려</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 14일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.spendRevDaily?.length || 0}일</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 특별 이벤트/요인 분석 */}
+                <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+                  <div className="flex items-start">
+                    <div className="text-purple-600 mr-3 text-xl">📈</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-purple-900 mb-2">특별 요인 및 이벤트 영향</div>
+                      <div className="text-xs text-purple-700">
+                        {data?.salesDaily?.length && data.salesDaily.length >= 7 ? (
+                          (() => {
+                            const salesData = arr(data.salesDaily);
+                            const revenues = salesData.map((item: any) => Number(item.revenue || 0));
+                            const avgRevenue = revenues.reduce((sum: number, rev: number) => sum + rev, 0) / revenues.length;
+                            const maxRevenue = Math.max(...revenues);
+                            const minRevenue = Math.min(...revenues);
+                            const maxDay = salesData.find((item: any) => Number(item.revenue || 0) === maxRevenue);
+                            const minDay = salesData.find((item: any) => Number(item.revenue || 0) === minRevenue);
+                            const variance = ((maxRevenue - minRevenue) / avgRevenue) * 100;
+                            
+                            if (variance >= 50) {
+                              return (
+                                <>
+                                  <div className="font-medium text-purple-700 mb-1">📊 높은 변동성 발견!</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 최고 매출: {maxDay?.sale_date} ({maxRevenue.toLocaleString()}원)</div>
+                                  <div>• 최저 매출: {minDay?.sale_date} ({minRevenue.toLocaleString()}원)</div>
+                                  <div className="mt-1 text-orange-600">→ 특별 이벤트나 외부 요인 영향 가능성 높음</div>
+                                </>
+                              );
+                            } else if (variance >= 20) {
+                              return (
+                                <>
+                                  <div className="font-medium text-blue-700 mb-1">📈 보통 수준의 변동성</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 안정적인 판매 패턴 유지</div>
+                                  <div>• 계절성이나 주기적 요인 영향</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-medium text-gray-700 mb-1">📊 낮은 변동성</div>
+                                  <div>최고일 대비 최저일 <strong>{variance.toFixed(0)}%</strong> 차이</div>
+                                  <div className="mt-1">• 매우 안정적인 판매 패턴</div>
+                                  <div>• 예측 가능한 수요 패턴</div>
+                                </>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <>
+                            <div className="font-medium text-orange-600 mb-1">⚠️ 데이터 부족</div>
+                            <div>분석을 위해 최소 7일 이상의 데이터가 필요합니다.</div>
+                            <div className="mt-1">현재: {data?.salesDaily?.length || 0}일</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
         {/* 산점도 2개 */}
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">평균기온(°C) vs 판매량/매출</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">평균기온(°C) vs 판매량/매출</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">온도 영향도</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-temp-vs-sales" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.tempVsSales && data.tempVsSales.length > 0 ? (
+              {data?.tempVsSales?.length && data.tempVsSales.length > 0 ? (
                 (() => {
                   const tempData = arr(data.tempVsSales);
-                  const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.tavg || 0), 0) / tempData.length;
+                  const avgTemp = tempData.reduce((sum: number, item: any) => sum + Number(item.temp || 0), 0) / tempData.length;
                   const avgQty = tempData.reduce((sum: number, item: any) => sum + Number(item.qty || 0), 0) / tempData.length;
                   const avgRev = tempData.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0) / tempData.length;
                   const tempReg = insights?.tempReg;
@@ -842,12 +1103,18 @@ export default function BoardPage() {
             </div>
           </div>
           <div className="rounded-2xl border bg-white shadow-sm p-4">
-            <h3 className="text-sm mb-2">광고비 vs 매출 (추세선)</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">광고비 vs 매출 (추세선)</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">광고 효율성</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-spend-vs-rev" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.spendRevDaily && data.spendRevDaily.length > 0 ? (
+              {data?.spendRevDaily?.length && data.spendRevDaily.length > 0 ? (
                 (() => {
                   const spendData = arr(data.spendRevDaily);
                   const totalSpend = spendData.reduce((sum: number, item: any) => sum + Number(item.spend || 0), 0);
@@ -865,14 +1132,20 @@ export default function BoardPage() {
         {/* 기존 차트 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl p-4 border bg-white shadow-sm">
-            <h3 className="text-sm mb-3 text-gray-700">일자별 매출</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">일자별 매출</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">매출 추이</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-sales-by-date" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {(data?.salesDaily?.length ?? 0) > 0 ? (
+              {data?.salesDaily?.length && data.salesDaily.length > 0 ? (
                 (() => {
-                  const sales = arr(data?.salesDaily ?? []);
+                  const sales = arr(data.salesDaily);
                   const totalRevenue = sales.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
                   const avgDaily = totalRevenue / sales.length;
                   const maxDay = sales.reduce((max: any, item: any) => 
@@ -886,25 +1159,43 @@ export default function BoardPage() {
             </div>
           </div>
           <div className="rounded-2xl p-4 border bg-white shadow-sm">
-            <h3 className="text-sm mb-3 text-gray-700">채널별 ROAS</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">채널별 ROAS</h3>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-xs text-gray-500">채널 효율성</span>
+              </div>
+            </div>
             <div className="h-64 mb-3">
               <canvas id="chart-roas-by-channel" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.roasByChannel && data.roasByChannel.length > 0 ? (
+              {data?.roasByChannel?.length && data.roasByChannel.length > 0 ? (
                 (() => {
                   const channels = arr(data.roasByChannel);
                   const bestChannel = channels.reduce((best: any, item: any) => 
-                    Number(item.avg_roas || 0) > Number(best.avg_roas || 0) ? item : best, channels[0]);
+                    Number(item.roas || 0) > Number(best.roas || 0) ? item : best, channels[0]);
                   const worstChannel = channels.reduce((worst: any, item: any) => 
-                    Number(item.avg_roas || 0) < Number(worst.avg_roas || 0) ? item : worst, channels[0]);
-                  const avgRoas = channels.reduce((sum: number, item: any) => sum + Number(item.avg_roas || 0), 0) / channels.length;
-                  const bestRoas = Number(bestChannel?.avg_roas || 0);
-                  const worstRoas = Number(worstChannel?.avg_roas || 0);
+                    Number(item.roas || 0) < Number(worst.roas || 0) ? item : worst, channels[0]);
+                  const avgRoas = channels.reduce((sum: number, item: any) => sum + Number(item.roas || 0), 0) / channels.length;
+                  const bestRoas = Number(bestChannel?.roas || 0);
+                  const worstRoas = Number(worstChannel?.roas || 0);
                   const efficiency = bestRoas > 0 ? ((bestRoas - worstRoas) / worstRoas * 100) : 0;
                   return `🎯 ${bestChannel?.channel}이 ${worstChannel?.channel} 대비 ${efficiency.toFixed(0)}% 더 효율적 | 평균 ROAS ${avgRoas.toFixed(2)} | ${bestChannel?.channel}에 집중 투자 권장`;
                 })()
               ) : "데이터 없음"}
+            </div>
+            {/* 채널별 ROAS 설명 */}
+            <div className="mt-3 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-400">
+              <div className="flex items-start">
+                <div className="text-emerald-600 mr-2">📊</div>
+                <div>
+                  <div className="text-sm font-medium text-emerald-900 mb-1">채널별 광고 효율성</div>
+                  <div className="text-xs text-emerald-700">
+                    각 채널의 광고 투자 대비 매출 효과를 비교하여 효율적인 채널을 식별할 수 있습니다.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="rounded-2xl p-4 border bg-white shadow-sm">
@@ -913,7 +1204,7 @@ export default function BoardPage() {
               <canvas id="chart-cum-revenue" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.cumulativeRevenue && data.cumulativeRevenue.length > 0 ? (
+              {data?.cumulativeRevenue?.length && data.cumulativeRevenue.length > 0 ? (
                 (() => {
                   const cumData = arr(data.cumulativeRevenue);
                   const totalCum = cumData[cumData.length - 1]?.cum_revenue || 0;
@@ -931,7 +1222,7 @@ export default function BoardPage() {
               <canvas id="chart-top-categories" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topCategories && data.topCategories.length > 0 ? (
+              {data?.topCategories?.length && data.topCategories.length > 0 ? (
                 (() => {
                   const categories = arr(data.topCategories);
                   const total = categories.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -949,7 +1240,7 @@ export default function BoardPage() {
               <canvas id="chart-top-regions" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topRegions && data.topRegions.length > 0 ? (
+              {data?.topRegions?.length && data.topRegions.length > 0 ? (
                 (() => {
                   const regions = arr(data.topRegions);
                   const total = regions.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -967,7 +1258,7 @@ export default function BoardPage() {
               <canvas id="chart-top-skus" />
             </div>
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-              {data?.topSkus && data.topSkus.length > 0 ? (
+              {data?.topSkus?.length && data.topSkus.length > 0 ? (
                 (() => {
                   const skus = arr(data.topSkus);
                   const total = skus.reduce((sum: number, item: any) => sum + Number(item.revenue || 0), 0);
@@ -1004,6 +1295,7 @@ export default function BoardPage() {
             </div>
           </div>
         </div>
+
 
         </div>
       </div>
