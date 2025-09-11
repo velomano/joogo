@@ -1,161 +1,166 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
-interface ApiStatus {
-  cafe24: 'idle' | 'loading' | 'success' | 'error';
-  weather: 'idle' | 'loading' | 'success' | 'error';
-  ads: 'idle' | 'loading' | 'success' | 'error';
+interface WeatherData {
+  temperature: number;
+  humidity: number;
+  description: string;
+  location: string;
+  lastUpdate: string;
 }
 
 export default function ApiTestSection() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>({
-    cafe24: 'idle',
-    weather: 'idle',
-    ads: 'idle'
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<string>('');
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
-  const [lastUpdate, setLastUpdate] = useState<{[key: string]: string}>({});
-
-  const testApi = useCallback(async (apiType: keyof ApiStatus) => {
-    setApiStatus(prev => ({ ...prev, [apiType]: 'loading' }));
-    
+  // 실제 기상청 API에서 날씨 정보 가져오기
+  const fetchWeatherData = useCallback(async () => {
     try {
-      let endpoint = '';
-      switch (apiType) {
-        case 'cafe24':
-          endpoint = '/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07';
-          break;
-        case 'weather':
-          endpoint = '/api/weather?from=2025-01-01&to=2025-01-07';
-          break;
-        case 'ads':
-          endpoint = '/api/ads?from=2025-01-01&to=2025-01-07';
-          break;
-      }
-
-      const response = await fetch(endpoint);
+      // 기상청 공공데이터포털 API (실제 사용시 API 키 필요)
+      // 현재는 mock 데이터로 대체
+      const response = await fetch('/api/weather?from=2025-01-01&to=2025-01-07');
       if (response.ok) {
-        setApiStatus(prev => ({ ...prev, [apiType]: 'success' }));
-        const now = new Date();
-        setLastUpdate(prev => ({ 
-          ...prev, 
-          [apiType]: now.toLocaleTimeString('ko-KR', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-          })
-        }));
-        
-        // API 테스트 성공 이벤트 발생
-        window.dispatchEvent(new CustomEvent('apiTestSuccess', {
-          detail: { apiType, timestamp: now.toISOString() }
-        }));
-      } else {
-        throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.length > 0) {
+          const latest = data[data.length - 1];
+          setWeatherData({
+            temperature: Math.round(latest.temperature || 20),
+            humidity: Math.round((latest.humidity || 50) * 100),
+            description: getWeatherDescription(latest.temperature || 20),
+            location: '서울',
+            lastUpdate: new Date().toLocaleTimeString('ko-KR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })
+          });
+        }
       }
     } catch (error) {
-      console.error(`${apiType} API 테스트 실패:`, error);
-      setApiStatus(prev => ({ ...prev, [apiType]: 'error' }));
+      console.error('날씨 데이터 가져오기 실패:', error);
     }
   }, []);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'loading': return '⏳';
-      default: return '⚪';
-    }
+  const getWeatherDescription = (temp: number) => {
+    if (temp < 0) return '눈';
+    if (temp < 10) return '흐림';
+    if (temp < 20) return '구름많음';
+    if (temp < 30) return '맑음';
+    return '맑음';
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'success': return '정상';
-      case 'error': return '오류';
-      case 'loading': return '테스트중';
-      default: return '미테스트';
-    }
-  };
+  const loadAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // 모든 API를 동시에 호출
+      const promises = [
+        fetch('/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07'),
+        fetch('/api/weather?from=2025-01-01&to=2025-01-07'),
+        fetch('/api/ads?from=2025-01-01&to=2025-01-07')
+      ];
 
-  const getButtonStyle = (status: string) => {
-    const baseStyle = {
-      width: '100%',
-      padding: '8px 12px',
-      margin: '4px 0',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '12px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between'
-    };
-
-    switch (status) {
-      case 'success':
-        return { ...baseStyle, backgroundColor: '#10b981', color: 'white' };
-      case 'error':
-        return { ...baseStyle, backgroundColor: '#ef4444', color: 'white' };
-      case 'loading':
-        return { ...baseStyle, backgroundColor: '#f59e0b', color: 'white' };
-      default:
-        return { ...baseStyle, backgroundColor: '#6b7280', color: 'white' };
+      const responses = await Promise.all(promises);
+      const allSuccess = responses.every(response => response.ok);
+      
+      if (allSuccess) {
+        const now = new Date();
+        setLastUpdate(now.toLocaleTimeString('ko-KR', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit' 
+        }));
+        
+        // 데이터 불러오기 성공 이벤트 발생
+        window.dispatchEvent(new CustomEvent('apiTestSuccess', {
+          detail: { 
+            apiType: 'all', 
+            timestamp: now.toISOString(),
+            success: true
+          }
+        }));
+      } else {
+        throw new Error('일부 API 호출 실패');
+      }
+    } catch (error) {
+      console.error('데이터 불러오기 실패:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
+
+  // 컴포넌트 마운트 시 날씨 데이터 로드
+  useEffect(() => {
+    fetchWeatherData();
+  }, [fetchWeatherData]);
 
   return (
     <div style={{ marginBottom: '20px' }}>
       <div className="muted" style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
-        🔌 API 관리
+        🔌 데이터 관리
       </div>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <button
-          onClick={() => testApi('cafe24')}
-          disabled={apiStatus.cafe24 === 'loading'}
-          style={getButtonStyle(apiStatus.cafe24)}
-        >
-          <span>쇼핑몰 API</span>
-          <span style={{ fontSize: '10px' }}>
-            {getStatusIcon(apiStatus.cafe24)} {getStatusText(apiStatus.cafe24)}
-          </span>
-        </button>
-        
-        <button
-          onClick={() => testApi('weather')}
-          disabled={apiStatus.weather === 'loading'}
-          style={getButtonStyle(apiStatus.weather)}
-        >
-          <span>기상청 API</span>
-          <span style={{ fontSize: '10px' }}>
-            {getStatusIcon(apiStatus.weather)} {getStatusText(apiStatus.weather)}
-          </span>
-        </button>
-        
-        <button
-          onClick={() => testApi('ads')}
-          disabled={apiStatus.ads === 'loading'}
-          style={getButtonStyle(apiStatus.ads)}
-        >
-          <span>광고비 API</span>
-          <span style={{ fontSize: '10px' }}>
-            {getStatusIcon(apiStatus.ads)} {getStatusText(apiStatus.ads)}
-          </span>
-        </button>
-      </div>
+      {/* 통합 데이터 불러오기 버튼 */}
+      <button
+        onClick={loadAllData}
+        disabled={isLoading}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          margin: '4px 0',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '12px',
+          fontWeight: '600',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          transition: 'all 0.2s ease',
+          backgroundColor: isLoading ? '#f59e0b' : '#3b82f6',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px'
+        }}
+      >
+        {isLoading ? '⏳' : '🔄'} 
+        {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
+      </button>
 
-      {/* 마지막 업데이트 시간 표시 */}
-      {(lastUpdate.cafe24 || lastUpdate.weather || lastUpdate.ads) && (
-        <div style={{ marginTop: '8px', fontSize: '10px', color: '#9ca3af' }}>
-          <div style={{ marginBottom: '4px' }}>마지막 테스트:</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {lastUpdate.cafe24 && <span>쇼핑몰: {lastUpdate.cafe24}</span>}
-            {lastUpdate.weather && <span>기상청: {lastUpdate.weather}</span>}
-            {lastUpdate.ads && <span>광고비: {lastUpdate.ads}</span>}
+      {/* 실시간 날씨 정보 */}
+      {weatherData && (
+        <div style={{ 
+          marginTop: '12px', 
+          padding: '8px', 
+          backgroundColor: '#f8fafc', 
+          borderRadius: '6px',
+          border: '1px solid #e2e8f0'
+        }}>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
+            🌤️ 현재 날씨 ({weatherData.location})
           </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                {weatherData.temperature}°C
+              </span>
+              <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
+                {weatherData.description}
+              </span>
+            </div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>
+              습도 {weatherData.humidity}%
+            </div>
+          </div>
+          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>
+            업데이트: {weatherData.lastUpdate}
+          </div>
+        </div>
+      )}
+
+      {/* 마지막 업데이트 시간 */}
+      {lastUpdate && (
+        <div style={{ marginTop: '8px', fontSize: '10px', color: '#9ca3af', textAlign: 'center' }}>
+          마지막 불러오기: {lastUpdate}
         </div>
       )}
     </div>

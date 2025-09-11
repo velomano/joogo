@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-type Daily = { date: string; tavg: number; source: string };
+type Daily = { date: string; tavg: number; humidity?: number; source: string };
 
 // 기상청 공공데이터포털 API 설정
 const WEATHER_API_KEY = process.env.KMA_SERVICE_KEY || process.env.WEATHER_API_KEY || 'your_api_key_here';
@@ -99,9 +99,21 @@ async function fetchWeatherData(region: string, date: string) {
     const temperatures = tempData.map((item: any) => parseFloat(item.fcstValue));
     const avgTemp = temperatures.reduce((sum: number, temp: number) => sum + temp, 0) / temperatures.length;
     
+    // 습도 데이터도 가져오기 (REH - 습도)
+    const humidityData = data.response?.body?.items?.item?.filter((item: any) => 
+      item.category === 'REH' && item.fcstDate === date
+    ) || [];
+    
+    let avgHumidity = 50; // 기본값
+    if (humidityData.length > 0) {
+      const humidities = humidityData.map((item: any) => parseFloat(item.fcstValue));
+      avgHumidity = humidities.reduce((sum: number, hum: number) => sum + hum, 0) / humidities.length;
+    }
+    
     return {
       date,
       tavg: Math.round(avgTemp * 10) / 10, // 소수점 1자리
+      humidity: Math.round(avgHumidity) / 100, // 0-1 범위로 정규화
       source: 'weather_api'
     };
   } catch (error) {
@@ -116,15 +128,21 @@ function generateMockTemperature(date: string) {
   const d = new Date(date);
   const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
   
+  // 더 현실적인 온도 분포
   const baseTemp = 15;
-  const seasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
-  const daily = 5 * Math.sin(dayOfYear * 0.1);
-  const random = (Math.random() - 0.5) * 8;
+  const seasonal = 12 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
+  const daily = 6 * Math.sin(dayOfYear * 0.1);
+  const random = (Math.random() - 0.5) * 6;
   const tavg = Math.round((baseTemp + seasonal + daily + random) * 10) / 10;
+  
+  // 습도 계산 (온도와 반비례)
+  const humidity = Math.round(80 - (tavg - 10) * 2 + (Math.random() - 0.5) * 20);
+  const clampedHumidity = Math.max(30, Math.min(95, humidity));
   
   return {
     date,
     tavg,
+    humidity: clampedHumidity / 100, // 0-1 범위로 정규화
     source: 'mock_fallback'
   };
 }
@@ -141,9 +159,9 @@ export async function GET(req: Request) {
     const days = Math.ceil((+end - +start) / 86400000) + 1;
 
     // 날짜 범위가 너무 크면 Mock 데이터 사용 (API 제한 고려)
-    if (days > 7) {
-      type Daily = { date: string; tavg: number; source: string };
-const mockData: Daily[] = [];
+    if (days > 3) {
+      type Daily = { date: string; tavg: number; humidity?: number; source: string };
+      const mockData: Daily[] = [];
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const dateStr = d.toISOString().slice(0, 10);

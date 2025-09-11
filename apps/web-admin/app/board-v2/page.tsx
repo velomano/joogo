@@ -286,21 +286,6 @@ export default function BoardV2Page() {
 
   // 버튼 이벤트 핸들러
 
-  const handleApiLoad = async () => {
-    setIsLoading(true);
-    try {
-      console.log('API에서 데이터 불러오기...');
-      // 실제 API 호출 로직
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 시뮬레이션
-      alert('API에서 데이터를 성공적으로 불러왔습니다.');
-    } catch (error) {
-      console.error('API 로드 실패:', error);
-      alert('API 로드에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleReset = () => {
     console.log('데이터 초기화');
     resetFilters(); // React 상태 리셋 함수 호출
@@ -314,19 +299,10 @@ export default function BoardV2Page() {
         <ApiTestSection />
         
         <div className="row" style={{ margin: '8px 0' }}>
-          <button className="btn" onClick={handleApiLoad} disabled={isLoading} style={{ 
-            backgroundColor: '#3b82f6', 
-            color: 'white', 
-            fontWeight: '600',
-            flex: 1,
-            marginRight: '4px'
-          }}>
-            {isLoading ? '로딩 중...' : '🔄 새로고침'}
-          </button>
           <button className="btn" onClick={handleReset} disabled={isLoading} style={{ 
             backgroundColor: '#6b7280', 
             color: 'white',
-            flex: 1
+            width: '100%'
           }}>초기화</button>
         </div>
 
