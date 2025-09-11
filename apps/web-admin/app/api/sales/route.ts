@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const generateMockData = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const data = [];
+    const data: { ts: string; value: number }[] = [];
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const ts = d.toISOString().slice(0, 10);
