@@ -139,7 +139,7 @@ export default function DiscountElasticityChart() {
                 callbacks: {
                   label: function(context) {
                     if (context.datasetIndex === 0) {
-                      return `할인율: ${(context.parsed.x * 100).toFixed(1)}%, 수량: ${context.raw.quantity}개`;
+                      return `할인율: ${(Number(context.parsed.x) * 100).toFixed(1)}%, 수량: ${Number(context.parsed.y)}개`;
                     }
                     return context.dataset.label;
                   }
@@ -157,8 +157,8 @@ export default function DiscountElasticityChart() {
                 ticks: { 
                   color: '#9aa0a6', 
                   font: { size: 10 },
-                  callback: function(value) {
-                    return `${(value * 100).toFixed(0)}%`;
+                  callback: function(value: string | number) {
+                    return `${(Number(value) * 100).toFixed(0)}%`;
                   }
                 },
                 grid: { color: '#1b2533' }

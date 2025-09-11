@@ -29,7 +29,7 @@ export default function SkuDetailChart() {
         const tempData = calendarData.map(d => d.tavg || 0);
         
         // 7일 이동평균 계산
-        const movingAvg = [];
+        const movingAvg: number[] = [];
         for (let i = 0; i < salesData.length; i++) {
           const start = Math.max(0, i - 6);
           const slice = salesData.slice(start, i + 1);

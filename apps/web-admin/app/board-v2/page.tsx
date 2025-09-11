@@ -440,7 +440,6 @@ export default function BoardV2Page() {
           />
           <DataTable 
             title="23 리오더/단종 제안" 
-            subtitle="(재고/리드타임/판매속도)"
             columns={['sku', 'avg_daily_14', 'stock_on_hand', 'lead_time_days', 'days_of_supply', 'reorder_gap_days', 'reco', 'discontinue_flag']}
             data={[
               ['TOPS-001', '3.2', '300', '7', '93.8', '86.8', '안정', ''],
