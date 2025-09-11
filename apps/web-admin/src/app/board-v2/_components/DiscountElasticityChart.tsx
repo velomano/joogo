@@ -137,12 +137,18 @@ export default function DiscountElasticityChart() {
                 borderColor: '#1b2533',
                 borderWidth: 1,
                 callbacks: {
-                  label: function(context: any) {
+                  // Chart.js v4 타입에서 context.raw는 unknown → 안전하게 축소
+                  label: function (context) {
                     if (context.datasetIndex === 0) {
-                      const raw = context.raw as any;
-                      return `할인율: ${(Number(context.parsed.x) * 100).toFixed(1)}%, 수량: ${raw?.quantity || 'N/A'}개`;
+                      const raw = context.raw as { quantity?: number } | number | null;
+                      const qty =
+                        typeof raw === 'object' && raw !== null && 'quantity' in raw
+                          ? (raw as any).quantity
+                          : context.parsed.y; // fallback
+                      const x = Number(context.parsed.x);
+                      return `할인율: ${(x * 100).toFixed(1)}%, 수량: ${qty}개`;
                     }
-                    return context.dataset.label;
+                    return context.dataset?.label ?? '';
                   }
                 }
               }
