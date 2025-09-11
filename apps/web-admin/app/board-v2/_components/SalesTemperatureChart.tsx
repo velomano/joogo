@@ -48,6 +48,12 @@ export default function SalesTemperatureChart({
           return date >= new Date(from) && date <= new Date(to);
         });
         
+        // 오늘 데이터만 표시하도록 필터링
+        const today = new Date().toISOString().slice(0, 10);
+        if (from === today && to === today) {
+          filteredData = filteredData.filter(d => d.date === today);
+        }
+        
         console.log('필터링 후 데이터 개수:', filteredData.length); // 디버깅용
         
         // 데이터 가공 - 날짜 범위에 따라 포맷 조정

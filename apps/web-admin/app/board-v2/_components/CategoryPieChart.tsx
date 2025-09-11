@@ -34,9 +34,25 @@ export default function CategoryPieChart({
         setLoading(true);
         const chartData = await Adapters.treemapPareto({ from, to }, { region, channel, category, sku });
         
+        // 오늘 데이터만 표시하도록 필터링
+        const today = new Date().toISOString().slice(0, 10);
+        let filteredData = chartData;
+        if (from === today && to === today) {
+          filteredData = chartData.filter(item => item.date === today);
+          if (filteredData.length === 0) {
+            // 오늘 데이터가 없으면 빈 차트 표시
+            setData({
+              labels: [],
+              datasets: []
+            });
+            setLoading(false);
+            return;
+          }
+        }
+        
         // 카테고리별 매출 집계
         const categoryMap = new Map<string, number>();
-        chartData.forEach(item => {
+        filteredData.forEach(item => {
           const category = item.category || '기타';
           categoryMap.set(category, (categoryMap.get(category) || 0) + item.revenue);
         });

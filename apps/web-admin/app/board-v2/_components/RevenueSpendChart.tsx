@@ -34,7 +34,7 @@ export default function RevenueSpendChart({
         setLoading(true);
         
         // 판매 데이터와 광고비 데이터를 병렬로 가져오기
-        const [chartData, adsData] = await Promise.all([
+        const [originalChartData, adsData] = await Promise.all([
           Adapters.calendarHeatmap(
             { from: from as string, to: to as string }, 
             { region, channel, category, sku }
@@ -44,6 +44,24 @@ export default function RevenueSpendChart({
             { region, channel, category, sku }
           )
         ]);
+        
+        // 오늘 데이터만 표시하도록 필터링
+        const today = new Date().toISOString().slice(0, 10);
+        let chartData = originalChartData;
+        if (from === today && to === today) {
+          // 오늘 데이터만 필터링
+          const todayData = originalChartData.filter(d => d.date === today);
+          if (todayData.length === 0) {
+            // 오늘 데이터가 없으면 빈 차트 표시
+            setData({
+              labels: [],
+              datasets: []
+            });
+            setLoading(false);
+            return;
+          }
+          chartData = todayData;
+        }
         
         // 데이터 가공 - 날짜 범위에 따라 포맷 조정
         const dateRange = new Date(to).getTime() - new Date(from).getTime();

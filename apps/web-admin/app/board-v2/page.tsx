@@ -332,6 +332,7 @@ export default function BoardV2Page() {
           <div className="muted" style={{ marginBottom: '6px' }}>빠른 선택</div>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {[
+              { value: 'today', label: '오늘' },
               { value: '1week', label: '1주일' },
               { value: '1month', label: '1개월' },
               { value: '3months', label: '3개월' },
