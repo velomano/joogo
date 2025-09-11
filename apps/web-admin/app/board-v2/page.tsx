@@ -307,7 +307,6 @@ export default function BoardV2Page() {
         </div>
 
         <hr className="line" />
-        <div className="muted">필터</div>
         <label className="muted">기간</label>
         <div className="row">
           <input 

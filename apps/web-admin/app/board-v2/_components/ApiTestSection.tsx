@@ -100,6 +100,37 @@ export default function ApiTestSection() {
         🔌 데이터 관리
       </div>
       
+      {/* 실시간 날씨 정보 */}
+      {weatherData && (
+        <div style={{ 
+          marginBottom: '12px', 
+          padding: '8px', 
+          backgroundColor: '#1e293b', 
+          borderRadius: '6px',
+          border: '1px solid #334155'
+        }}>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>
+            🌤️ 현재 날씨 ({weatherData.location})
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#f1f5f9' }}>
+                {weatherData.temperature}°C
+              </span>
+              <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '4px' }}>
+                {weatherData.description}
+              </span>
+            </div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+              습도 {weatherData.humidity}%
+            </div>
+          </div>
+          <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>
+            업데이트: {weatherData.lastUpdate}
+          </div>
+        </div>
+      )}
+      
       {/* 통합 데이터 불러오기 버튼 */}
       <button
         onClick={loadAllData}
@@ -125,37 +156,6 @@ export default function ApiTestSection() {
         {isLoading ? '⏳' : '🔄'} 
         {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
       </button>
-
-      {/* 실시간 날씨 정보 */}
-      {weatherData && (
-        <div style={{ 
-          marginTop: '12px', 
-          padding: '8px', 
-          backgroundColor: '#f8fafc', 
-          borderRadius: '6px',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
-            🌤️ 현재 날씨 ({weatherData.location})
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '14px', fontWeight: '600' }}>
-                {weatherData.temperature}°C
-              </span>
-              <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
-                {weatherData.description}
-              </span>
-            </div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>
-              습도 {weatherData.humidity}%
-            </div>
-          </div>
-          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>
-            업데이트: {weatherData.lastUpdate}
-          </div>
-        </div>
-      )}
 
       {/* 마지막 업데이트 시간 */}
       {lastUpdate && (
