@@ -2,7 +2,7 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../../lib/supabase/server";
+import { supaAdmin } from '@/lib/supabase/server';
 
 // Mock 데이터 생성 함수
 function generateMockData(hours: number = 24) {
@@ -139,3 +139,4 @@ export async function GET() {
     usage: "POST with { tenant, source: 'mock', hours: 24 }",
   });
 }
+

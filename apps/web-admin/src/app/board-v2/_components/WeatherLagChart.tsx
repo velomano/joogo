@@ -30,7 +30,7 @@ export default function WeatherLagChart() {
         // 지연 상관관계 계산 (-7일 ~ +7일)
         const lags = Array.from({ length: 15 }, (_, i) => i - 7);
         const correlations: number[] = lags.map((lag: number) => {
-          const pairs: LagPoint[] = [];
+          const pairs: Array<{ temp: number; sales: number }> = [];
           
           for (let i = 0; i < weatherData.length; i++) {
             const currentDate = new Date(weatherData[i].date);
@@ -41,10 +41,11 @@ export default function WeatherLagChart() {
             const targetWeather = weatherData.find(w => w.date === targetDateStr);
             
             if (targetWeather) {
-              pairs.push({
+              const pair: { temp: number; sales: number } = {
                 temp: weatherData[i].temp,
                 sales: targetWeather.sales
-              });
+              };
+              pairs.push(pair);
             }
           }
           

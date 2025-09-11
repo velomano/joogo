@@ -32,7 +32,14 @@ jobs:
         run: pnpm -F @joogo/web-admin typecheck
         
       - name: Prepare env for CI
-        run: cp apps/web-admin/.env.ci apps/web-admin/.env.local
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=" > apps/web-admin/.env.local
+          echo "SUPABASE_SERVICE_ROLE_KEY=" >> apps/web-admin/.env.local
+          echo "OPENAI_API_KEY=" >> apps/web-admin/.env.local
+          echo "TENANT_ID_DEFAULT=default" >> apps/web-admin/.env.local
+          echo "NEXT_PUBLIC_DATA_SOURCE=mock" >> apps/web-admin/.env.local
+          echo "KMA_SERVICE_KEY=" >> apps/web-admin/.env.local
+          echo "KMA_BASE_URL=https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0" >> apps/web-admin/.env.local
         
       - name: Build (Cloudflare Next)
         working-directory: apps/web-admin

@@ -30,11 +30,12 @@ export default function ParetoChart() {
         
         // 누적 비율 계산
         const total = values.reduce((sum, val) => sum + val, 0);
-        const cumulative: number[] = [];
-        let acc = 0;
+        const cumulative: Array<number> = [];
+        let acc: number = 0;
         for (let i = 0; i < values.length; i++) {
           acc += values[i];
-          cumulative.push((acc / total) * 100);
+          const percentage: number = (acc / total) * 100;
+          cumulative.push(percentage);
         }
         
         // ABC 분석

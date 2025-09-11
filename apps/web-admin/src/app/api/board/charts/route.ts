@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../../lib/supabase/server";
+import { supaAdmin } from '@/lib/supabase/server';
 
 // tiny per-process cache: key = `${tenant}|${from}|${to}`
 const _cache = new Map<string, { ts: number; payload: any }>();
@@ -106,3 +106,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: e?.message ?? "server error" }, { status: 500 });
   }
 }
+

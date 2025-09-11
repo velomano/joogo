@@ -2,7 +2,7 @@ import { Chart as ChartJS, ChartConfiguration } from "chart.js/auto";
 
 export { ChartJS as Chart };
 
-const registry = new Map<string, Chart>();
+const registry = new Map<string, ChartJS>();
 
 export function ensureChart(id: string, cfg: ChartConfiguration) {
   const el = document.getElementById(id) as HTMLCanvasElement | null;
@@ -11,7 +11,7 @@ export function ensureChart(id: string, cfg: ChartConfiguration) {
   if (!ctx) return;
   const existing = registry.get(id);
   if (existing) existing.destroy();
-  const c = new Chart(ctx, cfg);
+  const c = new ChartJS(ctx, cfg);
   registry.set(id, c);
 }
 

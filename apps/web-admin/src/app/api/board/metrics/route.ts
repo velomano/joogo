@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../../lib/supabase/server";
+import { supaAdmin } from '@/lib/supabase/server';
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -26,3 +26,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: e?.message ?? "server error" }, { status: 500 });
   }
 }
+

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/lib/state/filters';
+import { useFilters } from '@/lib/state/filters';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

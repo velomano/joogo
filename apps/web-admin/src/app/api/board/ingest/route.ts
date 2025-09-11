@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../../lib/supabase/server";
+import { supaAdmin } from '@/lib/supabase/server';
 
 async function csvParseSync(text: string) {
   const mod = await import("csv-parse/sync");
@@ -74,3 +74,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: e?.message ?? "ingest error" }, { status: 500 });
   }
 }
+

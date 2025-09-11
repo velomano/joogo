@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/lib/state/filters';
+import { useFilters } from '@/lib/state/filters';
 
 export default function OutlierDetectionChart() {
   const { from, to } = useFilters();

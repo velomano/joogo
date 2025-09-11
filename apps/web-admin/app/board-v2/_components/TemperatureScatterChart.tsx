@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/lib/state/filters';
+import { useFilters } from '@/lib/state/filters';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 

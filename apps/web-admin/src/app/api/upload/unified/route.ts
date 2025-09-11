@@ -5,11 +5,11 @@ export const revalidate = 0;
 
 import type { NextRequest } from "next/server";
 // ✅ 절대 alias 쓰지 말고 상대경로 고정 (CI에서 100% 동작)
-import { supa } from "../../../../lib/db";
+import { supa } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   // ✅ 여기서 "런타임"에 Supabase 생성 (모듈 top-level 금지)
-  const client = supa();
+  const client = supa;
 
   // ↓ 아래는 기존 구현 로직을 그대로 두세요.
   //    최소한 CI를 막지 않도록 try/catch로 감싸고, env 없으면 no-op로 통과.
@@ -41,3 +41,5 @@ export async function GET() {
     status: 200,
   });
 }
+
+

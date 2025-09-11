@@ -35,3 +35,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: e?.message ?? 'FETCH_FAILED' }, { status: 500 });
   }
 }
+

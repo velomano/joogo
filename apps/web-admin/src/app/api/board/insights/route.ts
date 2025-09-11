@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
-import { supaAdmin } from "../../../../lib/supabase/server";
+import { supaAdmin } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,3 +53,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: e?.message ?? "insights error" }, { status: 500 });
   }
 }
+

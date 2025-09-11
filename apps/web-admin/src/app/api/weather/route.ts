@@ -138,11 +138,12 @@ export async function GET(req: Request) {
 
     // 날짜 범위가 너무 크면 Mock 데이터 사용 (API 제한 고려)
     if (days > 7) {
-      const mockData: { date: string; tavg: number; source: string; }[] = [];
+      const mockData: Array<{ date: string; tavg: number; source: string; }> = [];
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const dateStr = d.toISOString().slice(0, 10);
-        mockData.push(generateMockTemperature(dateStr));
+        const mockItem = generateMockTemperature(dateStr);
+        mockData.push(mockItem);
       }
       return NextResponse.json(mockData);
     }
@@ -173,3 +174,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Failed to fetch weather data' }, { status: 500 });
   }
 }
+

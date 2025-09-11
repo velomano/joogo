@@ -138,7 +138,8 @@ export async function GET(req: Request) {
 
     // 날짜 범위가 너무 크면 Mock 데이터 사용 (API 제한 고려)
     if (days > 7) {
-      const mockData = [];
+      type Daily = { date: string; tavg: number; source: string };
+const mockData: Daily[] = [];
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const dateStr = d.toISOString().slice(0, 10);

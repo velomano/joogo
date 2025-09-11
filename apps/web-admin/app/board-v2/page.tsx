@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useFilters } from '@/lib/lib/state/filters';
+import { useFilters } from '@/lib/state/filters';
 import { Adapters } from './_data/adapters';
 import SalesTemperatureChart from './_components/SalesTemperatureChart';
 import RevenueSpendChart from './_components/RevenueSpendChart';
