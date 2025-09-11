@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     ];
     
     // tenants 테이블이 없거나 권한이 없을 수 있으므로 try-catch로 처리
-    let dbTenants = [];
+    let dbTenants: Array<{ id: string; name: string; created_at: string }> = [];
     try {
       const { data: tenants, error } = await supaAdmin()
         .from('tenants')
