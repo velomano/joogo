@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 type Daily = { date: string; tavg: number; source: string };
 
 // 기상청 공공데이터포털 API 설정
