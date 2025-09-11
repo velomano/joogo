@@ -1,4 +1,4 @@
-import { BoardDataSource, BoardSnapshot, KPI, DailyPoint, BreakdownRow } from './BoardTypes';
+import type { BoardDataSource, BoardSnapshot, KPI, DailyPoint, BreakdownRow, DateISO } from './BoardTypes';
 
 const baseUrl = typeof window === 'undefined' ? (process.env.NEXT_PUBLIC_BASE_URL || '') : '';
 

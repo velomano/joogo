@@ -39,9 +39,9 @@ export function FiltersPanel({
     onFiltersChange({
       from: '2025-01-01',
       to: '2025-12-31',
-      channels: [],
-      regions: [],
-      skus: [],
+      channel: [],
+      region: [],
+      sku: [],
       cuped: false,
       pinCompare: false,
     });
@@ -115,8 +115,8 @@ export function FiltersPanel({
             <input
               type="text"
               placeholder="web, app, mobile (쉼표로 구분)"
-              value={filters.channels.join(', ')}
-              onChange={(e) => handleArrayFilterChange('channels', e.target.value)}
+              value={filters.channel.join(', ')}
+              onChange={(e) => handleArrayFilterChange('channel', e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -131,8 +131,8 @@ export function FiltersPanel({
             <input
               type="text"
               placeholder="SEOUL, BUSAN, DAEGU (쉼표로 구분)"
-              value={filters.regions.join(', ')}
-              onChange={(e) => handleArrayFilterChange('regions', e.target.value)}
+              value={filters.region.join(', ')}
+              onChange={(e) => handleArrayFilterChange('region', e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -147,8 +147,8 @@ export function FiltersPanel({
             <input
               type="text"
               placeholder="TOPS-001, BOTTOMS-002 (쉼표로 구분)"
-              value={filters.skus.join(', ')}
-              onChange={(e) => handleArrayFilterChange('skus', e.target.value)}
+              value={filters.sku.join(', ')}
+              onChange={(e) => handleArrayFilterChange('sku', e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
