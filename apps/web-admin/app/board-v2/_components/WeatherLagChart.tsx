@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+type Pair = { temp: number; sales: number };
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
@@ -18,7 +20,7 @@ export default function WeatherLagChart() {
       try {
         setLoading(true);
         
-        const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
+        const calendarData = await Adapters.calendarHeatmap({ from: from as string, to: to as string }, {});
         
         // 날씨와 판매량 데이터 준비
         const weatherData = calendarData
@@ -143,7 +145,7 @@ export default function WeatherLagChart() {
                 color: '#9aa0a6', 
                 font: { size: 10 },
                 callback: function(value) {
-                  return value.toFixed(1);
+                  return Number(value).toFixed(1);
                 }
               },
               grid: { color: '#1b2533' }

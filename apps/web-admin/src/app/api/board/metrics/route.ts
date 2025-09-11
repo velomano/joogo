@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const to   = url.searchParams.get("to")   || "2025-12-31";
     if (!tenant) return NextResponse.json({ error: "tenant_id missing" }, { status: 400 });
 
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     const { data, error } = await sb.rpc("board_get_kpis", {
       p_tenant_id: tenant,
       p_from: from,

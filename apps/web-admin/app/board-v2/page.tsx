@@ -49,7 +49,7 @@ function KpiBar() {
   useEffect(() => {
     (async () => {
       try {
-      const data = await Adapters.calendarHeatmap({ from, to }, {});
+      const data = await Adapters.calendarHeatmap({ from: from as string, to: to as string }, {});
       const sum = data.reduce((a, b) => a + b.revenue, 0);
         const spend = data.reduce((a, b) => a + (b.spend || 0), 0);
         const roas = spend ? sum / spend : 0;
@@ -249,8 +249,8 @@ export default function BoardV2Page() {
         <div className="muted">필터</div>
         <label className="muted">기간</label>
         <div className="row">
-          <input type="date" id="fromDate" style={{ flex: 1 }} title="시작 날짜" value={from} readOnly />
-          <input type="date" id="toDate" style={{ flex: 1 }} title="종료 날짜" value={to} readOnly />
+          <input type="date" id="fromDate" style={{ flex: 1 }} title="시작 날짜" value={from as string} readOnly />
+          <input type="date" id="toDate" style={{ flex: 1 }} title="종료 날짜" value={to as string} readOnly />
         </div>
         <label className="muted" style={{ marginTop: '6px' }}>지역</label>
         <select id="regionSel" title="지역별 필터">

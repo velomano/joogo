@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     
     if (!tenant) return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
 
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     const [
       tempReg, spendReg, abc, rop, eol, movers
     ] = await Promise.all([

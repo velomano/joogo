@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+type Daily = { date: string; tavg: number; source: string };
+
 // 기상청 공공데이터포털 API 설정
 const WEATHER_API_KEY = process.env.KMA_SERVICE_KEY || process.env.WEATHER_API_KEY || 'your_api_key_here';
 const WEATHER_BASE_URL = process.env.KMA_BASE_URL || 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';

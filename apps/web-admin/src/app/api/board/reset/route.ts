@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
     }
 
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     
     // RPC 함수를 사용하여 데이터 삭제
     const { data: result, error } = await sb.rpc("board_reset_tenant_data", {

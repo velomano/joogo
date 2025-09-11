@@ -17,7 +17,7 @@ export default function RevenueSpendChart() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const chartData = await Adapters.calendarHeatmap({ from, to }, {});
+        const chartData = await Adapters.calendarHeatmap({ from: from as string, to: to as string }, {});
         
         // 데이터 가공
         const labels = chartData.map(d => d.date);

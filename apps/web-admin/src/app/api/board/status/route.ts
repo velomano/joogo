@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenant_id') || '84949b3c-2cb7-4c42-b9f9-d1f37d371e00';
 
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     
     // 기본 통계 조회
     const [salesStats, skuStats, uploadStats] = await Promise.all([

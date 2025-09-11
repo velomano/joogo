@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     }
 
     console.log(`[charts] Cache miss, calling Supabase RPCs for key: ${key}`);
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     
     const [
       daily,

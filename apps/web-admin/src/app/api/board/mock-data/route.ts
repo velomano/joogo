@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     console.log(`[mock-data] Generated ${mockData.length} records`);
     
     // Supabase에 직접 삽입
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     const fileId = `mock-${Date.now()}`;
     
     // 1) Stage에 삽입

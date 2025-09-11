@@ -3,7 +3,7 @@ import { supaAdmin } from '@/lib/supabase/server';
 
 export async function GET() {
   try {
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     
     // 실제 데이터베이스에서 채널 목록 조회
     const { data, error } = await sb

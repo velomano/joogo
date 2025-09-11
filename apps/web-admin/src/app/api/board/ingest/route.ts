@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       original_data: r,
     }));
 
-    const sb = supaAdmin();
+    const sb = supaAdmin;
     
     // 1) stage insert
     const ins = await sb.rpc("board_stage_insert_rows", {
