@@ -1,7 +1,7 @@
 'use client';
 import BoardLayout from './_components/BoardLayout';
-import { useFilters } from '../../lib/state/filters';
-import { FEATURE_FLAGS } from '../../lib/featureFlags';
+import { useFilters } from '@/lib/lib/state/filters';
+import { FEATURE_FLAGS } from '@/lib/lib/featureFlags';
 import { Adapters } from './_data/adapters';
 import { useEffect, useState } from 'react';
 import CalendarHeatmap from './_components/CalendarHeatmap';

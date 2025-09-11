@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import { Chart } from '../../../lib/chart';
+import { Chart } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
 type F = { stage:string; value:number; group:'marketing'|'merchant' };
@@ -37,6 +37,7 @@ export default function FunnelDual({ from, to }: { from:string; to:string }) {
           ]
         },
         options: {
+          maintainAspectRatio: false,
           indexAxis: 'y',
           plugins: { legend: { position: 'bottom' } },
           scales: {
@@ -52,7 +53,9 @@ export default function FunnelDual({ from, to }: { from:string; to:string }) {
   return (
     <div className="rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
       <div className="text-sm text-slate-300 mb-2">마케팅/머천트 이중 퍼널</div>
-      <canvas ref={canvasRef} />
+      <div className="h-64">
+        <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
     </div>
   );
 }

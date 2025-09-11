@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Chart } from '../../../lib/chart';
-import 'chartjs-chart-treemap';
+import { Chart } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
 type Node = { category:string; sku:string; revenue:number; roas?:number };
@@ -47,7 +46,10 @@ export default function TreemapPareto({ from, to }: { from:string; to:string }) 
             }
           } as any]
         },
-        options: { plugins: { legend: { display:false }, tooltip: { enabled: false } } }
+        options: { 
+          maintainAspectRatio: false,
+          plugins: { legend: { display:false }, tooltip: { enabled: false } } 
+        }
       });
     })();
     return () => { mounted=false; if (chartRef.current) chartRef.current.destroy(); };
@@ -57,7 +59,9 @@ export default function TreemapPareto({ from, to }: { from:string; to:string }) 
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
       <div className="lg:col-span-3 rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
         <div className="text-sm text-slate-300 mb-2">카테고리/상품 Treemap</div>
-        <canvas ref={canvasRef} />
+        <div className="h-64">
+          <canvas ref={canvasRef} className="w-full h-full" />
+        </div>
       </div>
       <div className="rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
         <div className="text-sm text-slate-300 mb-2">Pareto Top 10</div>

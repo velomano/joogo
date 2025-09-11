@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef } from 'react';
-import { Chart } from '../../../lib/chart';
-import 'chartjs-chart-matrix';
+import { Chart } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
 type Cell = { x: number; y: number; v: number; date: string; event?: boolean };
@@ -72,7 +71,7 @@ export default function CalendarHeatmap({ from, to }: { from: string; to: string
           }]
         },
         options: {
-          aspectRatio: 3.2,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -108,7 +107,9 @@ export default function CalendarHeatmap({ from, to }: { from: string; to: string
   return (
     <div className="rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
       <div className="text-sm text-slate-300 mb-2">성과 캘린더 히트맵</div>
-      <canvas ref={canvasRef} />
+      <div className="h-64">
+        <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
     </div>
   );
 }

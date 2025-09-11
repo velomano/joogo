@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef } from 'react';
-import { Chart } from '../../../lib/chart';
+import { Chart } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
 type Row = { date:string; channel:string; region:string; revenue:number; roas?:number };
@@ -35,7 +35,7 @@ export default function ChannelRegionSmallMultiples({ from, to }: { from: string
 
       byKey.forEach((list, key) => {
         const card = document.createElement('div');
-        card.className = 'rounded-2xl bg-slate-800/40 border border-slate-700 p-3';
+        card.className = 'rounded-2xl bg-slate-800/40 border border-slate-700 p-3 min-h-[220px]';
         const title = document.createElement('div');
         title.className = 'text-xs text-slate-400 mb-1';
         title.textContent = key;
@@ -54,6 +54,7 @@ export default function ChannelRegionSmallMultiples({ from, to }: { from: string
             datasets: [{ label: '매출', data, tension: 0.25, pointRadius: 0, borderWidth: 2 }]
           },
           options: {
+            maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
             scales: {
               x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
