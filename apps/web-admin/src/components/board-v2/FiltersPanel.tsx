@@ -23,7 +23,7 @@ export function FiltersPanel({
     onFiltersChange({ [field]: value });
   };
 
-  const handleArrayFilterChange = (field: 'channels' | 'regions' | 'skus', value: string) => {
+  const handleArrayFilterChange = (field: 'channel' | 'region' | 'sku', value: string) => {
     const currentValues = filters[field];
     const newValues = value.trim() 
       ? value.split(',').map(v => v.trim()).filter(Boolean)
