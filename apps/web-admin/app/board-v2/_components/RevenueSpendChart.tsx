@@ -121,7 +121,7 @@ export default function RevenueSpendChart({
           });
         } else if (daysDiff <= 90) {
           // 3개월 이하: 주별 집계 (7일씩 묶어서)
-          const weeklyData = [];
+          const weeklyData: { date: string; revenue: number; spend: number }[] = [];
           for (let i = 0; i < chartData.length; i += 7) {
             const weekData = chartData.slice(i, i + 7);
             if (weekData.length > 0) {

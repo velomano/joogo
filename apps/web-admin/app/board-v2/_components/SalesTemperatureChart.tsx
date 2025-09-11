@@ -82,7 +82,7 @@ export default function SalesTemperatureChart({
           tempData = filteredData.map(d => d.tavg || 0);
         } else if (daysDiff <= 90) {
           // 3개월 이하: 주별 집계 (7일씩 묶어서)
-          const weeklyData = [];
+          const weeklyData: { date: string; revenue: number; tavg: number }[] = [];
           for (let i = 0; i < filteredData.length; i += 7) {
             const weekData = filteredData.slice(i, i + 7);
             if (weekData.length > 0) {
