@@ -209,6 +209,41 @@ export const Adapters={
     }
   },
 
+  async weather(range:DateRange, f:Filters){
+    try {
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        ...(f.region && f.region.length > 0 && { region: f.region.join(',') })
+      });
+      const response = await fetch(`/api/weather?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch weather data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      // Fallback to mock data
+      const start = new Date(range.from);
+      const end = new Date(range.to);
+      const days = Math.ceil((+end - +start) / 86400000) + 1;
+      
+      return Array.from({length: days}).map((_,i)=>{
+        const d = new Date(+start + i * 86400000);
+        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const baseTemp = 15;
+        const seasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
+        const daily = 5 * Math.sin(dayOfYear * 0.1);
+        const random = (Math.random() - 0.5) * 8;
+        const tavg = Math.round((baseTemp + seasonal + daily + random) * 10) / 10;
+        
+        return {
+          date: d.toISOString().slice(0,10),
+          tavg,
+          source: 'mock_fallback'
+        };
+      });
+    }
+  },
+
   async weatherData(range:DateRange, region:string = 'SEOUL'){
     try {
       const qs = new URLSearchParams({
