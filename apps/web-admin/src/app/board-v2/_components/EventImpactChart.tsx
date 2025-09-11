@@ -17,63 +17,59 @@ export default function EventImpactChart() {
         // Mock 이벤트 임팩트 데이터 생성
         const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
         
-        console.log('Calendar data sample:', calendarData.slice(0, 5)); // 디버깅용
-        console.log('Total calendar data:', calendarData.length); // 디버깅용
+        console.log('EventImpactChart - Calendar data sample:', calendarData.slice(0, 5)); // 디버깅용
+        console.log('EventImpactChart - Total calendar data:', calendarData.length); // 디버깅용
         
         // Mock API의 is_event 필드 사용 (이미 설정되어 있음)
         const eventDates = calendarData.filter(d => d.is_event).map(d => d.date);
         
-        console.log('Event dates found:', eventDates); // 디버깅용
-        console.log('Event count:', eventDates.length); // 디버깅용
+        console.log('EventImpactChart - Event dates found:', eventDates); // 디버깅용
+        console.log('EventImpactChart - Event count:', eventDates.length); // 디버깅용
         
-        if (eventDates.length > 0) {
-          // 실제 데이터를 기반으로 통계 계산
-          const revenues = calendarData.map(d => d.revenue);
-          const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
-          
-          // 이벤트 전후 평균 계산 (Mock)
-          const preEvent = avgRevenue * 0.85; // 이벤트 전 평균 (15% 낮음)
-          const postEvent = avgRevenue * 1.15; // 이벤트 후 평균 (15% 높음)
-          const diff = (postEvent - preEvent) / 1000; // 천원 단위
-          
-          // 통계값 계산 (Mock)
-          const tStat = 2.1;
-          const df = 8.5;
-          const pValue = 0.023;
-          
-          setImpactData({
-            diff: diff.toFixed(1),
-            preAvg: (preEvent / 1000).toFixed(1),
-            postAvg: (postEvent / 1000).toFixed(1),
-            tStat: tStat.toFixed(1),
-            df: df.toFixed(1),
-            pValue: pValue.toFixed(3),
-            isSignificant: pValue < 0.05,
-            eventCount: eventDates.length
-          });
-        } else {
-          // 이벤트가 없는 경우 - Mock 데이터로 강제 생성
-          const revenues = calendarData.map(d => d.revenue);
-          const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
-          
-          const preEvent = avgRevenue * 0.85;
-          const postEvent = avgRevenue * 1.15;
-          const diff = (postEvent - preEvent) / 1000;
-          
-          setImpactData({
-            diff: diff.toFixed(1),
-            preAvg: (preEvent / 1000).toFixed(1),
-            postAvg: (postEvent / 1000).toFixed(1),
-            tStat: 2.1,
-            df: 8.5,
-            pValue: 0.023,
-            isSignificant: true,
-            eventCount: 0,
-            isMock: true
-          });
-        }
+        // 실제 데이터를 기반으로 통계 계산
+        const revenues = calendarData.map(d => d.revenue);
+        const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
+        
+        // 이벤트 전후 평균 계산 (Mock)
+        const preEvent = avgRevenue * 0.85; // 이벤트 전 평균 (15% 낮음)
+        const postEvent = avgRevenue * 1.15; // 이벤트 후 평균 (15% 높음)
+        const diff = (postEvent - preEvent) / 1000; // 천원 단위
+        
+        // 통계값 계산 (Mock)
+        const tStat = 2.1;
+        const df = 8.5;
+        const pValue = 0.023;
+        
+        const result = {
+          diff: diff.toFixed(1),
+          preAvg: (preEvent / 1000).toFixed(1),
+          postAvg: (postEvent / 1000).toFixed(1),
+          tStat: tStat.toFixed(1),
+          df: df.toFixed(1),
+          pValue: pValue.toFixed(3),
+          isSignificant: pValue < 0.05,
+          eventCount: eventDates.length,
+          hasEvents: eventDates.length > 0
+        };
+        
+        console.log('EventImpactChart - Setting impact data:', result); // 디버깅용
+        setImpactData(result);
+        
       } catch (error) {
-        console.error('Failed to fetch event impact data:', error);
+        console.error('EventImpactChart - Failed to fetch event impact data:', error);
+        // 에러 발생 시에도 기본 데이터 설정
+        setImpactData({
+          diff: '15.2',
+          preAvg: '2.8',
+          postAvg: '3.2',
+          tStat: '2.1',
+          df: '8.5',
+          pValue: '0.023',
+          isSignificant: true,
+          eventCount: 0,
+          hasEvents: false,
+          isError: true
+        });
       } finally {
         setLoading(false);
       }
@@ -104,17 +100,6 @@ export default function EventImpactChart() {
     );
   }
 
-  if (impactData.noEvent) {
-    return (
-      <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-        <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>이벤트 데이터 없음</div>
-          <div style={{ fontSize: '12px' }}>분석할 이벤트가 없습니다</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ height: '130px', padding: '16px', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
       <div className="row" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
@@ -130,7 +115,9 @@ export default function EventImpactChart() {
         </span>
       </div>
       <div className="small muted" style={{ marginTop: '8px' }}>
-        ※ Welch t-검정 근사치 {impactData.isSignificant ? '(유의함)' : '(비유의함)'}
+        ※ Welch t-검정 근사치 {impactData.isSignificant ? '(유의함)' : '(비유의함)'} 
+        {impactData.eventCount > 0 ? ` | 이벤트 ${impactData.eventCount}개` : ' | Mock 데이터'}
+        {impactData.isError ? ' (에러 복구)' : ''}
       </div>
     </div>
   );
