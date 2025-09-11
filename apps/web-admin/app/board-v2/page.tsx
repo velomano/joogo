@@ -235,10 +235,8 @@ export default function BoardV2Page() {
     let newTo = '2025-12-31';
     
     switch (period) {
-      case '1year':
-        const yearAgo = new Date(today);
-        yearAgo.setFullYear(today.getFullYear() - 1);
-        newFrom = yearAgo.toISOString().split('T')[0];
+      case 'today':
+        newFrom = todayStr;
         newTo = todayStr;
         break;
       case '1week':
@@ -263,6 +261,12 @@ export default function BoardV2Page() {
         const sixMonthsAgo = new Date(today);
         sixMonthsAgo.setMonth(today.getMonth() - 6);
         newFrom = sixMonthsAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+      case '1year':
+        const yearAgo = new Date(today);
+        yearAgo.setFullYear(today.getFullYear() - 1);
+        newFrom = yearAgo.toISOString().split('T')[0];
         newTo = todayStr;
         break;
     }
