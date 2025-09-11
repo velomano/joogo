@@ -8,6 +8,20 @@ import RevenueSpendChart from './_components/RevenueSpendChart';
 import CategoryPieChart from './_components/CategoryPieChart';
 import RegionBarChart from './_components/RegionBarChart';
 import ParetoChart from './_components/ParetoChart';
+import SkuDetailChart from './_components/SkuDetailChart';
+import RankResponseChart from './_components/RankResponseChart';
+import EventImpactChart from './_components/EventImpactChart';
+import ToggleCompareChart from './_components/ToggleCompareChart';
+import TemperatureScatterChart from './_components/TemperatureScatterChart';
+import ProfitScatterChart from './_components/ProfitScatterChart';
+import DayOfWeekChart from './_components/DayOfWeekChart';
+import WeatherLagChart from './_components/WeatherLagChart';
+import PriceElasticityChart from './_components/PriceElasticityChart';
+import DiscountElasticityChart from './_components/DiscountElasticityChart';
+import TemperatureBucketChart from './_components/TemperatureBucketChart';
+import HeatmapChart from './_components/HeatmapChart';
+import OutlierDetectionChart from './_components/OutlierDetectionChart';
+import ForecastChart from './_components/ForecastChart';
 
 type KPI = { 
   label: string; 
@@ -35,8 +49,8 @@ function KpiBar() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await Adapters.calendarHeatmap({ from, to }, {});
-        const sum = data.reduce((a, b) => a + b.revenue, 0);
+      const data = await Adapters.calendarHeatmap({ from, to }, {});
+      const sum = data.reduce((a, b) => a + b.revenue, 0);
         const spend = data.reduce((a, b) => a + (b.spend || 0), 0);
         const roas = spend ? sum / spend : 0;
         const orders = Math.round(sum / 50000);
@@ -93,7 +107,7 @@ function KpiBar() {
       } catch (error) {
         console.error('Failed to fetch KPI data:', error);
         // 에러 시 기본값
-        setKpis([
+      setKpis([
           { label: '총 재고수량', value: '0', subValue: '데이터 없음', status: 'bad' },
           { label: '총 매출', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
           { label: '총 원가', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
@@ -156,8 +170,8 @@ function DataTable({ title, columns, data, maxHeight = 200 }: {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
-    </div>
   );
 }
 
@@ -326,109 +340,69 @@ export default function BoardV2Page() {
 
         <section className="two">
           <ChartPanel title="⑥ 선택 SKU 상세" subtitle="(판매량·7일 이동평균·평균기온)">
-            <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-              <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-                <div style={{ fontSize: '14px', marginBottom: '8px' }}>SKU 상세 차트 로딩 중...</div>
-                <div style={{ fontSize: '12px' }}>선택된 SKU 데이터 분석 중</div>
-              </div>
-            </div>
+            <SkuDetailChart />
           </ChartPanel>
           <ChartPanel title="⑦ 진열 순위 반응곡선" subtitle="(slot_rank↓ 좋음)">
-            <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-              <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-                <div style={{ fontSize: '14px', marginBottom: '8px' }}>순위 반응곡선 로딩 중...</div>
-                <div style={{ fontSize: '12px' }}>진열 순위별 판매량 분석 중</div>
-              </div>
-            </div>
+            <RankResponseChart />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑧ 이벤트 전/후 임팩트" subtitle="(전후 평균·Welch t-검정)">
-            <div id="impactBox" className="note">
-              <div className="row">
-                <span className="badge ok">증감: +2.5</span>
-                <span className="badge">전 평균: 15.2</span>
-                <span className="badge">후 평균: 17.7</span>
-                <span className="badge">t≈ 2.1</span>
-                <span className="badge">df≈ 8.5</span>
-                <span className="badge ok">p≈ 0.023</span>
-              </div>
-              <div className="small muted">※ 근사치</div>
-            </div>
+            <EventImpactChart />
           </ChartPanel>
           <ChartPanel title="⑨ 토글 비교">
             <div className="row">
-              <b>⑨ 토글 비교</b>
-              <div className="toggle-group" style={{ marginLeft: '8px' }}>
+              <div className="toggle-group" style={{ marginLeft: '0' }}>
                 <button id="tgChannel" className="active">채널</button>
                 <button id="tgRegion">지역</button>
                 <button id="tgCampaign">캠페인</button>
               </div>
             </div>
-            <canvas id="lineToggleCompare" height="130"></canvas>
+            <ToggleCompareChart />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑩ 산점도: 평균기온 vs 판매량">
-            <canvas id="scatterTemp" height="130"></canvas>
-            <div id="scatterTempNote" className="note">
-              해석: r≈0.65(강함). 1℃↑ 시 판매량 1.2 변동(선형).
-            </div>
+            <TemperatureScatterChart />
           </ChartPanel>
           <ChartPanel title="⑪ 산점도: 할인율 vs 이익">
-            <canvas id="scatterProfit" height="130"></canvas>
-            <div id="scatterProfitNote" className="note">
-              해석: r≈0.45(보통). 할인율 1%p↑ 시 이익 0.8 변동(근사).
-            </div>
+            <ProfitScatterChart />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑫ 요일 효과">
-            <canvas id="barDow" height="130"></canvas>
+            <DayOfWeekChart />
           </ChartPanel>
           <ChartPanel title="⑬ 날씨→판매 지연 상관" subtitle="(±7일)">
-            <canvas id="lagLine" height="130"></canvas>
+            <WeatherLagChart />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑭ 가격 탄력성" subtitle="(log-가격 vs log(Q+1))">
-            <canvas id="priceElastic" height="130"></canvas>
-            <div id="priceNote" className="note">해석: 가격 탄력성 ≈ -1.2 (log-log).</div>
+            <PriceElasticityChart />
           </ChartPanel>
           <ChartPanel title="⑮ 할인 탄력성" subtitle="(할인율 vs log(Q+1))">
-            <canvas id="discElastic" height="130"></canvas>
-            <div id="discNote" className="note">해석: 할인율 1%p↑ 시 Q≈ 2.5% 변화(근사).</div>
+            <DiscountElasticityChart />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑯ 기온 버킷">
-            <canvas id="bucketTemp" height="130"></canvas>
+            <TemperatureBucketChart />
           </ChartPanel>
           <ChartPanel title="⑰ 요일×할인 구간 히트맵">
-            <div style={{ overflow: 'auto', borderRadius: '10px', border: '1px solid #1b2533' }}>
-              <table id="heatDiscDow" className="heat">
-                <thead><tr id="heatHead"></tr></thead>
-                <tbody id="heatBody"></tbody>
-              </table>
-            </div>
+            <HeatmapChart />
           </ChartPanel>
         </section>
 
         <section className="two">
-          <DataTable 
-            title="⑱ 이상치 탐지(Z-score)"
-            columns={['date', 'qty_z', 'rev_z']}
-            data={[
-              ['2025-01-15', '2.1', '1.8'],
-              ['2025-02-03', '1.9', '2.2'],
-              ['2025-03-10', '2.3', '1.7']
-            ]}
-          />
+          <ChartPanel title="⑱ 이상치 탐지(Z-score)">
+            <OutlierDetectionChart />
+          </ChartPanel>
           <DataTable 
             title="⑲ 데이터 미리보기"
             columns={['date', 'region', 'channel', 'sku', 'qty', 'revenue']}
@@ -442,7 +416,7 @@ export default function BoardV2Page() {
 
         <section className="two">
           <ChartPanel title="⑳ 단기 예측(7일 이동평균)">
-            <canvas id="forecast" height="130"></canvas>
+            <ForecastChart />
           </ChartPanel>
           <DataTable 
             title="21 재고 소진 예상"

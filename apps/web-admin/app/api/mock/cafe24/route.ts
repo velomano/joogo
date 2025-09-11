@@ -25,7 +25,16 @@ export async function GET(req: Request) {
         const event = (d.getDate() === 1 || d.getDate() === 15) ? 1 : 0;
         const rev = Math.round(500000 + 4500000 * seasonal * (0.7 + rng()));
         const roas = +(2.0 + (rng() - 0.5) * 0.6).toFixed(2);
-        return { date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event };
+        
+        // 온도 데이터 생성 (계절성 반영)
+        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const baseTemp = 15; // 연평균 15도
+        const tempSeasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365); // 계절 변동
+        const daily = 5 * Math.sin(dayOfYear * 0.1); // 일일 변동
+        const random = (rng() - 0.5) * 8; // 랜덤 변동
+        const tavg = +(baseTemp + tempSeasonal + daily + random).toFixed(1);
+        
+        return { date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event, tavg };
       });
       return NextResponse.json(arr);
     }

@@ -25,20 +25,33 @@ async function fetchChannels(): Promise<string[]> {
 }
 
 export const Adapters={
-  calendarHeatmap(range:DateRange,f:Filters){
-    // 더미 데이터 생성
-    const start = new Date(range.from);
-    const end = new Date(range.to);
-    const days = Math.ceil((+end - +start) / 86400000) + 1;
-    
-    return Promise.resolve(Array.from({length: days}).map((_,i)=>{
-      const d = new Date(+start + i * 86400000);
-      const seasonal = 1 + (d.getMonth() === 5 || d.getMonth() === 10 ? 0.4 : 0);
-      const event = d.getDate() === 1 || d.getDate() === 15 ? 1 : 0;
-      const revenue = Math.round(500000 + 4500000 * seasonal * (0.7 + Math.random()));
-      const roas = +(2.0 + (Math.random() - 0.5) * 0.6).toFixed(2);
-      return {date: d.toISOString().slice(0,10), revenue, roas, is_event: !!event};
-    }));
+  async calendarHeatmap(range:DateRange,f:Filters){
+    // Mock API에서 데이터 가져오기
+    try {
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        kind: 'calendar'
+      });
+      const response = await fetch(`/api/mock/cafe24?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch calendar data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+      // Fallback to basic data
+      const start = new Date(range.from);
+      const end = new Date(range.to);
+      const days = Math.ceil((+end - +start) / 86400000) + 1;
+      
+      return Array.from({length: days}).map((_,i)=>{
+        const d = new Date(+start + i * 86400000);
+        const seasonal = 1 + (d.getMonth() === 5 || d.getMonth() === 10 ? 0.4 : 0);
+        const event = d.getDate() === 1 || d.getDate() === 15 ? 1 : 0;
+        const revenue = Math.round(500000 + 4500000 * seasonal * (0.7 + Math.random()));
+        const roas = +(2.0 + (Math.random() - 0.5) * 0.6).toFixed(2);
+        return {date: d.toISOString().slice(0,10), revenue, roas, is_event: !!event};
+      });
+    }
   },
   
   async channelRegion(range:DateRange,f:Filters){
@@ -78,7 +91,7 @@ export const Adapters={
   
   treemapPareto(range:DateRange,f:Filters){
     const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
-    const result = [];
+    const result: any[] = [];
     for(const cat of cats){
       for(let i = 0; i < 10; i++){
         const sku = `${cat}-${String(i+1).padStart(3,'0')}`;
@@ -113,6 +126,41 @@ export const Adapters={
         {stage: 'orders', value: 360, group: 'merchant' as const}
       ];
       return [...marketing, ...merchant];
+    }
+  },
+
+  async weatherData(range:DateRange, region:string = 'SEOUL'){
+    try {
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        region: region
+      });
+      const response = await fetch(`/api/weather?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch weather data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      // Fallback to mock data
+      const start = new Date(range.from);
+      const end = new Date(range.to);
+      const days = Math.ceil((+end - +start) / 86400000) + 1;
+      
+      return Array.from({length: days}).map((_,i)=>{
+        const d = new Date(+start + i * 86400000);
+        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const baseTemp = 15;
+        const seasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
+        const daily = 5 * Math.sin(dayOfYear * 0.1);
+        const random = (Math.random() - 0.5) * 8;
+        const tavg = Math.round((baseTemp + seasonal + daily + random) * 10) / 10;
+        
+        return {
+          date: d.toISOString().slice(0,10),
+          tavg,
+          source: 'mock_fallback'
+        };
+      });
     }
   }
 };
