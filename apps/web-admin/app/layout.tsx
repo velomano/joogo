@@ -25,11 +25,6 @@ export default function RootLayout({
                 </a>
               </div>
               
-              <nav className="main-nav">
-                <a href="/board" className="nav-link">대시보드레거시</a>
-                <a href="/board-upload-log" className="nav-link">보드업로드 로그</a>
-              </nav>
-              
               <div className="status-section">
                 <div className="status-badge">시스템 정상</div>
               </div>

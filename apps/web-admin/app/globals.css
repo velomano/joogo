@@ -106,6 +106,12 @@ body {
   color: white;
 }
 
+.api-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .status-section {
   display: flex;
   align-items: center;
