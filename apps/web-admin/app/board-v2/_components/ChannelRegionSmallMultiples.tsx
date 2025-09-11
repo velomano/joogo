@@ -1,76 +1,126 @@
 'use client';
-import { useEffect, useMemo, useRef } from 'react';
-import { Chart } from '@/lib/lib/chart';
+import { useEffect, useRef } from 'react';
+import { Chart, chartDefaults, colorPalette } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
-type Row = { date:string; channel:string; region:string; revenue:number; roas?:number };
-
 export default function ChannelRegionSmallMultiples({ from, to }: { from: string; to: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const charts = useRef<Record<string, Chart>>({});
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart|null>(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const rows: Row[] = await Adapters.channelRegion({ from, to }, {});
-      if (!mounted) return;
+      const data = await Adapters.channelRegion({ from, to }, {});
+      if (!mounted || !canvasRef.current) return;
 
-      const byKey = new Map<string, Row[]>();
-      for (const r of rows) {
-        const key = `${r.region} · ${r.channel}`;
-        if (!byKey.has(key)) byKey.set(key, []);
-        byKey.get(key)!.push(r);
-      }
+      if (chartRef.current) chartRef.current.destroy();
 
-      // cleanup old
-      Object.values(charts.current).forEach(c => c.destroy());
-      charts.current = {};
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) return;
 
-      // render grid
-      const container = containerRef.current!;
-      container.innerHTML = '';
-      container.style.display = 'grid';
-      container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(260px, 1fr))';
-      container.style.gap = '12px';
+      // 데이터 그룹화
+      const grouped = data.reduce((acc: any, item: any) => {
+        const key = `${item.channel}-${item.region}`;
+        if (!acc[key]) {
+          acc[key] = { channel: item.channel, region: item.region, data: [] };
+        }
+        acc[key].data.push(item);
+        return acc;
+      }, {});
 
-      byKey.forEach((list, key) => {
-        const card = document.createElement('div');
-        card.className = 'rounded-2xl bg-slate-800/40 border border-slate-700 p-3 min-h-[220px]';
-        const title = document.createElement('div');
-        title.className = 'text-xs text-slate-400 mb-1';
-        title.textContent = key;
-        const canvas = document.createElement('canvas');
-        card.appendChild(title);
-        card.appendChild(canvas);
-        container.appendChild(card);
+      const datasets = Object.values(grouped).map((group: any, index: number) => ({
+        label: `${group.channel} - ${group.region}`,
+        data: group.data.map((item: any) => ({
+          x: item.date,
+          y: item.revenue
+        })),
+        borderColor: colorPalette[index % colorPalette.length],
+        backgroundColor: colorPalette[index % colorPalette.length] + '20',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4
+      }));
 
-        const ctx = canvas.getContext('2d')!;
-        const labels = list.map(r => r.date);
-        const data = list.map(r => r.revenue);
-        charts.current[key] = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{ label: '매출', data, tension: 0.25, pointRadius: 0, borderWidth: 2 }]
+      chartRef.current = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top' as const,
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: { size: 10 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                title: (context: any) => {
+                  return new Date(context[0].parsed.x).toLocaleDateString('ko-KR');
+                },
+                label: (context: any) => {
+                  return `${context.dataset.label}: ₩${context.parsed.y.toLocaleString()}`;
+                }
+              }
+            }
           },
-          options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-            scales: {
-              x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
-              y: { grid: { color: 'rgba(148,163,184,0.12)' } }
+          scales: {
+            x: {
+              type: 'time' as const,
+              time: {
+                parser: 'yyyy-MM-dd',
+                displayFormats: { day: 'MM/dd' }
+              },
+              ticks: { maxTicksLimit: 6 }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value: any) => {
+                  if (value >= 1000000) return `₩${(value / 1000000).toFixed(1)}M`;
+                  if (value >= 1000) return `₩${(value / 1000).toFixed(0)}K`;
+                  return `₩${value}`;
+                }
+              }
             }
           }
-        });
+        }
       });
     })();
-    return () => { mounted = false; Object.values(charts.current).forEach(c => c.destroy()); };
+    return () => { mounted = false; if (chartRef.current) chartRef.current.destroy(); };
   }, [from, to]);
 
   return (
-    <div>
-      <div className="text-sm text-slate-300 mb-2">채널×지역 스몰멀티</div>
-      <div ref={containerRef} />
+    <div className="w-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600">
+          <span className="text-sm">🌍</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">채널×지역 스몰멀티</h3>
+          <p className="text-xs text-gray-500">Channel x Region Analysis</p>
+        </div>
+      </div>
+      
+      <div className="h-64">
+        <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
+      
+      <div className="mt-4 p-3 bg-green-50 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-green-900">지역별 성과</p>
+            <p className="text-xs text-green-700">채널별 매출 분석</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-green-900">Performance Analysis</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

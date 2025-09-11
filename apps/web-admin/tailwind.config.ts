@@ -1,58 +1,30 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
-const config: Config = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './lib/**/*.{js,ts,jsx,tsx,mdx}',
-    './hooks/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/board-v2/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+export default {
+  darkMode: ["class"],
+  content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
+        // GitHub Primer-ish neutrals
+        canvas: { DEFAULT: "#f6f8fa", dark: "#0d1117" },
+        panel:  { DEFAULT: "#ffffff", dark: "#0d1117" },
+        fg:     { DEFAULT: "#1f2328", dark: "#e6edf3" },
+        muted:  { DEFAULT: "#6e7781", dark: "#7d8590" },
+        border: { DEFAULT: "#d0d7de", dark: "#30363d" },
+        accent: { DEFAULT: "#0969da", dark: "#2f81f7" },
+        success:{ DEFAULT: "#1a7f37", dark: "#3fb950" },
+        danger: { DEFAULT: "#d1242f", dark: "#f85149" },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "6px",
+        lg: "8px",
+        xl: "12px",
+      },
+      boxShadow: {
+        subtle: "0 1px 0 rgba(31,35,40,0.04), 0 1px 3px rgba(31,35,40,0.06)",
       },
     },
   },
   plugins: [],
-}
-
-export default config
+} satisfies Config;

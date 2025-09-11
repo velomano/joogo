@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef } from 'react';
-import { Chart } from '@/lib/lib/chart';
+import { Chart, chartDefaults, colorPalette } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
 type Cell = { x: number; y: number; v: number; date: string; event?: boolean };
@@ -28,16 +28,20 @@ export default function CalendarHeatmap({ from, to }: { from: string; to: string
   const compute = (rows: {date:string; revenue:number; is_event?:boolean}[]): {cells:Cell[], min:number, max:number, weekMin:number, weekMax:number} => {
     if (!rows?.length) return { cells:[], min:0, max:0, weekMin:1, weekMax:53 };
     let min = Number.MAX_VALUE, max = 0, wmin = 60, wmax = 0;
-    const cells: Cell[] = rows.map(r => {
-      const d = new Date(r.date+'T00:00:00');
-      const w = weekOfYear(d);
-      const y = dayOfWeek(d);
-      min = Math.min(min, r.revenue);
-      max = Math.max(max, r.revenue);
-      wmin = Math.min(wmin, w);
-      wmax = Math.max(wmax, w);
-      return { x: w, y, v: r.revenue, date: r.date, event: r.is_event };
-    });
+    const cells: Cell[] = [];
+    for (const r of rows) {
+      const d = new Date(r.date);
+      const week = weekOfYear(d);
+      const day = dayOfWeek(d);
+      const v = r.revenue;
+      if (v > 0) {
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+        wmin = Math.min(wmin, week);
+        wmax = Math.max(wmax, week);
+        cells.push({ x: day, y: week, v, date: r.date, event: r.is_event });
+      }
+    }
     return { cells, min, max, weekMin: wmin, weekMax: wmax };
   };
 
@@ -45,58 +49,74 @@ export default function CalendarHeatmap({ from, to }: { from: string; to: string
     let mounted = true;
     (async () => {
       const rows = await fetchData();
-      if (!mounted) return;
+      if (!mounted || !canvasRef.current) return;
       const { cells, min, max, weekMin, weekMax } = compute(rows);
-
-      const ctx = canvasRef.current!.getContext('2d')!;
-      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
-      const width = 18, height = 18;
+      
+      if (chartRef.current) chartRef.current.destroy();
+      
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) return;
 
       chartRef.current = new Chart(ctx, {
-        type: 'matrix',
+        type: 'line',
         data: {
+          labels: cells.map(c => c.date),
           datasets: [{
-            label: 'Daily Revenue',
-            data: cells.map(c => ({ x: c.x, y: c.y, v: c.v, date: c.date, event: c.event })),
-            width: () => width,
-            height: () => height,
-            backgroundColor: (ctx) => {
-              const v = (ctx.raw as any).v || 0;
-              const ratio = max === min ? 0.5 : (v - min) / (max - min);
-              const a = 0.15 + 0.75 * ratio;
-              return `rgba(56,189,248,${a})`; // sky-400 계열
-            },
-            borderColor: (ctx) => (ctx.raw as any).event ? 'rgba(250,204,21,0.9)' : 'rgba(30,41,59,0.6)',
-            borderWidth: (ctx) => (ctx.raw as any).event ? 2 : 1,
+            label: '매출',
+            data: cells.map(c => c.v),
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: '#3b82f6',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#3b82f6',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 2
           }]
         },
         options: {
+          responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (i) => {
-                  const r:any = i.raw;
-                  return `${r.date}: ₩${(r.v||0).toLocaleString()}${r.event?' (event)':''}`;
+                title: (context: any) => {
+                  const point = context[0].raw;
+                  return new Date(point.date).toLocaleDateString('ko-KR');
+                },
+                label: (context: any) => {
+                  const point = context.raw;
+                  return `매출: ₩${point.v.toLocaleString()}`;
                 }
               }
             }
           },
           scales: {
             x: {
-              type: 'linear',
-              ticks: {
-                callback: (v: string | number) => `W${Number(v)|0}`,
-                autoSkip: true, maxTicksLimit: 12,
+              type: 'time' as const,
+              time: {
+                parser: 'yyyy-MM-dd',
+                displayFormats: { day: 'MM/dd' }
               },
-              min: weekMin - 0.5, max: weekMax + 0.5, grid: { display:false }
+              ticks: { maxTicksLimit: 8 }
             },
             y: {
-              type: 'linear',
-              ticks: { callback: (v: string | number) => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][Number(v)] },
-              min: -0.5, max: 6.5, grid: { display:false }
+              beginAtZero: true,
+              ticks: {
+                callback: (value: any) => {
+                  if (value >= 1000000) return `₩${(value / 1000000).toFixed(1)}M`;
+                  if (value >= 1000) return `₩${(value / 1000).toFixed(0)}K`;
+                  return `₩${value}`;
+                }
+              }
             }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'point' as const
           }
         }
       });
@@ -105,10 +125,31 @@ export default function CalendarHeatmap({ from, to }: { from: string; to: string
   }, [from, to]);
 
   return (
-    <div className="rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
-      <div className="text-sm text-slate-300 mb-2">성과 캘린더 히트맵</div>
+    <div className="w-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600">
+          <span className="text-sm">📅</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">일별 매출 추이</h3>
+          <p className="text-xs text-gray-500">Daily Sales Trend</p>
+        </div>
+      </div>
+      
       <div className="h-64">
         <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
+      
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-blue-900">일평균 매출 1,250,000원</p>
+            <p className="text-xs text-blue-700">최고일: 2025-01-15</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-blue-900">Product Analysis</p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,78 +1,117 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { Chart } from '@/lib/lib/chart';
+import { useEffect, useRef } from 'react';
+import { Chart, chartDefaults, colorPalette } from '@/lib/lib/chart';
 import { Adapters } from '../_data/adapters';
 
-type Node = { category:string; sku:string; revenue:number; roas?:number };
-type Pareto = { sku:string; revenue:number; cumPct:number; category:string };
-
-export default function TreemapPareto({ from, to }: { from:string; to:string }) {
+export default function TreemapPareto({ from, to }: { from: string; to: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [topList, setTopList] = useState<Pareto[]>([]);
   const chartRef = useRef<Chart|null>(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const rows: Node[] = await Adapters.treemapPareto({ from, to }, {});
-      if (!mounted) return;
+      const data = await Adapters.treemapPareto({ from, to }, {});
+      if (!mounted || !canvasRef.current) return;
 
-      const total = rows.reduce((a,b)=>a+b.revenue, 0) || 1;
-      const sorted = [...rows].sort((a,b)=>b.revenue-a.revenue);
-      let acc = 0;
-      const pareto: Pareto[] = sorted.map(r => {
-        acc += r.revenue;
-        return { sku: r.sku, revenue: r.revenue, cumPct: acc/total, category: r.category };
+      if (chartRef.current) chartRef.current.destroy();
+
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) return;
+
+      // 데이터 정렬 및 누적 비율 계산
+      const sortedData = data.sort((a: any, b: any) => b.revenue - a.revenue);
+      const totalRevenue = sortedData.reduce((sum: number, item: any) => sum + item.revenue, 0);
+      
+      let cumulativeRevenue = 0;
+      const chartData = sortedData.slice(0, 10).map((item: any, index: number) => {
+        cumulativeRevenue += item.revenue;
+        return {
+          x: item.sku,
+          y: item.revenue,
+          cumulative: (cumulativeRevenue / totalRevenue) * 100
+        };
       });
-      setTopList(pareto.slice(0, 10));
 
-      const ctx = canvasRef.current!.getContext('2d')!;
-      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
       chartRef.current = new Chart(ctx, {
-        type: 'treemap' as any,
+        type: 'bar',
         data: {
+          labels: chartData.map((item: any) => item.x),
           datasets: [{
-            tree: rows.map(r => ({ category:r.category, sku:r.sku, value:r.revenue })),
-            key: 'value',
-            groups: ['category'],
-            spacing: 1,
-            borderColor: 'rgba(30,41,59,0.6)',
-            borderWidth: 1,
-            captions: {
-              display: true,
-              align: 'center',
-              color: 'rgba(226,232,240,0.95)',
-              formatter: (ctx:any) => `${ctx.raw.sku}\n₩${(ctx.raw.value||0).toLocaleString()}`
-            }
-          } as any]
+            label: '매출',
+            data: chartData.map((item: any) => item.y),
+            backgroundColor: chartData.map((_, index) => colorPalette[index % colorPalette.length]),
+            borderColor: chartData.map((_, index) => colorPalette[index % colorPalette.length]),
+            borderWidth: 1
+          }]
         },
-        options: { 
+        options: {
+          responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display:false }, tooltip: { enabled: false } } 
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context: any) => {
+                  const item = chartData[context.dataIndex];
+                  return `매출: ₩${item.y.toLocaleString()}`;
+                },
+                afterLabel: (context: any) => {
+                  const item = chartData[context.dataIndex];
+                  return `누적: ${item.cumulative.toFixed(1)}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 45,
+                font: { size: 10 }
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value: any) => {
+                  if (value >= 1000000) return `₩${(value / 1000000).toFixed(1)}M`;
+                  if (value >= 1000) return `₩${(value / 1000).toFixed(0)}K`;
+                  return `₩${value}`;
+                }
+              }
+            }
+          }
         }
       });
     })();
-    return () => { mounted=false; if (chartRef.current) chartRef.current.destroy(); };
+    return () => { mounted = false; if (chartRef.current) chartRef.current.destroy(); };
   }, [from, to]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-      <div className="lg:col-span-3 rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
-        <div className="text-sm text-slate-300 mb-2">카테고리/상품 Treemap</div>
-        <div className="h-64">
-          <canvas ref={canvasRef} className="w-full h-full" />
+    <div className="w-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600">
+          <span className="text-sm">📊</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">카테고리/상품 Treemap</h3>
+          <p className="text-xs text-gray-500">Product Analysis</p>
         </div>
       </div>
-      <div className="rounded-2xl bg-slate-800/40 border border-slate-700 p-4">
-        <div className="text-sm text-slate-300 mb-2">Pareto Top 10</div>
-        <ol className="text-slate-200 text-sm space-y-1">
-          {topList.map((r,i)=>(
-            <li key={r.sku} className="flex items-center justify-between">
-              <span className="opacity-80">{i+1}. {r.sku}</span>
-              <span className="opacity-70">₩{r.revenue.toLocaleString()} · {(r.cumPct*100).toFixed(1)}%</span>
-            </li>
-          ))}
-        </ol>
+      
+      <div className="h-64">
+        <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
+      
+      <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-purple-900">Pareto Top 10</p>
+            <p className="text-xs text-purple-700">ABC Analysis</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold text-purple-900">Product Analysis</p>
+          </div>
+        </div>
       </div>
     </div>
   );
