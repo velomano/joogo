@@ -116,8 +116,8 @@ export default function InsightCards({
       try {
         // 캘린더 데이터 가져오기
         const calendarData = await Adapters.calendarHeatmap(
-          { from, to, region, channel, category, sku },
-          {}
+          { from, to },
+          { region, channel, category, sku }
         );
         console.log('InsightCards 캘린더 데이터:', calendarData.length);
 
