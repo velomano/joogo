@@ -25,7 +25,11 @@ export async function GET(req: Request) {
     const start = new Date(from);
     const end = new Date(to);
     const days = Math.ceil((+end - +start) / 86400000) + 1;
-    const rng = seedRand(42);
+    
+    // 실시간 시드: 현재 시간 기반으로 매번 다른 데이터 생성
+    const now = new Date();
+    const timeSeed = now.getTime() % 1000000; // 시간 기반 시드
+    const rng = seedRand(timeSeed);
 
     if (kind === 'calendar') {
       const arr = Array.from({ length: days }).map((_, i) => {
@@ -34,8 +38,10 @@ export async function GET(req: Request) {
         const seasonal = 1 + ((mm === 5 || mm === 10) ? 0.4 : 0) + ((mm >= 6 && mm <= 8) ? 0.2 : 0);
         const event = (d.getDate() === 1 || d.getDate() === 15) ? 1 : 0;
         
-        // 필터에 따른 매출 조정
-        let baseRevenue = 500000 + 4500000 * seasonal * (0.7 + rng());
+        // 필터에 따른 매출 조정 + 실시간 변동성 추가
+        const timeVariation = Math.sin(now.getHours() / 24 * Math.PI * 2) * 0.1; // 시간대별 변동
+        const randomVariation = (rng() - 0.5) * 0.3; // 랜덤 변동
+        let baseRevenue = 500000 + 4500000 * seasonal * (0.7 + rng() + timeVariation + randomVariation);
         
         // 지역 필터가 있으면 해당 지역의 매출만 반영
         if (region.length > 0) {

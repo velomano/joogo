@@ -25,6 +25,24 @@ async function fetchChannels(): Promise<string[]> {
 }
 
 export const Adapters={
+  // 광고비 데이터 가져오기
+  async ads(range: DateRange, f: Filters) {
+    try {
+      const params = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        ...(f.channel && f.channel.length > 0 && { channel: f.channel.join(',') })
+      });
+      
+      const response = await fetch(`/api/ads?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch ads data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching ads data:', error);
+      return [];
+    }
+  },
+
   async calendarHeatmap(range:DateRange,f:Filters){
     // Mock API에서 데이터 가져오기
     try {

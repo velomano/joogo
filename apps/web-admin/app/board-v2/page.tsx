@@ -22,6 +22,7 @@ import TemperatureBucketChart from './_components/TemperatureBucketChart';
 import HeatmapChart from './_components/HeatmapChart';
 import OutlierDetectionChart from './_components/OutlierDetectionChart';
 import ForecastChart from './_components/ForecastChart';
+import InsightCards from './_components/InsightCards';
 
 type KPI = { 
   label: string; 
@@ -444,6 +445,18 @@ export default function BoardV2Page() {
       <main className="main">
         <section className="panel">
           <KpiBar from={from} to={to} />
+        </section>
+
+        <section className="panel">
+          <InsightCards 
+            refreshTrigger={refreshTrigger}
+            from={from}
+            to={to}
+            region={region}
+            channel={channel}
+            category={category}
+            sku={sku}
+          />
         </section>
 
         <section className="two">
