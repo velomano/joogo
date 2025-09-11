@@ -122,7 +122,7 @@ export default function InsightCards({
         console.log('InsightCards 캘린더 데이터:', calendarData.length);
 
         // 기온 데이터 가져오기
-        const weatherData = await Adapters.weather({ from, to }, { region: 'SEOUL' });
+        const weatherData = await Adapters.weather({ from, to }, { region: ['SEOUL'] });
 
         // 매출 및 광고비 데이터
         const totalRevenue = calendarData.reduce((sum, item) => sum + item.revenue, 0);

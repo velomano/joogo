@@ -28,7 +28,7 @@ export default function TemperatureScatterChart({
         
         const [calendarData, weatherData] = await Promise.all([
           Adapters.calendarHeatmap({ from, to }, {}),
-          Adapters.weather({ from, to }, { region: 'SEOUL' }) // 서울 기준
+          Adapters.weather({ from, to }, { region: ['SEOUL'] }) // 서울 기준
         ]);
         
         // 날짜별로 매칭하여 온도와 매출 데이터 결합
