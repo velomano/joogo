@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supaAdmin } from '@/lib/supabase/server';
 
+export const runtime = 'edge';
+
 export async function GET() {
   try {
     const sb = supaAdmin;
