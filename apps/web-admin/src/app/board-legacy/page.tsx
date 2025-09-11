@@ -424,6 +424,9 @@ export default function BoardPage() {
       },
       options: {
         responsive: true,
+        animation: {
+          duration: 0
+        },
         scales: {
           y: {
             type: 'linear',
@@ -494,6 +497,9 @@ export default function BoardPage() {
       },
       options: {
         responsive: true,
+        animation: {
+          duration: 0
+        },
         scales: {
           y: {
             type: 'linear',
@@ -537,6 +543,9 @@ export default function BoardPage() {
         },
         options: {
           responsive: true,
+          animation: {
+            duration: 0
+          },
           plugins: {
             title: { display: true, text: `ABC 분석 (총 ${abc.length}개 SKU)` },
             legend: { position: 'bottom' }
@@ -557,6 +566,9 @@ export default function BoardPage() {
         },
         options: {
           responsive: true,
+          animation: {
+            duration: 0
+          },
           plugins: {
             title: { display: true, text: 'ABC 분석 (데이터 없음)' }
           }

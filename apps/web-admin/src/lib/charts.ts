@@ -18,7 +18,9 @@ export function ensureChart(id: string, cfg: ChartConfiguration) {
 export const chartDefaults = {
   responsive: true,
   maintainAspectRatio: false,
-  animation: false,
+  animation: {
+    duration: 0
+  },
   plugins: {
     legend: {
       display: true,

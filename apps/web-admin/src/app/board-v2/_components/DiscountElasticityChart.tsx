@@ -158,7 +158,7 @@ export default function DiscountElasticityChart() {
                 ticks: { 
                   color: '#9aa0a6', 
                   font: { size: 10 },
-                  callback: function(value) {
+                  callback: function(value: string | number) {
                     const asNum = (v: string | number) => (typeof v === "number" ? v : Number(v));
                     return `${(asNum(value) * 100).toFixed(0)}%`;
                   }
