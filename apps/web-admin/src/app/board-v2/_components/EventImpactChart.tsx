@@ -102,20 +102,58 @@ export default function EventImpactChart() {
 
   return (
     <div style={{ height: '130px', padding: '16px', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-      <div className="row" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-        <span className={`badge ${parseFloat(impactData.diff) >= 0 ? 'ok' : 'bad'}`}>
-          증감: {impactData.diff > 0 ? '+' : ''}{impactData.diff}
-        </span>
-        <span className="badge">전 평균: {impactData.preAvg}</span>
-        <span className="badge">후 평균: {impactData.postAvg}</span>
+      {/* 메인 임팩트 표시 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: '#9aa0a6', marginBottom: '2px' }}>이벤트 전</div>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#9aa0a6' }}>
+              {impactData.preAvg}천원
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '20px', height: '2px', background: '#1d2835' }}></div>
+            <div style={{ fontSize: '24px', color: '#9aa0a6' }}>→</div>
+            <div style={{ width: '20px', height: '2px', background: '#1d2835' }}></div>
+          </div>
+          
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: '#9aa0a6', marginBottom: '2px' }}>이벤트 후</div>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#9aa0a6' }}>
+              {impactData.postAvg}천원
+            </div>
+          </div>
+        </div>
+        
+        {/* 증감 표시 */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#9aa0a6', marginBottom: '2px' }}>증감</div>
+          <div style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: parseFloat(impactData.diff) >= 0 ? '#4ade80' : '#f87171'
+          }}>
+            {impactData.diff > 0 ? '+' : ''}{impactData.diff}천원
+          </div>
+        </div>
+      </div>
+      
+      {/* 통계 정보 */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
         <span className="badge">t≈ {impactData.tStat}</span>
         <span className="badge">df≈ {impactData.df}</span>
         <span className={`badge ${impactData.isSignificant ? 'ok' : 'warn'}`}>
           p≈ {impactData.pValue}
         </span>
+        <span className={`badge ${impactData.isSignificant ? 'ok' : 'warn'}`}>
+          {impactData.isSignificant ? '유의함' : '비유의함'}
+        </span>
       </div>
-      <div className="small muted" style={{ marginTop: '8px' }}>
-        ※ Welch t-검정 근사치 {impactData.isSignificant ? '(유의함)' : '(비유의함)'} 
+      
+      {/* 하단 정보 */}
+      <div className="small muted" style={{ fontSize: '10px' }}>
+        ※ Welch t-검정 근사치 
         {impactData.eventCount > 0 ? ` | 이벤트 ${impactData.eventCount}개` : ' | Mock 데이터'}
         {impactData.isError ? ' (에러 복구)' : ''}
       </div>
