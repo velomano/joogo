@@ -41,5 +41,11 @@
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "chart.js": "^4.5.0",
+    "chartjs-chart-matrix": "^3.0.0",
+    "chartjs-chart-treemap": "^3.1.0",
+    "chartjs-plugin-datalabels": "^2.2.0"
+  }
 }

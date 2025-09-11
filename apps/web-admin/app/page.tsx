@@ -7,7 +7,7 @@ export default function Home() {
   const router = useRouter();
   
   useEffect(() => {
-    router.replace("/board");
+    router.replace("/board-v2");
   }, [router]);
 
   return (
