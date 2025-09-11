@@ -4,12 +4,27 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
-export default function ParetoChart() {
-  const { from, to } = useFilters();
+export default function ParetoChart({ 
+  refreshTrigger, 
+  from, 
+  to, 
+  region = [], 
+  channel = [], 
+  category = [], 
+  sku = [] 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+  region?: string[];
+  channel?: string[];
+  category?: string[];
+  sku?: string[];
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [abcInfo, setAbcInfo] = useState('');
@@ -18,7 +33,7 @@ export default function ParetoChart() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const chartData = await Adapters.treemapPareto({ from, to }, {});
+        const chartData = await Adapters.treemapPareto({ from, to }, { region, channel, category, sku });
         
         // SKU별 매출 정렬
         const sortedData = chartData
@@ -75,7 +90,7 @@ export default function ParetoChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, region, channel, category, sku, refreshTrigger]);
 
   if (loading) {
     return (

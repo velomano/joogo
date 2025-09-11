@@ -6,12 +6,19 @@ type Pair = { temp: number; sales: number };
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-export default function WeatherLagChart() {
-  const { from, to } = useFilters();
+export default function WeatherLagChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +92,7 @@ export default function WeatherLagChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, refreshTrigger]);
 
   if (loading) {
     return (

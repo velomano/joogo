@@ -14,6 +14,14 @@ export async function GET(req: Request) {
     const to = searchParams.get('to') ?? '2025-12-31';
     const kind = searchParams.get('kind') ?? 'calendar';
     
+    // 필터 파라미터들
+    const region = searchParams.get('region')?.split(',') || [];
+    const channel = searchParams.get('channel')?.split(',') || [];
+    const category = searchParams.get('category')?.split(',') || [];
+    const sku = searchParams.get('sku')?.split(',') || [];
+    
+    console.log('Mock API 필터:', { from, to, kind, region, channel, category, sku });
+    
     const start = new Date(from);
     const end = new Date(to);
     const days = Math.ceil((+end - +start) / 86400000) + 1;
@@ -25,7 +33,25 @@ export async function GET(req: Request) {
         const mm = d.getMonth();
         const seasonal = 1 + ((mm === 5 || mm === 10) ? 0.4 : 0) + ((mm >= 6 && mm <= 8) ? 0.2 : 0);
         const event = (d.getDate() === 1 || d.getDate() === 15) ? 1 : 0;
-        const rev = Math.round(500000 + 4500000 * seasonal * (0.7 + rng()));
+        
+        // 필터에 따른 매출 조정
+        let baseRevenue = 500000 + 4500000 * seasonal * (0.7 + rng());
+        
+        // 지역 필터가 있으면 해당 지역의 매출만 반영
+        if (region.length > 0) {
+          const regionMultiplier = region.includes('SEOUL') ? 1.5 : 
+                                 region.includes('BUSAN') ? 1.2 : 0.8;
+          baseRevenue *= regionMultiplier;
+        }
+        
+        // 채널 필터가 있으면 해당 채널의 매출만 반영
+        if (channel.length > 0) {
+          const channelMultiplier = channel.includes('web') ? 1.2 : 
+                                   channel.includes('app') ? 1.0 : 0.8;
+          baseRevenue *= channelMultiplier;
+        }
+        
+        const rev = Math.round(baseRevenue);
         const roas = +(2.0 + (rng() - 0.5) * 0.6).toFixed(2);
         
         // 온도 데이터 생성 (계절성 반영)
@@ -42,12 +68,17 @@ export async function GET(req: Request) {
     }
 
     if (kind === 'channel_region') {
-      const channels = ['web', 'app', 'mobile', 'kiosk'];
-      const regions = [
+      const allChannels = ['web', 'app', 'mobile', 'kiosk'];
+      const allRegions = [
         'SEOUL', 'BUSAN', 'DAEGU', 'INCHEON', 'GWANGJU', 'DAEJEON', 'ULSAN', 
         'GYEONGGI', 'GANGWON', 'CHUNGBUK', 'CHUNGNAM', 'JEONBUK', 'JEONNAM', 
         'GYEONGBUK', 'GYEONGNAM', 'JEJU'
       ];
+      
+      // 필터링된 채널과 지역
+      const channels = channel.length > 0 ? allChannels.filter(c => channel.includes(c)) : allChannels;
+      const regions = region.length > 0 ? allRegions.filter(r => region.includes(r)) : allRegions;
+      
       const out: any[] = [];
       
       for (let i = 0; i < days; i++) {
@@ -109,15 +140,27 @@ export async function GET(req: Request) {
       return NextResponse.json(out);
     }
 
-    if (kind === 'treemap') {
+    if (kind === 'treemap' || kind === 'treemap_pareto') {
       const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
       const out: any[] = [];
-      for (const cat of cats) {
+      
+      // 카테고리 필터링
+      const filteredCats = category.length > 0 ? cats.filter(cat => category.includes(cat)) : cats;
+      
+      for (const cat of filteredCats) {
         for (let i = 0; i < 10; i++) {
-          const sku = `${cat}-${String(i + 1).padStart(3, '0')}`;
-          const rev = Math.round(3_000_000 * (0.4 + rng() * (cat === 'TOPS' ? 1.4 : 1)));
+          const skuCode = `${cat}-${String(i + 1).padStart(3, '0')}`;
+          
+          // SKU 필터링
+          if (sku.length > 0 && !sku.includes(skuCode)) continue;
+          
+          // 날짜 범위에 따른 매출 조정
+          const dateRange = Math.ceil((+end - +start) / 86400000) + 1;
+          const baseRevenue = 3_000_000 * (dateRange / 365); // 연간 기준으로 조정
+          
+          const rev = Math.round(baseRevenue * (0.4 + rng() * (cat === 'TOPS' ? 1.4 : 1)));
           const roas = +(1.5 + rng()).toFixed(2);
-          out.push({ category: cat, sku, revenue: rev, roas });
+          out.push({ category: cat, sku: skuCode, revenue: rev, roas });
         }
       }
       return NextResponse.json(out);

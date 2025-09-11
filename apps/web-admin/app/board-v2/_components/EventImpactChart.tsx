@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
-export default function EventImpactChart() {
-  const { from, to } = useFilters();
+export default function EventImpactChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [impactData, setImpactData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -80,7 +87,7 @@ export default function EventImpactChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, refreshTrigger]);
 
   if (loading) {
     return (

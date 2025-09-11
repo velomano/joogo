@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
-export default function OutlierDetectionChart() {
-  const { from, to } = useFilters();
+export default function OutlierDetectionChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [outliers, setOutliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +63,7 @@ export default function OutlierDetectionChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, refreshTrigger]);
 
   if (loading) {
     return (

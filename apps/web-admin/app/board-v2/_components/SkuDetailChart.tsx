@@ -4,12 +4,27 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-export default function SkuDetailChart() {
-  const { from, to } = useFilters();
+export default function SkuDetailChart({ 
+  refreshTrigger, 
+  from, 
+  to, 
+  region = [], 
+  channel = [], 
+  category = [], 
+  sku = [] 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+  region?: string[];
+  channel?: string[];
+  category?: string[];
+  sku?: string[];
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSku, setSelectedSku] = useState('TOPS-001');
@@ -20,8 +35,8 @@ export default function SkuDetailChart() {
         setLoading(true);
         
         // SKU별 데이터 가져오기
-        const skuData = await Adapters.treemapPareto({ from, to }, {});
-        const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
+        const skuData = await Adapters.treemapPareto({ from, to }, { region, channel, category, sku });
+        const calendarData = await Adapters.calendarHeatmap({ from, to }, { region, channel, category, sku });
         
         // 선택된 SKU의 데이터 필터링 (Mock 데이터에서는 전체 데이터를 사용)
         const labels = calendarData.map(d => d.date);
@@ -76,7 +91,7 @@ export default function SkuDetailChart() {
     };
 
     fetchData();
-  }, [from, to, selectedSku]);
+  }, [from, to, region, channel, category, sku, selectedSku, refreshTrigger]);
 
   if (loading) {
     return (

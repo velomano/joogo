@@ -4,12 +4,27 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-export default function RevenueSpendChart() {
-  const { from, to } = useFilters();
+export default function RevenueSpendChart({ 
+  refreshTrigger, 
+  from, 
+  to, 
+  region = [], 
+  channel = [], 
+  category = [], 
+  sku = [] 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+  region?: string[];
+  channel?: string[];
+  category?: string[];
+  sku?: string[];
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -17,13 +32,93 @@ export default function RevenueSpendChart() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const chartData = await Adapters.calendarHeatmap({ from: from as string, to: to as string }, {});
+        const chartData = await Adapters.calendarHeatmap(
+          { from: from as string, to: to as string }, 
+          { region, channel, category, sku }
+        );
         
-        // 데이터 가공
-        const labels = chartData.map(d => d.date);
-        const revenueData = chartData.map(d => d.revenue / 1000000); // 백만원 단위로 변환
-        const spendData = chartData.map(d => (d.spend || 0) / 1000000); // 백만원 단위로 변환
-        const roasData = chartData.map(d => d.spend ? d.revenue / d.spend : 0);
+        // 데이터 가공 - 날짜 범위에 따라 포맷 조정
+        const dateRange = new Date(to).getTime() - new Date(from).getTime();
+        const daysDiff = Math.ceil(dateRange / (1000 * 60 * 60 * 24));
+        
+        console.log('RevenueSpendChart 날짜 범위:', { from, to, daysDiff, dataLength: chartData.length });
+        
+        let labels, revenueData, spendData, roasData;
+        
+        if (daysDiff <= 7) {
+          // 1주일 이하: 일별 상세 표시 (모든 데이터 포인트 사용)
+          labels = chartData.map(d => {
+            const date = new Date(d.date);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+          });
+          revenueData = chartData.map(d => d.revenue / 1000000);
+          spendData = chartData.map(d => (d.spend || 0) / 1000000);
+          roasData = chartData.map(d => d.spend ? d.revenue / d.spend : 0);
+        } else if (daysDiff <= 31) {
+          // 1개월 이하: 일별 표시 (모든 데이터 포인트 사용)
+          labels = chartData.map(d => {
+            const date = new Date(d.date);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+          });
+          revenueData = chartData.map(d => d.revenue / 1000000);
+          spendData = chartData.map(d => (d.spend || 0) / 1000000);
+          roasData = chartData.map(d => d.spend ? d.revenue / d.spend : 0);
+        } else if (daysDiff <= 90) {
+          // 3개월 이하: 주별 집계 (7일씩 묶어서)
+          const weeklyData = [];
+          for (let i = 0; i < chartData.length; i += 7) {
+            const weekData = chartData.slice(i, i + 7);
+            if (weekData.length > 0) {
+              const weekRevenue = weekData.reduce((sum, d) => sum + d.revenue, 0);
+              const weekSpend = weekData.reduce((sum, d) => sum + (d.spend || 0), 0);
+              weeklyData.push({
+                date: weekData[0].date,
+                revenue: weekRevenue,
+                spend: weekSpend
+              });
+            }
+          }
+          labels = weeklyData.map((d, index) => `W${index + 1}`);
+          revenueData = weeklyData.map(d => d.revenue / 1000000);
+          spendData = weeklyData.map(d => d.spend / 1000000);
+          roasData = weeklyData.map(d => d.spend ? d.revenue / d.spend : 0);
+        } else {
+          // 3개월 초과: 월별 집계
+          const monthlyData = [];
+          const monthMap = new Map();
+          chartData.forEach(d => {
+            const date = new Date(d.date);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthMap.has(monthKey)) {
+              monthMap.set(monthKey, { revenue: 0, spend: 0 });
+            }
+            const monthData = monthMap.get(monthKey);
+            monthData.revenue += d.revenue;
+            monthData.spend += d.spend || 0;
+          });
+          
+          monthMap.forEach((data, monthKey) => {
+            monthlyData.push({
+              date: monthKey,
+              revenue: data.revenue,
+              spend: data.spend
+            });
+          });
+          
+          // 월별 데이터를 날짜순으로 정렬
+          monthlyData.sort((a, b) => a.date.localeCompare(b.date));
+          
+          labels = monthlyData.map(d => d.date);
+          revenueData = monthlyData.map(d => d.revenue / 1000000);
+          spendData = monthlyData.map(d => d.spend / 1000000);
+          roasData = monthlyData.map(d => d.spend ? d.revenue / d.spend : 0);
+        }
+        
+        console.log('RevenueSpendChart 데이터 포맷:', { 
+          daysDiff, 
+          labelsCount: labels.length, 
+          sampleLabels: labels.slice(0, 5)
+        });
         
         setData({
           labels,
@@ -63,7 +158,7 @@ export default function RevenueSpendChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, region, channel, category, sku, refreshTrigger]);
 
   if (loading) {
     return (

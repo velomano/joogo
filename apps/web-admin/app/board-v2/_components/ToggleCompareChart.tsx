@@ -4,12 +4,19 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-export default function ToggleCompareChart() {
-  const { from, to } = useFilters();
+export default function ToggleCompareChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [toggleMode, setToggleMode] = useState<'channel' | 'region' | 'campaign'>('channel');
@@ -68,7 +75,7 @@ export default function ToggleCompareChart() {
     };
 
     fetchData();
-  }, [from, to, toggleMode]);
+  }, [from, to, toggleMode, refreshTrigger]);
 
   // 토글 버튼 이벤트 핸들러
   useEffect(() => {

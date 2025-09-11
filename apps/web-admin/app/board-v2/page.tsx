@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useFilters } from '@/lib/state/filters';
+import { useEffect, useState, useCallback } from 'react';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 import { Adapters } from './_data/adapters';
 import SalesTemperatureChart from './_components/SalesTemperatureChart';
 import RevenueSpendChart from './_components/RevenueSpendChart';
@@ -42,9 +42,8 @@ function KpiCard({ kpi }: { kpi: KPI }) {
   );
 }
 
-function KpiBar() {
+function KpiBar({ from, to }: { from: string; to: string }) {
   const [kpis, setKpis] = useState<KPI[]>([]);
-  const { from, to } = useFilters();
   
   useEffect(() => {
     (async () => {
@@ -176,59 +175,107 @@ function DataTable({ title, columns, data, maxHeight = 200 }: {
 }
 
 export default function BoardV2Page() {
-  const { from, to } = useFilters();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // 필터 상태 직접 관리
+  const [from, setFrom] = useState('2025-01-01');
+  const [to, setTo] = useState('2025-12-31');
+  const [region, setRegion] = useState<string[]>([]);
+  const [channel, setChannel] = useState<string[]>([]);
+  const [category, setCategory] = useState<string[]>([]);
+  const [sku, setSku] = useState<string[]>([]);
+  
+  // setPeriod 함수 직접 구현
+  const setPeriod = useCallback((period: string) => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    let newFrom = '2025-01-01';
+    let newTo = '2025-12-31';
+    
+    switch (period) {
+      case '1year':
+        const yearAgo = new Date(today);
+        yearAgo.setFullYear(today.getFullYear() - 1);
+        newFrom = yearAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+      case '1week':
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        newFrom = weekAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+      case '1month':
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        newFrom = monthAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+      case '3months':
+        const threeMonthsAgo = new Date(today);
+        threeMonthsAgo.setMonth(today.getMonth() - 3);
+        newFrom = threeMonthsAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+      case '6months':
+        const sixMonthsAgo = new Date(today);
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+        newFrom = sixMonthsAgo.toISOString().split('T')[0];
+        newTo = todayStr;
+        break;
+    }
+    
+    console.log('setPeriod 호출:', { period, newFrom, newTo });
+    setFrom(newFrom);
+    setTo(newTo);
+  }, []);
+  
+  // 리셋 함수 구현
+  const resetFilters = useCallback(() => {
+    console.log('리셋 버튼 클릭됨');
+    setFrom('2025-01-01');
+    setTo('2025-12-31');
+    setRegion([]);
+    setChannel([]);
+    setCategory([]);
+    setSku([]);
+    // setRefreshTrigger(prev => prev + 1); // useEffect에서 자동으로 처리됨
+  }, []);
 
   // 버튼 이벤트 핸들러
-  useEffect(() => {
-    const handleFileUpload = () => {
-      const fileInput = document.getElementById('csvFile') as HTMLInputElement;
-      if (fileInput.files && fileInput.files[0]) {
-        console.log('파일 업로드:', fileInput.files[0].name);
-        // 실제 파일 업로드 로직 구현 예정
-        alert('파일 업로드 기능은 구현 예정입니다.');
-      } else {
-        alert('파일을 선택해주세요.');
-      }
-    };
+  const handleFileUpload = () => {
+    const fileInput = document.getElementById('csvFile') as HTMLInputElement;
+    if (fileInput.files && fileInput.files[0]) {
+      console.log('파일 업로드:', fileInput.files[0].name);
+      // 실제 파일 업로드 로직 구현 예정
+      alert('파일 업로드 기능은 구현 예정입니다.');
+    } else {
+      alert('파일을 선택해주세요.');
+    }
+  };
 
-    const handleApiLoad = async () => {
-      setIsLoading(true);
-      try {
-        console.log('API에서 데이터 불러오기...');
-        // 실제 API 호출 로직
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 시뮬레이션
-        alert('API에서 데이터를 성공적으로 불러왔습니다.');
-      } catch (error) {
-        console.error('API 로드 실패:', error);
-        alert('API 로드에 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const handleApiLoad = async () => {
+    setIsLoading(true);
+    try {
+      console.log('API에서 데이터 불러오기...');
+      // 실제 API 호출 로직
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 시뮬레이션
+      alert('API에서 데이터를 성공적으로 불러왔습니다.');
+    } catch (error) {
+      console.error('API 로드 실패:', error);
+      alert('API 로드에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const handleReset = () => {
-      console.log('데이터 초기화');
-      // 실제 초기화 로직
-      alert('데이터가 초기화되었습니다.');
-    };
-
-    // 이벤트 리스너 등록
-    const btnFileUpload = document.getElementById('btnFileUpload');
-    const btnApiLoad = document.getElementById('btnApiLoad');
-    const btnReset = document.getElementById('btnReset');
-
-    if (btnFileUpload) btnFileUpload.onclick = handleFileUpload;
-    if (btnApiLoad) btnApiLoad.onclick = handleApiLoad;
-    if (btnReset) btnReset.onclick = handleReset;
-
-    // 클린업
-    return () => {
-      if (btnFileUpload) btnFileUpload.onclick = null;
-      if (btnApiLoad) btnApiLoad.onclick = null;
-      if (btnReset) btnReset.onclick = null;
-    };
-  }, []);
+  const handleReset = () => {
+    console.log('데이터 초기화');
+    resetFilters(); // React 상태 리셋 함수 호출
+    alert('데이터가 초기화되었습니다.');
+  };
 
   return (
     <div className="wrap">
@@ -238,22 +285,80 @@ export default function BoardV2Page() {
         
         <input type="file" id="csvFile" accept=".csv" />
         <div className="row" style={{ margin: '8px 0' }}>
-          <button className="btn" id="btnFileUpload" disabled={isLoading}>파일 업로드</button>
-          <button className="btn" id="btnApiLoad" disabled={isLoading}>
+          <button className="btn" onClick={handleFileUpload} disabled={isLoading}>파일 업로드</button>
+          <button className="btn" onClick={handleApiLoad} disabled={isLoading}>
             {isLoading ? '로딩 중...' : 'API 불러오기'}
           </button>
-          <button className="btn" id="btnReset" disabled={isLoading}>초기화</button>
+          <button className="btn" onClick={handleReset} disabled={isLoading}>초기화</button>
         </div>
 
         <hr className="line" />
         <div className="muted">필터</div>
         <label className="muted">기간</label>
         <div className="row">
-          <input type="date" id="fromDate" style={{ flex: 1 }} title="시작 날짜" value={from as string} readOnly />
-          <input type="date" id="toDate" style={{ flex: 1 }} title="종료 날짜" value={to as string} readOnly />
+          <input 
+            type="date" 
+            id="fromDate" 
+            style={{ flex: 1 }} 
+            title="시작 날짜" 
+            value={from} 
+            onChange={(e) => setFrom(e.target.value)}
+          />
+          <input 
+            type="date" 
+            id="toDate" 
+            style={{ flex: 1 }} 
+            title="종료 날짜" 
+            value={to} 
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+        
+        {/* 기간별 선택 버튼 */}
+        <div style={{ marginBottom: '12px' }}>
+          <div className="muted" style={{ marginBottom: '6px' }}>빠른 선택</div>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            {[
+              { value: '1week', label: '1주일' },
+              { value: '1month', label: '1개월' },
+              { value: '3months', label: '3개월' },
+              { value: '6months', label: '6개월' },
+              { value: '1year', label: '1년' }
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  console.log('버튼 클릭됨:', option.value);
+                  setPeriod(option.value);
+                  // setRefreshTrigger(prev => prev + 1); // useEffect에서 자동으로 처리됨
+                }}
+                className="btn"
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '4px 8px',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  color: '#374151',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  margin: '2px'
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
         <label className="muted" style={{ marginTop: '6px' }}>지역</label>
-        <select id="regionSel" title="지역별 필터">
+        <select 
+          id="regionSel" 
+          title="지역별 필터"
+          value={region.length > 0 ? region[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setRegion(value ? [value] : []);
+          }}
+        >
           <option value="">전체</option>
           <option>SEOUL</option>
           <option>BUSAN</option>
@@ -273,7 +378,15 @@ export default function BoardV2Page() {
           <option>JEJU</option>
         </select>
         <label className="muted" style={{ marginTop: '6px' }}>채널</label>
-        <select id="channelSel" title="채널 필터">
+        <select 
+          id="channelSel" 
+          title="채널 필터"
+          value={channel.length > 0 ? channel[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setChannel(value ? [value] : []);
+          }}
+        >
           <option value="">전체</option>
           <option>web</option>
           <option>app</option>
@@ -282,7 +395,15 @@ export default function BoardV2Page() {
           <option>offline</option>
         </select>
         <label className="muted" style={{ marginTop: '6px' }}>카테고리</label>
-        <select id="categorySel" title="카테고리 필터">
+        <select 
+          id="categorySel" 
+          title="카테고리 필터"
+          value={category.length > 0 ? category[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setCategory(value ? [value] : []);
+          }}
+        >
           <option value="">전체</option>
           <option>TOPS</option>
           <option>BOTTOMS</option>
@@ -293,8 +414,16 @@ export default function BoardV2Page() {
           <option>ACCESSORIES</option>
         </select>
         <label className="muted" style={{ marginTop: '6px' }}>SKU</label>
-        <select id="skuSel" title="SKU 필터">
-          <option value="__AUTO__">자동(매출 상위)</option>
+        <select 
+          id="skuSel" 
+          title="SKU 필터"
+          value={sku.length > 0 ? sku[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSku(value ? [value] : []);
+          }}
+        >
+          <option value="">자동(매출 상위)</option>
           <option>TOPS-001</option>
           <option>TOPS-002</option>
           <option>BOTTOMS-001</option>
@@ -314,42 +443,106 @@ export default function BoardV2Page() {
 
       <main className="main">
         <section className="panel">
-          <KpiBar />
+          <KpiBar from={from} to={to} />
         </section>
 
         <section className="two">
           <ChartPanel title="① 판매량 × 평균기온">
-            <SalesTemperatureChart />
+            <SalesTemperatureChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="② 매출 × 광고비 × ROAS">
-            <RevenueSpendChart />
+            <RevenueSpendChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="three">
           <ChartPanel title="③ 카테고리 매출 비중">
-            <CategoryPieChart />
+            <CategoryPieChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="④ 지역별 매출">
-            <RegionBarChart />
+            <RegionBarChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑤ 파레토/ABC">
-            <ParetoChart />
+            <ParetoChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑥ 선택 SKU 상세" subtitle="(판매량·7일 이동평균·평균기온)">
-            <SkuDetailChart />
+            <SkuDetailChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑦ 진열 순위 반응곡선" subtitle="(slot_rank↓ 좋음)">
-            <RankResponseChart />
+            <RankResponseChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑧ 이벤트 전/후 임팩트" subtitle="(전후 평균·Welch t-검정)">
-            <EventImpactChart />
+            <EventImpactChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑨ 토글 비교">
             <div className="row">
@@ -359,49 +552,129 @@ export default function BoardV2Page() {
                 <button id="tgCampaign">캠페인</button>
               </div>
             </div>
-            <ToggleCompareChart />
+            <ToggleCompareChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑩ 산점도: 평균기온 vs 판매량">
-            <TemperatureScatterChart />
+            <TemperatureScatterChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑪ 산점도: 할인율 vs 이익">
-            <ProfitScatterChart />
+            <ProfitScatterChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑫ 요일 효과">
-            <DayOfWeekChart />
+            <DayOfWeekChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑬ 날씨→판매 지연 상관" subtitle="(±7일)">
-            <WeatherLagChart />
+            <WeatherLagChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑭ 가격 탄력성" subtitle="(log-가격 vs log(Q+1))">
-            <PriceElasticityChart />
+            <PriceElasticityChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑮ 할인 탄력성" subtitle="(할인율 vs log(Q+1))">
-            <DiscountElasticityChart />
+            <DiscountElasticityChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑯ 기온 버킷">
-            <TemperatureBucketChart />
+            <TemperatureBucketChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <ChartPanel title="⑰ 요일×할인 구간 히트맵">
-            <HeatmapChart />
+            <HeatmapChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
         </section>
 
         <section className="two">
           <ChartPanel title="⑱ 이상치 탐지(Z-score)">
-            <OutlierDetectionChart />
+            <OutlierDetectionChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <DataTable 
             title="⑲ 데이터 미리보기"
@@ -416,7 +689,15 @@ export default function BoardV2Page() {
 
         <section className="two">
           <ChartPanel title="⑳ 단기 예측(7일 이동평균)">
-            <ForecastChart />
+            <ForecastChart 
+              refreshTrigger={refreshTrigger} 
+              from={from} 
+              to={to} 
+              region={region} 
+              channel={channel} 
+              category={category} 
+              sku={sku} 
+            />
           </ChartPanel>
           <DataTable 
             title="21 재고 소진 예상"

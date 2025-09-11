@@ -4,12 +4,27 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export default function RegionBarChart() {
-  const { from, to } = useFilters();
+export default function RegionBarChart({ 
+  refreshTrigger, 
+  from, 
+  to, 
+  region = [], 
+  channel = [], 
+  category = [], 
+  sku = [] 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+  region?: string[];
+  channel?: string[];
+  category?: string[];
+  sku?: string[];
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +32,7 @@ export default function RegionBarChart() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const chartData = await Adapters.channelRegion({ from, to }, {});
+        const chartData = await Adapters.channelRegion({ from, to }, { region, channel, category, sku });
         
         // 지역별 매출 집계
         const regionMap = new Map<string, number>();
@@ -47,7 +62,7 @@ export default function RegionBarChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, region, channel, category, sku, refreshTrigger]);
 
   if (loading) {
     return (

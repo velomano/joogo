@@ -33,6 +33,22 @@ export const Adapters={
         to: range.to,
         kind: 'calendar'
       });
+      
+      // 필터 값들을 쿼리 파라미터에 추가
+      if (f.region && f.region.length > 0) {
+        qs.append('region', f.region.join(','));
+      }
+      if (f.channel && f.channel.length > 0) {
+        qs.append('channel', f.channel.join(','));
+      }
+      if (f.category && f.category.length > 0) {
+        qs.append('category', f.category.join(','));
+      }
+      if (f.sku && f.sku.length > 0) {
+        qs.append('sku', f.sku.join(','));
+      }
+      
+      console.log('API 호출:', `/api/mock/cafe24?${qs}`); // 디버깅용
       const response = await fetch(`/api/mock/cafe24?${qs}`);
       if (!response.ok) throw new Error('Failed to fetch calendar data');
       return await response.json();
@@ -62,6 +78,22 @@ export const Adapters={
         to: range.to,
         kind: 'channel_region'
       });
+      
+      // 필터 값들을 쿼리 파라미터에 추가
+      if (f.region && f.region.length > 0) {
+        qs.append('region', f.region.join(','));
+      }
+      if (f.channel && f.channel.length > 0) {
+        qs.append('channel', f.channel.join(','));
+      }
+      if (f.category && f.category.length > 0) {
+        qs.append('category', f.category.join(','));
+      }
+      if (f.sku && f.sku.length > 0) {
+        qs.append('sku', f.sku.join(','));
+      }
+      
+      console.log('API 호출:', `/api/mock/cafe24?${qs}`); // 디버깅용
       const response = await fetch(`/api/mock/cafe24?${qs}`);
       if (!response.ok) throw new Error('Failed to fetch channel region data');
       return await response.json();
@@ -89,18 +121,48 @@ export const Adapters={
     }
   },
   
-  treemapPareto(range:DateRange,f:Filters){
-    const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
-    const result: any[] = [];
-    for(const cat of cats){
-      for(let i = 0; i < 10; i++){
-        const sku = `${cat}-${String(i+1).padStart(3,'0')}`;
-        const revenue = Math.round(3_000_000 * (0.4 + Math.random() * (cat === 'TOPS' ? 1.4 : 1)));
-        const roas = +(1.5 + Math.random()).toFixed(2);
-        result.push({category: cat, sku, revenue, roas});
+  async treemapPareto(range:DateRange,f:Filters){
+    // Mock API에서 데이터 가져오기
+    try {
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        kind: 'treemap_pareto'
+      });
+      
+      // 필터 값들을 쿼리 파라미터에 추가
+      if (f.region && f.region.length > 0) {
+        qs.append('region', f.region.join(','));
       }
+      if (f.channel && f.channel.length > 0) {
+        qs.append('channel', f.channel.join(','));
+      }
+      if (f.category && f.category.length > 0) {
+        qs.append('category', f.category.join(','));
+      }
+      if (f.sku && f.sku.length > 0) {
+        qs.append('sku', f.sku.join(','));
+      }
+      
+      console.log('API 호출:', `/api/mock/cafe24?${qs}`); // 디버깅용
+      const response = await fetch(`/api/mock/cafe24?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch treemap pareto data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching treemap pareto data:', error);
+      // Fallback to basic data
+      const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
+      const result: any[] = [];
+      for(const cat of cats){
+        for(let i = 0; i < 10; i++){
+          const sku = `${cat}-${String(i+1).padStart(3,'0')}`;
+          const revenue = Math.round(3_000_000 * (0.4 + Math.random() * (cat === 'TOPS' ? 1.4 : 1)));
+          const roas = +(1.5 + Math.random()).toFixed(2);
+          result.push({category: cat, sku, revenue, roas});
+        }
+      }
+      return result;
     }
-    return Promise.resolve(result);
   },
   
   async funnel(range:DateRange,f:Filters){

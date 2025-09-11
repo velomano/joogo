@@ -4,12 +4,19 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-export default function TemperatureScatterChart() {
-  const { from, to } = useFilters();
+export default function TemperatureScatterChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [correlation, setCorrelation] = useState<any>(null);
@@ -110,7 +117,7 @@ export default function TemperatureScatterChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, refreshTrigger]);
 
   if (loading) {
     return (

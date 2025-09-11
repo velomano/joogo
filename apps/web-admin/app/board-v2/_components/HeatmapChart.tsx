@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Adapters } from '../_data/adapters';
-import { useFilters } from '@/lib/state/filters';
+// import { useFilters } from '@/lib/state/filters'; // 제거
 
-export default function HeatmapChart() {
-  const { from, to } = useFilters();
+export default function HeatmapChart({ 
+  refreshTrigger, 
+  from, 
+  to 
+}: { 
+  refreshTrigger: number;
+  from: string;
+  to: string;
+}) {
   const [heatmapData, setHeatmapData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -79,7 +86,7 @@ export default function HeatmapChart() {
     };
 
     fetchData();
-  }, [from, to]);
+  }, [from, to, refreshTrigger]);
 
   if (loading) {
     return (
