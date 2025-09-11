@@ -46,6 +46,7 @@
     "chart.js": "^4.5.0",
     "chartjs-chart-matrix": "^3.0.0",
     "chartjs-chart-treemap": "^3.1.0",
-    "chartjs-plugin-datalabels": "^2.2.0"
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "zustand": "^5.0.8"
   }
 }
