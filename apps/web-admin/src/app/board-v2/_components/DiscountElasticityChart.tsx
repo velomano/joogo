@@ -137,7 +137,7 @@ export default function DiscountElasticityChart() {
                 borderColor: '#1b2533',
                 borderWidth: 1,
                 callbacks: {
-                  label: function(context: TooltipItem<'scatter'>) {
+                  label: function(context: any) {
                     if (context.datasetIndex === 0) {
                       const raw = context.raw as any;
                       return `할인율: ${(Number(context.parsed.x) * 100).toFixed(1)}%, 수량: ${raw?.quantity || 'N/A'}개`;
