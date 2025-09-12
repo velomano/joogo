@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supaAdmin } from '../../../../../lib/supabase/server';
+import { supaAdmin } from '../../../../../src/lib/supabase/server';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
