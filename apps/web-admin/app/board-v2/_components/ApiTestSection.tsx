@@ -53,12 +53,15 @@ export default function ApiTestSection() {
 
   const loadAllData = useCallback(async () => {
     setIsLoading(true);
+    setMessage(null); // 이전 메시지 초기화
+    
     try {
-      // 모든 API를 동시에 호출
+      // 현재 시간을 쿼리 파라미터로 추가하여 캐시 방지
+      const timestamp = Date.now();
       const apiCalls = [
-        { name: '매출 데이터', url: '/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07' },
-        { name: '날씨 데이터', url: '/api/weather?from=2025-01-01&to=2025-01-07' },
-        { name: '광고 데이터', url: '/api/ads?from=2025-01-01&to=2025-01-07' }
+        { name: '매출 데이터', url: `/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07&_t=${timestamp}` },
+        { name: '날씨 데이터', url: `/api/weather?from=2025-01-01&to=2025-01-07&_t=${timestamp}` },
+        { name: '광고 데이터', url: `/api/ads?from=2025-01-01&to=2025-01-07&_t=${timestamp}` }
       ];
 
       const results = await Promise.allSettled(
@@ -148,7 +151,7 @@ export default function ApiTestSection() {
     if (message) {
       const timer = setTimeout(() => {
         setMessage(null);
-      }, 3000);
+      }, 5000); // 5초로 연장
       return () => clearTimeout(timer);
     }
   }, [message]);
@@ -190,6 +193,25 @@ export default function ApiTestSection() {
         </div>
       )}
       
+      {/* 메시지 표시 (버튼 위) */}
+      {message && (
+        <div style={{
+          marginBottom: '8px',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontSize: '11px',
+          fontWeight: '500',
+          textAlign: 'center',
+          backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white',
+          animation: 'fadeInOut 5s ease-in-out',
+          whiteSpace: 'pre-line',
+          lineHeight: '1.4'
+        }}>
+          {message.text}
+        </div>
+      )}
+      
       {/* 통합 데이터 불러오기 버튼 */}
       <button
         onClick={loadAllData}
@@ -215,25 +237,6 @@ export default function ApiTestSection() {
         {isLoading ? '⏳' : '🔄'} 
         {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
       </button>
-
-      {/* 메시지 표시 */}
-      {message && (
-        <div style={{
-          marginTop: '8px',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '11px',
-          fontWeight: '500',
-          textAlign: 'center',
-          backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
-          color: 'white',
-          animation: 'fadeInOut 4s ease-in-out',
-          whiteSpace: 'pre-line',
-          lineHeight: '1.4'
-        }}>
-          {message.text}
-        </div>
-      )}
 
       {/* 마지막 업데이트 시간 */}
       {lastUpdate && (
