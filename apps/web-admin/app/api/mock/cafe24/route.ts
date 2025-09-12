@@ -9,10 +9,13 @@ function seedRand(seed: number) {
 
 export async function GET(req: Request) {
   try {
+    console.log('Cafe24 Mock API called');
     const { searchParams } = new URL(req.url);
     const from = searchParams.get('from') ?? '2025-01-01';
     const to = searchParams.get('to') ?? '2025-12-31';
     const kind = searchParams.get('kind') ?? 'calendar';
+    
+    console.log('Cafe24 API params:', { from, to, kind });
     
     // 필터 파라미터들
     const region = searchParams.get('region')?.split(',') || [];
@@ -32,6 +35,7 @@ export async function GET(req: Request) {
     const rng = seedRand(timeSeed);
 
     if (kind === 'calendar') {
+      console.log('Generating calendar data for', days, 'days');
       const arr = Array.from({ length: days }).map((_, i) => {
         const d = new Date(+start + i * 86400000);
         const mm = d.getMonth();
@@ -70,6 +74,7 @@ export async function GET(req: Request) {
         
         return { date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event, tavg };
       });
+      console.log('Generated calendar data length:', arr.length);
       return NextResponse.json(arr);
     }
 

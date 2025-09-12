@@ -149,17 +149,23 @@ function generateMockTemperature(date: string) {
 
 export async function GET(req: Request) {
   try {
+    console.log('Weather API called');
     const { searchParams } = new URL(req.url);
     const from = searchParams.get('from') || '2025-01-01';
     const to = searchParams.get('to') || '2025-12-31';
     const region = searchParams.get('region') || 'SEOUL';
 
+    console.log('Weather API params:', { from, to, region });
+
     const start = new Date(from);
     const end = new Date(to);
     const days = Math.ceil((+end - +start) / 86400000) + 1;
 
+    console.log('Weather API calculated days:', days);
+
     // 날짜 범위가 너무 크면 Mock 데이터 사용 (API 제한 고려)
     if (days > 3) {
+      console.log('Using mock data for large date range');
       type Daily = { date: string; tavg: number; humidity?: number; source: string };
       const mockData: Daily[] = [];
       for (let i = 0; i < days; i++) {
@@ -167,6 +173,7 @@ export async function GET(req: Request) {
         const dateStr = d.toISOString().slice(0, 10);
         mockData.push(generateMockTemperature(dateStr));
       }
+      console.log('Generated mock data length:', mockData.length);
       return NextResponse.json(mockData);
     }
 
