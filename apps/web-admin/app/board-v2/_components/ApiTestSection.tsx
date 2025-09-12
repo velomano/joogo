@@ -55,37 +55,81 @@ export default function ApiTestSection() {
     setIsLoading(true);
     try {
       // 모든 API를 동시에 호출
-      const promises = [
-        fetch('/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07'),
-        fetch('/api/weather?from=2025-01-01&to=2025-01-07'),
-        fetch('/api/ads?from=2025-01-01&to=2025-01-07')
+      const apiCalls = [
+        { name: '매출 데이터', url: '/api/mock/cafe24?kind=calendar&from=2025-01-01&to=2025-01-07' },
+        { name: '날씨 데이터', url: '/api/weather?from=2025-01-01&to=2025-01-07' },
+        { name: '광고 데이터', url: '/api/ads?from=2025-01-01&to=2025-01-07' }
       ];
 
-      const responses = await Promise.all(promises);
-      const allSuccess = responses.every(response => response.ok);
+      const results = await Promise.allSettled(
+        apiCalls.map(api => fetch(api.url))
+      );
+
+      const now = new Date();
+      setLastUpdate(now.toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      }));
+
+      // 결과 분석
+      const successCount = results.filter(result => 
+        result.status === 'fulfilled' && result.value.ok
+      ).length;
       
-      if (allSuccess) {
-        const now = new Date();
-        setLastUpdate(now.toLocaleTimeString('ko-KR', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          second: '2-digit' 
-        }));
+      const failedCount = results.length - successCount;
+      
+      // 각 API별 상세 결과 수집
+      const details = [];
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const apiName = apiCalls[i].name;
         
-        // 성공 메시지 표시
-        setMessage({ type: 'success', text: '✅ 모든 데이터를 성공적으로 불러왔습니다!' });
-        
-        // 데이터 불러오기 성공 이벤트 발생
-        window.dispatchEvent(new CustomEvent('apiTestSuccess', {
-          detail: { 
-            apiType: 'all', 
-            timestamp: now.toISOString(),
-            success: true
+        if (result.status === 'fulfilled' && result.value.ok) {
+          try {
+            const data = await result.value.json();
+            const count = Array.isArray(data) ? data.length : 1;
+            details.push(`${apiName}: ${count}개`);
+          } catch {
+            details.push(`${apiName}: 성공`);
           }
-        }));
-      } else {
-        throw new Error('일부 API 호출 실패');
+        } else {
+          details.push(`${apiName}: 실패`);
+        }
       }
+
+      if (successCount === results.length) {
+        // 모든 API 성공
+        setMessage({ 
+          type: 'success', 
+          text: `✅ 모든 데이터를 성공적으로 불러왔습니다!\n${details.join(', ')}` 
+        });
+      } else if (successCount > 0) {
+        // 일부 성공
+        setMessage({ 
+          type: 'success', 
+          text: `⚠️ ${successCount}/${results.length}개 API 성공\n${details.join(', ')}` 
+        });
+      } else {
+        // 모든 API 실패
+        setMessage({ 
+          type: 'error', 
+          text: `❌ 모든 API 호출 실패\n${details.join(', ')}` 
+        });
+      }
+      
+      // 데이터 불러오기 이벤트 발생
+      window.dispatchEvent(new CustomEvent('apiTestSuccess', {
+        detail: { 
+          apiType: 'all', 
+          timestamp: now.toISOString(),
+          success: successCount > 0,
+          successCount,
+          totalCount: results.length,
+          details
+        }
+      }));
+      
     } catch (error) {
       console.error('데이터 불러오기 실패:', error);
       setMessage({ type: 'error', text: '❌ 데이터 불러오기에 실패했습니다. 다시 시도해주세요.' });
@@ -183,7 +227,9 @@ export default function ApiTestSection() {
           textAlign: 'center',
           backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
           color: 'white',
-          animation: 'fadeInOut 3s ease-in-out'
+          animation: 'fadeInOut 4s ease-in-out',
+          whiteSpace: 'pre-line',
+          lineHeight: '1.4'
         }}>
           {message.text}
         </div>
