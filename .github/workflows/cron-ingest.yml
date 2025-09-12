@@ -9,7 +9,7 @@ on:
       force_run:
         description: 'Force run even if data exists'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 jobs:
@@ -42,6 +42,22 @@ jobs:
           echo "Checking if data already exists..."
           # 여기서 DB에 데이터가 있는지 확인하는 로직 추가 가능
           
+      - name: Check required secrets
+        run: |
+          echo "🔍 Checking required secrets..."
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "❌ SUPABASE_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "❌ SUPABASE_SERVICE_ROLE_KEY secret is not set"
+            exit 1
+          fi
+          echo "✅ All required secrets are available"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
+          
       - name: Run cron job
         run: |
           cd apps/ingest-worker
@@ -60,11 +76,11 @@ jobs:
           echo "  - Weather data: Updated" 
           echo "  - Ads data: Updated"
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          REPO_NAME: ${{ secrets.REPO_NAME }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET || '' }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN || '' }}
+          REPO_NAME: ${{ secrets.REPO_NAME || '' }}
           
       - name: Notify completion
         if: always()
