@@ -60,7 +60,7 @@ export default function ApiTestSection() {
       const timestamp = Date.now();
       const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00'; // 기본 테넌트 ID
       const apiCalls = [
-        { name: '매출 데이터', url: `/api/board/charts?tenant_id=${tenantId}&from=2025-01-01&to=2025-01-07&_t=${timestamp}` },
+        { name: '매출 데이터', url: `/api/data/sales?from=2025-01-01&to=2025-01-07&tenant_id=${tenantId}&_t=${timestamp}` },
         { name: '날씨 데이터', url: `/api/data/weather?from=2025-01-01&to=2025-01-07&region=SEOUL&_t=${timestamp}` },
         { name: '광고 데이터', url: `/api/data/ads?from=2025-01-01&to=2025-01-07&_t=${timestamp}` }
       ];

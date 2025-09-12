@@ -6,9 +6,9 @@ type Daily = { date: string; tavg: number; humidity?: number; source: string };
 
 // 실제 기상청 API 호출 함수
 async function fetchWeatherData(from: string, to: string, region: string) {
-  const apiKey = process.env.KMA_API_KEY;
-  if (!apiKey || apiKey === 'your_kma_api_key_here') {
-    throw new Error('KMA_API_KEY 환경변수가 설정되지 않았습니다');
+  const apiKey = process.env.KMA_SERVICE_KEY;
+  if (!apiKey) {
+    throw new Error('KMA_SERVICE_KEY 환경변수가 설정되지 않았습니다');
   }
   
   const start = new Date(from);

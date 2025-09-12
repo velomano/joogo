@@ -19,9 +19,9 @@ async function fetchWeatherData(date: string) {
     const nx = '55'; // 서울시 강남구 좌표
     const ny = '127';
     
-    const apiKey = process.env.KMA_API_KEY;
-    if (!apiKey || apiKey === 'your_kma_api_key_here') {
-      throw new Error('KMA_API_KEY 환경변수가 설정되지 않았습니다. .env 파일에 실제 API 키를 설정해주세요');
+    const apiKey = process.env.KMA_SERVICE_KEY;
+    if (!apiKey) {
+      throw new Error('KMA_SERVICE_KEY 환경변수가 설정되지 않았습니다');
     }
     
     const url = `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${apiKey}&numOfRows=1000&pageNo=1&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}&dataType=JSON`;
@@ -167,6 +167,100 @@ async function fetchAdsData(date: string) {
       ctr: +(clicks / impressions * 100).toFixed(2),
       cpc: +(spend / clicks).toFixed(2)
     };
+  }
+}
+
+// 실제 매출 API 호출 함수 (Mock-cafe24 서버 사용)
+async function fetchSalesData(date: string) {
+  console.log(`💰 매출 API 호출: ${date}`);
+  
+  try {
+    // Mock-cafe24 서버 호출
+    const mockCafe24Url = process.env.MOCK_CAFE24_URL || 'http://localhost:3000';
+    const url = `${mockCafe24Url}/api/mock/cafe24?from=${date}&to=${date}&kind=calendar`;
+    
+    console.log(`매출 API URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`매출 API 오류: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      throw new Error('매출 데이터가 없습니다');
+    }
+    
+    // 매출 데이터를 sales_data 테이블 형식으로 변환
+    const salesData = data.map((item: any) => ({
+      date: item.date,
+      region: 'SEOUL', // 기본값
+      channel: 'web', // 기본값
+      category: 'TOPS', // 기본값
+      sku: `SKU-${item.date}`,
+      revenue: item.revenue || 0,
+      quantity: Math.round((item.revenue || 0) / 50000), // 추정 수량
+      roas: item.roas || 2.0,
+      spend: Math.round((item.revenue || 0) / (item.roas || 2.0)),
+      is_event: item.is_event || false
+    }));
+    
+    console.log(`✅ 매출 데이터 수신: ${salesData.length}개`);
+    
+    return salesData;
+    
+  } catch (error) {
+    console.error('❌ 매출 API 호출 실패:', error);
+    
+    // Fallback: Mock 데이터 생성
+    console.log('🔄 Fallback Mock 매출 데이터 생성');
+    const rng = (seed: number) => {
+      let s = seed;
+      return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+    };
+    
+    const random = rng(parseInt(date.replace(/-/g, '')));
+    const regions = ['SEOUL', 'BUSAN', 'DAEGU', 'INCHEON', 'GWANGJU', 'DAEJEON', 'ULSAN', 'GYEONGGI'];
+    const channels = ['web', 'app', 'mobile', 'kiosk'];
+    const categories = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC', 'SHOES', 'BAGS'];
+    
+    const salesData: { date: string; region: string; channel: string; category: string; sku: string; revenue: number; quantity: number; roas: number; spend: number; is_event: boolean }[] = [];
+    
+    // 매출 데이터 생성
+    for (const region of regions) {
+      for (const channel of channels) {
+        for (const category of categories) {
+          const seasonal = 1 + (new Date(date).getMonth() === 5 || new Date(date).getMonth() === 10 ? 0.4 : 0);
+          const event = new Date(date).getDate() === 1 || new Date(date).getDate() === 15 ? 1 : 0;
+          const revenue = Math.round(500000 + 4500000 * seasonal * (0.7 + random()));
+          const quantity = Math.round(revenue / 50000);
+          const roas = +(2.0 + (random() - 0.5) * 0.6).toFixed(2);
+          const spend = Math.round(revenue / roas);
+          
+          salesData.push({
+            date,
+            region,
+            channel,
+            category,
+            sku: `${category}-${String(Math.floor(random() * 100)).padStart(3, '0')}`,
+            revenue,
+            quantity,
+            roas,
+            spend,
+            is_event: !!event
+          });
+        }
+      }
+    }
+    
+    return salesData;
   }
 }
 
@@ -355,7 +449,7 @@ export async function runCafe24Ingest() {
     const [weatherData, adsData, salesData] = await Promise.all([
       fetchWeatherData(dateStr),
       fetchAdsData(dateStr),
-      fetchCafe24Data(dateStr).then(data => data.salesData)
+      fetchSalesData(dateStr)
     ]);
     
     // 데이터베이스에 저장
