@@ -45,7 +45,7 @@ jobs:
         uses: cloudflare/pages-action@v1
         with:
           projectName: joogo
-          directory: apps/web-admin/.next
+          directory: .next
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           workingDirectory: apps/web-admin
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
