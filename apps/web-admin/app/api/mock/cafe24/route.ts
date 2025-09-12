@@ -38,7 +38,7 @@ export async function GET(req: Request) {
 
     if (kind === 'calendar') {
       console.log('Generating calendar data for', days, 'days');
-      const arr = [];
+      const arr: { date: string; revenue: number; roas: number; is_event: boolean; tavg: number }[] = [];
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const mm = d.getMonth();
@@ -94,7 +94,7 @@ export async function GET(req: Request) {
       const channels = channel.length > 0 ? allChannels.filter(c => channel.includes(c)) : allChannels;
       const regions = region.length > 0 ? allRegions.filter(r => region.includes(r)) : allRegions;
       
-      const out = [];
+      const out: { date: string; channel: string; region: string; revenue: number; roas: number }[] = [];
       
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
@@ -159,7 +159,7 @@ export async function GET(req: Request) {
     if (kind === 'treemap' || kind === 'treemap_pareto') {
       console.log('Generating treemap data');
       const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
-      const out = [];
+      const out: { category: string; sku: string; revenue: number; roas: number }[] = [];
       
       // 카테고리 필터링
       const filteredCats = category.length > 0 ? cats.filter(cat => category.includes(cat)) : cats;

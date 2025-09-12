@@ -100,9 +100,9 @@ function KpiBar() {
           },
           { 
             label: 'ROAS', 
-            value: roas.toFixed(2),
+            value: avgRoas.toFixed(2),
             subValue: `광고비: ₩${(spend / 1000000).toFixed(1)}M`,
-            status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
+            status: avgRoas > 2 ? 'ok' : avgRoas > 1 ? 'warn' : 'bad'
           },
           { 
             label: '데이터 품질', 
