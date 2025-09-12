@@ -87,8 +87,43 @@ export async function GET(req: NextRequest) {
     
     console.log('Ads API 호출 (Mock 서버에서 조회):', { from, to, channel });
     
-    // Mock-ads 서버에서 데이터 조회
-    const mockServerUrl = process.env.MOCK_ADS_URL || 'http://localhost:61211';
+    // Mock-ads 서버에서 데이터 조회 (환경 변수 기반)
+    const mockServerUrl = process.env.MOCK_ADS_URL || process.env.ADS_BASE_URL;
+    
+    // Mock 서버 URL이 설정되지 않은 경우 Supabase에서 직접 조회
+    if (!mockServerUrl) {
+      console.log('Mock 서버 URL이 설정되지 않음. Supabase에서 직접 조회');
+      
+      const { data: adsData, error } = await supaAdmin
+        .from('ads_analysis')
+        .select('*')
+        .gte('date', from)
+        .lte('date', to)
+        .order('date', { ascending: true });
+
+      if (error) {
+        console.error('Supabase 조회 오류:', error);
+        throw new Error(`Supabase 오류: ${error.message}`);
+      }
+
+      const formattedData = adsData?.map(item => ({
+        date: item.date,
+        channel: item.channel || 'unknown',
+        spend: item.spend || 0,
+        impressions: item.impressions || 0,
+        clicks: item.clicks || 0
+      })) || [];
+
+      console.log(`Supabase에서 가져온 광고 데이터 개수: ${formattedData.length}`);
+
+      const apiResponse = NextResponse.json(formattedData);
+      apiResponse.headers.set('X-API-Status', 'success');
+      apiResponse.headers.set('X-Data-Source', 'supabase');
+      
+      return apiResponse;
+    }
+
+    // Mock 서버가 설정된 경우
     const params = new URLSearchParams({
       from,
       to,
@@ -109,7 +144,7 @@ export async function GET(req: NextRequest) {
     const data = await response.json();
     const adsData = data.points || [];
     
-    console.log(`가져온 광고 데이터 개수: ${adsData.length}`);
+    console.log(`Mock 서버에서 가져온 광고 데이터 개수: ${adsData.length}`);
     
     // 응답 헤더에 상태 정보 추가
     const apiResponse = NextResponse.json(adsData);
