@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     if (!mockServerUrl) {
       console.log('Mock 서버 URL이 설정되지 않음. Supabase에서 직접 조회');
       
-      const { data: salesData, error } = await supaAdmin
+      const { data: salesData, error } = await supaAdmin()
         .from('sales_analysis')
         .select('*')
         .gte('date', _from)
