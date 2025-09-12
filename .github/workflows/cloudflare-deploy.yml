@@ -1,0 +1,53 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@8 --activate
+          pnpm -w install --no-frozen-lockfile
+
+      - name: Build web-admin
+        run: |
+          cd apps/web-admin
+          pnpm run build
+
+      - name: Check bundle size
+        run: |
+          cd apps/web-admin
+          echo "Checking bundle sizes..."
+          find .next -name "*.js" -size +20M -exec ls -lh {} \; || echo "No files larger than 20MB found"
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          projectName: joogo
+          directory: apps/web-admin/.next
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: apps/web-admin
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4
