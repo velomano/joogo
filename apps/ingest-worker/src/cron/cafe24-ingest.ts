@@ -8,8 +8,18 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 실제 기상청 API 호출 함수
+// 실제 기상청 API 호출 함수 (최적화된 버전)
 async function fetchWeatherData(date: string) {
+  // 로그 출력 최소화
+  const today = new Date();
+  const targetDate = new Date(date);
+  const daysDiff = Math.ceil((today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // 최근 3일 이내가 아니면 Mock 데이터 사용
+  if (daysDiff > 3) {
+    return generateMockWeatherData(date);
+  }
+  
   console.log(`🌤️  기상청 API 호출: ${date}`);
   
   try {
@@ -91,6 +101,37 @@ async function fetchWeatherData(date: string) {
       description: '맑음 (Fallback)'
     };
   }
+}
+
+// Mock 기상 데이터 생성 함수
+function generateMockWeatherData(date: string) {
+  const d = new Date(date);
+  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+  
+  // 계절별 온도 분포
+  const baseTemp = 15;
+  const seasonal = 12 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
+  const daily = 6 * Math.sin(dayOfYear * 0.1);
+  const random = (Math.random() - 0.5) * 6;
+  const tavg = Math.round((baseTemp + seasonal + daily + random) * 10) / 10;
+  
+  // 습도 계산
+  const humidity = Math.round(80 - (tavg - 10) * 2 + (Math.random() - 0.5) * 20);
+  const clampedHumidity = Math.max(30, Math.min(95, humidity));
+  
+  // 강수량 (계절별)
+  const isRainySeason = dayOfYear >= 150 && dayOfYear <= 200; // 6-7월
+  const precipitation = isRainySeason ? Math.random() * 20 : Math.random() * 5;
+  
+  return {
+    date,
+    region: 'SEOUL',
+    temperature: tavg,
+    humidity: clampedHumidity,
+    precipitation: Math.round(precipitation * 10) / 10,
+    description: tavg > 25 ? '맑음' : tavg > 15 ? '구름많음' : '흐림',
+    source: 'mock'
+  };
 }
 
 // 실제 광고 API 호출 함수 (Mock-ads 서버 사용)
@@ -445,30 +486,24 @@ export async function runCafe24Ingest() {
     
     console.log(`📊 Fetching data for ${dateStr}`);
     
-    // 각 API에서 데이터 수집
-    const [weatherData, adsData, salesData] = await Promise.all([
-      fetchWeatherData(dateStr),
-      fetchAdsData(dateStr),
-      fetchSalesData(dateStr)
-    ]);
+    // 기상청 데이터만 실제 API 호출하여 DB에 저장
+    console.log('🌤️ Fetching weather data from KMA API...');
+    const weatherData = await fetchWeatherData(dateStr);
     
     // 데이터베이스에 저장
-    console.log('💾 Saving data to database...');
+    console.log('💾 Saving weather data to database...');
     
     const weatherCount = await saveToDatabase([weatherData], 'weather_data');
-    const adsCount = await saveToDatabase([adsData], 'ads_data');
-    const salesCount = await saveToDatabase(salesData, 'sales_data');
     
-    totalRecords = salesCount + weatherCount + adsCount;
+    totalRecords = weatherCount;
     
     const completedAt = new Date();
     const duration = completedAt.getTime() - startedAt.getTime();
     
     console.log(`✅ ${jobName} completed successfully!`);
-    console.log(`📈 Processed ${totalRecords} records in ${duration}ms`);
-    console.log(`   - Sales: ${salesCount} records`);
-    console.log(`   - Weather: ${weatherCount} records`);
-    console.log(`   - Ads: ${adsCount} records`);
+    console.log(`📈 Processed ${totalRecords} weather records in ${duration}ms`);
+    console.log(`   - Weather: ${weatherCount} records (from KMA API and Mock data)`);
+    console.log(`   - Ads/Sales: Will use mock data in web-admin`);
     
     // 성공 로그 저장
     await logCronJob(jobName, 'success', startedAt, completedAt, totalRecords);

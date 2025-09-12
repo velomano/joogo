@@ -216,7 +216,7 @@ export const Adapters={
         to: range.to,
         ...(f.region && f.region.length > 0 && { region: f.region.join(',') })
       });
-      const response = await fetch(`/api/weather?${qs}`);
+      const response = await fetch(`/api/data/weather?${qs}`);
       if (!response.ok) throw new Error('Failed to fetch weather data');
       return await response.json();
     } catch (error) {
@@ -251,7 +251,7 @@ export const Adapters={
         to: range.to,
         region: region
       });
-      const response = await fetch(`/api/weather?${qs}`);
+      const response = await fetch(`/api/data/weather?${qs}`);
       if (!response.ok) throw new Error('Failed to fetch weather data');
       return await response.json();
     } catch (error) {

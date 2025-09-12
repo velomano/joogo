@@ -59,25 +59,94 @@ app.get("/api/v2/admin/orders", (c) => {
 
 // Mock Ads (통합)
 app.get("/api/v1/ads/spend", (c) => {
-  const points = [
-    {
-      ts: new Date().toISOString(),
-      channel: "naver",
-      campaign_id: "CAMP-001",
-      impressions: 1000,
-      clicks: 50,
-      cost: 15000
-    },
-    {
-      ts: new Date(Date.now() - 3600000).toISOString(),
-      channel: "coupang",
-      campaign_id: "CAMP-002",
-      impressions: 800,
-      clicks: 40,
-      cost: 12000
+  const from = c.req.query("from") || "2025-01-01";
+  const to = c.req.query("to") || "2025-01-07";
+  const channel = c.req.query("channel");
+  
+  const start = new Date(from);
+  const end = new Date(to);
+  const days = Math.ceil((+end - +start) / 86400000) + 1;
+  
+  const channels = channel ? [channel] : ["naver", "coupang", "google", "meta"];
+  const points = [];
+  
+  // 시드 기반 랜덤 생성기
+  function seedRand(seed: number) {
+    let s = seed;
+    return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  }
+  
+  for (let i = 0; i < days; i++) {
+    const currentDate = new Date(+start + i * 86400000);
+    const dateStr = currentDate.toISOString();
+    
+    for (const ch of channels) {
+      const rng = seedRand(i * 1000 + ch.charCodeAt(0));
+      
+      // 채널별 기본 광고비
+      const baseCosts = {
+        'naver': 150000,
+        'coupang': 200000,
+        'google': 300000,
+        'meta': 100000
+      };
+      
+      const baseCost = baseCosts[ch as keyof typeof baseCosts] || 150000;
+      const randomFactor = 0.7 + rng() * 0.6; // 0.7 ~ 1.3
+      const cost = Math.round(baseCost * randomFactor);
+      
+      // 노출수, 클릭수 계산
+      const impressions = Math.round(cost * (80 + rng() * 40)); // 80-120 per 1원
+      const ctr = 0.01 + rng() * 0.02; // 1-3% CTR
+      const clicks = Math.round(impressions * ctr);
+      
+      points.push({
+        ts: dateStr,
+        channel: ch,
+        campaign_id: `CAMP-${String(i % 3 + 1).padStart(3, '0')}`,
+        impressions,
+        clicks,
+        cost
+      });
     }
-  ];
-  return c.json({ points, meta: { group_by: "day", channels: ["naver", "coupang", "google", "meta"] } });
+  }
+  
+  return c.json({ points, meta: { group_by: "day", channels } });
+});
+
+// Mock Sales API
+app.get("/api/sales", (c) => {
+  const from = c.req.query("from") || "2025-01-01";
+  const to = c.req.query("to") || "2025-01-07";
+  const granularity = c.req.query("g") || "day";
+  
+  const start = new Date(from);
+  const end = new Date(to);
+  const days = Math.ceil((+end - +start) / 86400000) + 1;
+  
+  const salesData = [];
+  for (let i = 0; i < days; i++) {
+    const currentDate = new Date(+start + i * 86400000);
+    const dateStr = currentDate.toISOString().split('T')[0];
+    
+    // 시드 기반 랜덤 생성기 (일관된 데이터를 위해)
+    function seedRand(seed: number) {
+      let s = seed;
+      return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+    }
+    
+    const rng = seedRand(i * 1000);
+    const baseRevenue = 1000000; // 100만원 기본값
+    const variation = 0.5 + rng() * 1.0; // 0.5 ~ 1.5 배
+    const revenue = Math.round(baseRevenue * variation);
+    
+    salesData.push({
+      ts: dateStr,
+      value: revenue
+    });
+  }
+  
+  return c.json(salesData);
 });
 
 // Mock Weather (통합)

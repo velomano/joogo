@@ -71,7 +71,7 @@ export default function SalesTemperatureChart({
             return `${date.getMonth() + 1}/${date.getDate()}`;
           });
           salesData = filteredData.map(d => d.revenue / 1000);
-          tempData = filteredData.map(d => d.tavg || 0);
+          tempData = filteredData.map(d => d.tavg !== null && d.tavg !== undefined ? d.tavg : null);
         } else if (daysDiff <= 31) {
           // 1개월 이하: 일별 표시 (모든 데이터 포인트 사용)
           labels = filteredData.map(d => {
@@ -79,15 +79,18 @@ export default function SalesTemperatureChart({
             return `${date.getMonth() + 1}/${date.getDate()}`;
           });
           salesData = filteredData.map(d => d.revenue / 1000);
-          tempData = filteredData.map(d => d.tavg || 0);
+          tempData = filteredData.map(d => d.tavg !== null && d.tavg !== undefined ? d.tavg : null);
         } else if (daysDiff <= 90) {
           // 3개월 이하: 주별 집계 (7일씩 묶어서)
-          const weeklyData: { date: string; revenue: number; tavg: number }[] = [];
+          const weeklyData: { date: string; revenue: number; tavg: number | null }[] = [];
           for (let i = 0; i < filteredData.length; i += 7) {
             const weekData = filteredData.slice(i, i + 7);
             if (weekData.length > 0) {
               const weekRevenue = weekData.reduce((sum, d) => sum + d.revenue, 0);
-              const weekTemp = weekData.reduce((sum, d) => sum + (d.tavg || 0), 0) / weekData.length;
+              const validTemps = weekData.filter(d => d.tavg !== null && d.tavg !== undefined);
+              const weekTemp = validTemps.length > 0 
+                ? validTemps.reduce((sum, d) => sum + d.tavg, 0) / validTemps.length 
+                : null;
               weeklyData.push({
                 date: weekData[0].date,
                 revenue: weekRevenue,
@@ -106,11 +109,14 @@ export default function SalesTemperatureChart({
             const date = new Date(d.date);
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             if (!monthMap.has(monthKey)) {
-              monthMap.set(monthKey, { revenue: 0, temp: 0, count: 0 });
+              monthMap.set(monthKey, { revenue: 0, temp: 0, count: 0, validTempCount: 0 });
             }
             const monthData = monthMap.get(monthKey);
             monthData.revenue += d.revenue;
-            monthData.temp += d.tavg || 0;
+            if (d.tavg !== null && d.tavg !== undefined) {
+              monthData.temp += d.tavg;
+              monthData.validTempCount += 1;
+            }
             monthData.count += 1;
           });
           

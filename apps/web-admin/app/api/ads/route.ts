@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { supaAdmin } from '../../../lib/supabase/server';
 
 export const runtime = 'edge';
-
-// Mock-ads API URL (개발환경에서는 로컬, 프로덕션에서는 Cloudflare Workers)
-const MOCK_ADS_URL = process.env.MOCK_ADS_URL || 'http://localhost:8789';
+export const dynamic = 'force-dynamic';
 
 // 광고비 데이터 타입
 interface AdSpendData {
@@ -13,31 +12,6 @@ interface AdSpendData {
   impressions: number;
   clicks: number;
   cost: number;
-}
-
-// Mock-ads API에서 데이터 가져오기
-async function fetchAdSpendData(from: string, to: string, channel?: string) {
-  try {
-    const params = new URLSearchParams({
-      from,
-      to,
-      ...(channel && { channel })
-    });
-    
-    const response = await fetch(`${MOCK_ADS_URL}/api/v1/ads/spend?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Mock-ads API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return { success: true, data: data.points || [] };
-    
-  } catch (error) {
-    console.error('Mock-ads API 호출 실패:', error);
-    // API 실패 시 fallback 데이터 생성하되 실패 상태 표시
-    return { success: false, data: generateFallbackData(from, to, channel), error: error.message };
-  }
 }
 
 // Fallback 데이터 생성 (API 실패 시)
@@ -104,35 +78,60 @@ function generateFallbackData(from: string, to: string, channel?: string): AdSpe
   return data;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const from = searchParams.get('from') ?? '2025-01-01';
     const to = searchParams.get('to') ?? '2025-12-31';
     const channel = searchParams.get('channel') ?? undefined;
     
-    console.log('Ads API 호출:', { from, to, channel });
+    console.log('Ads API 호출 (Mock 서버에서 조회):', { from, to, channel });
     
-    // Mock-ads API에서 데이터 가져오기
-    const result = await fetchAdSpendData(from, to, channel);
+    // Mock-ads 서버에서 데이터 조회
+    const mockServerUrl = process.env.MOCK_ADS_URL || 'http://localhost:61211';
+    const params = new URLSearchParams({
+      from,
+      to,
+      ...(channel && { channel })
+    });
     
-    console.log('가져온 광고비 데이터 개수:', result.data.length);
-    console.log('Mock-ads API 성공 여부:', result.success);
-    
-    // 실패 상태를 헤더에 포함
-    const response = NextResponse.json(result.data);
-    response.headers.set('X-API-Status', result.success ? 'success' : 'fallback');
-    if (!result.success) {
-      response.headers.set('X-API-Error', result.error || 'Unknown error');
+    const response = await fetch(`${mockServerUrl}/api/v1/ads/spend?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Mock-ads 서버 오류: ${response.status}`);
     }
+
+    const data = await response.json();
+    const adsData = data.points || [];
     
-    return response;
+    console.log(`가져온 광고 데이터 개수: ${adsData.length}`);
+    
+    // 응답 헤더에 상태 정보 추가
+    const apiResponse = NextResponse.json(adsData);
+    apiResponse.headers.set('X-API-Status', 'success');
+    apiResponse.headers.set('X-Data-Source', 'mock-server');
+    
+    return apiResponse;
     
   } catch (error) {
     console.error('Ads API 오류:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
+    
+    // Mock 서버 오류 시 fallback 데이터
+    const fallbackData = generateFallbackData(
+      '2025-01-01',
+      '2025-01-02',
+      undefined
     );
+    
+    const response = NextResponse.json(fallbackData);
+    response.headers.set('X-API-Status', 'fallback');
+    response.headers.set('X-Data-Source', 'fallback');
+    
+    return response;
   }
 }

@@ -21,7 +21,7 @@ export default function ApiTestSection() {
     try {
       // 기상청 공공데이터포털 API (실제 사용시 API 키 필요)
       // 현재는 mock 데이터로 대체
-      const response = await fetch('/api/weather?from=2025-01-01&to=2025-01-07');
+      const response = await fetch('/api/data/weather?from=2025-01-01&to=2025-01-07&region=SEOUL');
       if (response.ok) {
         const data = await response.json();
         if (data.length > 0) {
@@ -59,10 +59,16 @@ export default function ApiTestSection() {
       // 현재 시간을 쿼리 파라미터로 추가하여 캐시 방지
       const timestamp = Date.now();
       const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00'; // 기본 테넌트 ID
+      // 현재 날짜 기준으로 최근 7일 데이터 조회
+      const today = new Date();
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const fromDate = weekAgo.toISOString().split('T')[0];
+      const toDate = today.toISOString().split('T')[0];
+      
       const apiCalls = [
-        { name: '매출 데이터', url: `/api/data/sales?from=2025-01-01&to=2025-01-07&tenant_id=${tenantId}&_t=${timestamp}` },
-        { name: '날씨 데이터', url: `/api/data/weather?from=2025-01-01&to=2025-01-07&region=SEOUL&_t=${timestamp}` },
-        { name: '광고 데이터', url: `/api/data/ads?from=2025-01-01&to=2025-01-07&_t=${timestamp}` }
+        { name: '매출 데이터', url: `/api/mock/cafe24?from=${fromDate}&to=${toDate}&kind=calendar&_t=${timestamp}`, isMock: true },
+        { name: '날씨 데이터', url: `/api/data/weather?from=${fromDate}&to=${toDate}&region=SEOUL&_t=${timestamp}`, isMock: false },
+        { name: '광고 데이터', url: `/api/ads?from=${fromDate}&to=${toDate}&_t=${timestamp}`, isMock: true }
       ];
 
       const results = await Promise.allSettled(
@@ -84,22 +90,27 @@ export default function ApiTestSection() {
       const failedCount = results.length - successCount;
       
       // 각 API별 상세 결과 수집
-      const details = [];
+      const details: string[] = [];
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
         const apiName = apiCalls[i].name;
+        const isMock = apiCalls[i].isMock;
         
         if (result.status === 'fulfilled' && result.value.ok) {
           try {
             const data = await result.value.json();
             const count = Array.isArray(data) ? data.length : 1;
             
-            // 헤더에서 실제 API 상태 확인
-            const apiStatus = result.value.headers.get('X-API-Status');
-            if (apiStatus === 'fallback') {
-              details.push(`${apiName}: ${count}개 (Fallback)`);
+            if (isMock) {
+              details.push(`${apiName}: ${count}개 (Mock)`);
             } else {
-              details.push(`${apiName}: ${count}개`);
+              // DB에서 조회한 데이터
+              const apiStatus = result.value.headers.get('X-API-Status');
+              if (apiStatus === 'fallback') {
+                details.push(`${apiName}: ${count}개 (Fallback)`);
+              } else {
+                details.push(`${apiName}: ${count}개 (DB)`);
+              }
             }
           } catch {
             details.push(`${apiName}: 성공`);
@@ -201,25 +212,6 @@ export default function ApiTestSection() {
         </div>
       )}
       
-      {/* 메시지 표시 (버튼 위) */}
-      {message && (
-        <div style={{
-          marginBottom: '8px',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '11px',
-          fontWeight: '500',
-          textAlign: 'center',
-          backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
-          color: 'white',
-          animation: 'fadeInOut 5s ease-in-out',
-          whiteSpace: 'pre-line',
-          lineHeight: '1.4'
-        }}>
-          {message.text}
-        </div>
-      )}
-      
       {/* 통합 데이터 불러오기 버튼 */}
       <button
         onClick={loadAllData}
@@ -245,6 +237,25 @@ export default function ApiTestSection() {
         {isLoading ? '⏳' : '🔄'} 
         {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
       </button>
+
+      {/* 메시지 표시 (버튼 아래) */}
+      {message && (
+        <div style={{
+          marginTop: '8px',
+          padding: '10px 14px',
+          borderRadius: '6px',
+          fontSize: '11px',
+          fontWeight: '500',
+          textAlign: 'center',
+          backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white',
+          animation: 'fadeInOut 5s ease-in-out',
+          whiteSpace: 'pre-line',
+          lineHeight: '1.4'
+        }}>
+          {message.text}
+        </div>
+      )}
 
       {/* 마지막 업데이트 시간 */}
       {lastUpdate && (

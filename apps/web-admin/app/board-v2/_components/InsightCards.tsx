@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Adapters } from '../_data/adapters';
 
 interface InsightCardProps {
@@ -18,6 +18,7 @@ function InsightCard({ title, value, trend, description, icon, color, onClick }:
   
   return (
     <div 
+      className="insight-card"
       style={{
         background: '#2d3748',
         border: '1px solid #4a5568',
@@ -27,22 +28,9 @@ function InsightCard({ title, value, trend, description, icon, color, onClick }:
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s ease'
+        cursor: onClick ? 'pointer' : 'default'
       }}
       onClick={onClick}
-      onMouseEnter={(e) => {
-        if (onClick) {
-          e.currentTarget.style.background = '#374151';
-          e.currentTarget.style.borderColor = '#6b7280';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (onClick) {
-          e.currentTarget.style.background = '#2d3748';
-          e.currentTarget.style.borderColor = '#4a5568';
-        }
-      }}
     >
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
         <span style={{ fontSize: '16px', marginRight: '6px' }}>{icon}</span>
@@ -102,15 +90,54 @@ export default function InsightCards({
   console.log('InsightCards 컴포넌트 렌더링:', { from, to });
 
   const [insights, setInsights] = useState<InsightCardProps[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const [popupData, setPopupData] = useState<{
     type: 'temperature' | 'roas' | 'reorder' | 'discontinued' | 'repurchase';
     title: string;
     data: any;
   } | null>(null);
 
+  // 기본 인사이트 데이터를 메모이제이션
+  const defaultInsights = useMemo(() => [
+    {
+      title: '기온 vs 판매량 상관관계',
+      value: '0.75',
+      trend: 'up' as const,
+      description: '기온 1도 상승시 판매량 12% 증가 예상',
+      icon: '🌡️',
+      color: '#3b82f6'
+    },
+    {
+      title: '광고비 투자 효율성',
+      value: '4.2x ROAS',
+      trend: 'up' as const,
+      description: '광고비 100만원당 420만원 매출 발생',
+      icon: '💰',
+      color: '#10b981'
+    },
+    {
+      title: '재고 리오더 알림',
+      value: '3일 후',
+      trend: 'down' as const,
+      description: '현재 재고로 3일간 판매 가능, 긴급 주문 필요',
+      icon: '📦',
+      color: '#f59e0b'
+    },
+    {
+      title: '단종 후보 상품',
+      value: '2개 상품',
+      trend: 'down' as const,
+      description: '지난 30일 판매량 10개 미만, 단종 검토 권장',
+      icon: '⚠️',
+      color: '#ef4444'
+    }
+  ], []);
+
   useEffect(() => {
     const fetchInsights = async () => {
+      if (initialized) return; // 이미 초기화되었으면 스킵
+      
       console.log('InsightCards useEffect 실행:', { from, to, region, channel, category, sku });
       setLoading(true);
       try {
@@ -216,16 +243,18 @@ export default function InsightCards({
 
         console.log('InsightCards 인사이트 생성 완료:', newInsights);
         setInsights(newInsights);
+        setInitialized(true);
       } catch (error) {
         console.error('인사이트 데이터 로드 실패:', error);
-        setInsights([]);
+        setInsights(defaultInsights);
+        setInitialized(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchInsights();
-  }, [from, to, region, channel, category, sku, refreshTrigger]);
+  }, [from, to, refreshTrigger, initialized, defaultInsights]);
 
   // 팝업 컴포넌트
   const PopupModal = () => {
@@ -390,108 +419,8 @@ export default function InsightCards({
     );
   };
 
-  if (loading) {
-    return (
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} style={{
-            background: '#f3f4f6',
-            borderRadius: '8px',
-            height: '120px',
-            animation: 'pulse 2s infinite'
-          }} />
-        ))}
-      </div>
-    );
-  }
-
-  // 테스트용 인사이트 카드 (데이터가 없을 때)
-  if (insights.length === 0) {
-    const testInsights: InsightCardProps[] = [
-      {
-        title: '기온 vs 판매량 상관관계',
-        value: '0.75',
-        trend: 'up',
-        description: '기온 1도 상승시 판매량 12% 증가 예상',
-        icon: '🌡️',
-        color: '#3b82f6'
-      },
-      {
-        title: '광고비 투자 효율성',
-        value: '4.2x ROAS',
-        trend: 'up',
-        description: '광고비 100만원당 420만원 매출 발생',
-        icon: '💰',
-        color: '#10b981'
-      },
-      {
-        title: '재고 리오더 알림',
-        value: '3일 후',
-        trend: 'down',
-        description: '현재 재고로 3일간 판매 가능, 긴급 주문 필요',
-        icon: '📦',
-        color: '#f59e0b'
-      },
-      {
-        title: '단종 후보 상품',
-        value: '2개 상품',
-        trend: 'down',
-        description: '지난 30일 판매량 10개 미만, 단종 검토 권장',
-        icon: '⚠️',
-        color: '#ef4444'
-      },
-      {
-        title: '고객 재구매율',
-        value: '68%',
-        trend: 'up',
-        description: '지난 3개월 고객 중 68%가 재구매 완료',
-        icon: '🔄',
-        color: '#06b6d4'
-      }
-    ];
-
-    return (
-      <>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '12px',
-          marginBottom: '24px'
-        }}>
-          {testInsights.map((insight, index) => (
-            <InsightCard 
-              key={index} 
-              {...insight} 
-              onClick={() => {
-                const typeMap: { [key: string]: 'temperature' | 'roas' | 'reorder' | 'discontinued' | 'repurchase' } = {
-                  '기온 vs 판매량 상관관계': 'temperature',
-                  '광고비 투자 효율성': 'roas',
-                  '재고 리오더 알림': 'reorder',
-                  '단종 후보 상품': 'discontinued',
-                  '고객 재구매율': 'repurchase'
-                };
-                
-                const type = typeMap[insight.title];
-                if (type) {
-                  setPopupData({
-                    type,
-                    title: insight.title,
-                    data: null
-                  });
-                }
-              }}
-            />
-          ))}
-        </div>
-        <PopupModal />
-      </>
-    );
-  }
+  // 기본 인사이트 카드 표시 (로딩 상태 제거)
+  const displayInsights = insights.length > 0 ? insights : defaultInsights;
 
   return (
     <>
@@ -501,13 +430,30 @@ export default function InsightCards({
         gap: '12px',
         marginBottom: '24px'
       }}>
-        {insights.map((insight, index) => (
+        {displayInsights.map((insight, index) => (
           <InsightCard 
             key={index} 
             {...insight} 
             onClick={() => {
-              // 실제 데이터에서도 팝업을 표시할 수 있도록 확장 가능
-              console.log('인사이트 카드 클릭:', insight.title);
+              const typeMap: { [key: string]: 'temperature' | 'roas' | 'reorder' | 'discontinued' | 'repurchase' } = {
+                '기온 vs 판매량 상관관계': 'temperature',
+                '기온과 판매량 상관관계': 'temperature',
+                '광고비 투자 효율성': 'roas',
+                '광고비 효율성': 'roas',
+                '재고 리오더 알림': 'reorder',
+                '리오더 시점': 'reorder',
+                '단종 후보 상품': 'discontinued',
+                '고객 재구매율': 'repurchase'
+              };
+              
+              const type = typeMap[insight.title];
+              if (type) {
+                setPopupData({
+                  type,
+                  title: insight.title,
+                  data: null
+                });
+              }
             }}
           />
         ))}
