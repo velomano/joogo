@@ -8,67 +8,164 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 실제 API 호출 함수들
+// 실제 기상청 API 호출 함수
 async function fetchWeatherData(date: string) {
+  console.log(`🌤️  기상청 API 호출: ${date}`);
+  
   try {
-    // 기상청 API 호출 (실제 구현)
-    const response = await fetch(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${process.env.KMA_API_KEY}&numOfRows=1000&pageNo=1&base_date=${date.replace(/-/g, '')}&base_time=0500&nx=55&ny=127&dataType=JSON`);
+    // 기상청 단기예보 API 호출
+    const baseDate = date.replace(/-/g, '');
+    const baseTime = '0500'; // 5시 기준
+    const nx = '55'; // 서울시 강남구 좌표
+    const ny = '127';
+    
+    const apiKey = process.env.KMA_API_KEY;
+    if (!apiKey || apiKey === 'your_kma_api_key_here') {
+      throw new Error('KMA_API_KEY 환경변수가 설정되지 않았습니다. .env 파일에 실제 API 키를 설정해주세요');
+    }
+    
+    const url = `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${apiKey}&numOfRows=1000&pageNo=1&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}&dataType=JSON`;
+    
+    console.log(`API URL: ${url.substring(0, 100)}...`);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Weather API error: ${response.status}`);
+      throw new Error(`기상청 API 오류: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    // 실제 기상청 데이터 파싱 로직 구현 필요
+    
+    if (data.response?.header?.resultCode !== '00') {
+      throw new Error(`기상청 API 응답 오류: ${data.response?.header?.resultMsg}`);
+    }
+    
+    // 기상청 데이터 파싱
+    const items = data.response?.body?.items?.item || [];
+    let tavg = 20.0; // 기본값
+    let humidity = 60; // 기본값
+    let precipitation = 0; // 기본값
+    
+    // TMP (기온), REH (습도), PCP (강수량) 데이터 추출
+    for (const item of items) {
+      if (item.category === 'TMP' && item.fcstTime === '0600') {
+        tavg = parseFloat(item.fcstValue) || tavg;
+      }
+      if (item.category === 'REH' && item.fcstTime === '0600') {
+        humidity = parseInt(item.fcstValue) || humidity;
+      }
+      if (item.category === 'PCP' && item.fcstTime === '0600') {
+        precipitation = parseFloat(item.fcstValue) || precipitation;
+      }
+    }
+    
+    console.log(`✅ 기상청 데이터 수신: 기온 ${tavg}°C, 습도 ${humidity}%, 강수량 ${precipitation}mm`);
+    
     return {
       date,
       region: 'SEOUL',
-      temperature: 20.5,
-      humidity: 65,
-      precipitation: 0,
-      description: '맑음'
+      temperature: tavg,
+      humidity,
+      precipitation,
+      description: precipitation > 0 ? '비' : '맑음'
     };
+    
   } catch (error) {
-    console.error('Weather API 호출 실패:', error);
-    // Fallback 데이터
+    console.error('❌ 기상청 API 호출 실패:', error);
+    
+    // Fallback: Mock 데이터 생성
+    console.log('🔄 Fallback Mock 데이터 생성');
+    const dayOfYear = Math.floor((new Date(date).getTime() - new Date(new Date(date).getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const baseTemp = 15;
+    const tempSeasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365);
+    const daily = 5 * Math.sin(dayOfYear * 0.1);
+    const randomTemp = (Math.random() - 0.5) * 8;
+    const tavg = +(baseTemp + tempSeasonal + daily + randomTemp).toFixed(1);
+    
     return {
       date,
       region: 'SEOUL',
-      temperature: 20.0 + Math.random() * 10,
-      humidity: 50 + Math.random() * 30,
-      precipitation: Math.random() * 5,
-      description: '맑음'
+      temperature: tavg,
+      humidity: Math.round(50 + Math.random() * 30),
+      precipitation: Math.round(Math.random() * 5),
+      description: '맑음 (Fallback)'
     };
   }
 }
 
+// 실제 광고 API 호출 함수 (Mock-ads 서버 사용)
 async function fetchAdsData(date: string) {
+  console.log(`📊 광고 API 호출: ${date}`);
+  
   try {
-    // 실제 광고 API 호출 (Google Ads, Facebook Ads 등)
-    const response = await fetch(`https://api.example.com/ads?date=${date}`, {
-      headers: { 'Authorization': `Bearer ${process.env.ADS_API_KEY}` }
+    // Mock-ads 서버 호출
+    const mockAdsUrl = process.env.MOCK_ADS_URL || 'http://localhost:8787';
+    const url = `${mockAdsUrl}/api/ads?date=${date}`;
+    
+    console.log(`광고 API URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
     
     if (!response.ok) {
-      throw new Error(`Ads API error: ${response.status}`);
+      throw new Error(`광고 API 오류: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Ads API 호출 실패:', error);
-    // Fallback 데이터
+    
+    if (!data.points || data.points.length === 0) {
+      throw new Error('광고 데이터가 없습니다');
+    }
+    
+    // 첫 번째 광고 데이터 사용
+    const adData = data.points[0];
+    
+    console.log(`✅ 광고 데이터 수신: ${adData.channel} - ${adData.campaign}`);
+    
     return {
       date,
-      channel: 'google',
-      campaign_id: `CAMP-${date}`,
-      impressions: 1000 + Math.random() * 5000,
-      clicks: 50 + Math.random() * 200,
-      spend: 100000 + Math.random() * 500000,
-      revenue: 200000 + Math.random() * 1000000,
-      roas: 2.0 + Math.random() * 1.0,
-      ctr: 0.02 + Math.random() * 0.03,
-      cpc: 1000 + Math.random() * 2000
+      channel: adData.channel,
+      campaign_id: adData.campaign,
+      impressions: adData.impressions,
+      clicks: adData.clicks,
+      spend: adData.cost,
+      revenue: adData.revenue,
+      roas: adData.roas,
+      ctr: adData.ctr,
+      cpc: adData.cpc
+    };
+    
+  } catch (error) {
+    console.error('❌ 광고 API 호출 실패:', error);
+    
+    // Fallback: Mock 데이터 생성
+    console.log('🔄 Fallback Mock 광고 데이터 생성');
+    const channels = ['google', 'facebook', 'naver', 'kakao'];
+    const campaigns = ['AlwaysOn', 'PromoPush', 'Seasonal', 'Brand'];
+    const channel = channels[Math.floor(Math.random() * channels.length)];
+    const campaign = campaigns[Math.floor(Math.random() * campaigns.length)];
+    
+    const impressions = Math.round(1000 + Math.random() * 5000);
+    const clicks = Math.round(impressions * (0.01 + Math.random() * 0.03));
+    const spend = Math.round(100000 + Math.random() * 500000);
+    const revenue = Math.round(spend * (1.5 + Math.random() * 1.0));
+    const roas = +(revenue / spend).toFixed(2);
+    
+    return {
+      date,
+      channel,
+      campaign_id: `CAMP-${date}-${campaign}`,
+      impressions,
+      clicks,
+      spend,
+      revenue,
+      roas,
+      ctr: +(clicks / impressions * 100).toFixed(2),
+      cpc: +(spend / clicks).toFixed(2)
     };
   }
 }
@@ -91,6 +188,8 @@ async function fetchCafe24Data(date: string) {
   const categories = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC', 'SHOES', 'BAGS'];
   
   const salesData: { date: string; region: string; channel: string; category: string; sku: string; revenue: number; quantity: number; roas: number; spend: number; is_event: boolean }[] = [];
+  const weatherData: { date: string; region: string; tavg: number; tmin: number; tmax: number; humidity: number; precipitation: number }[] = [];
+  const adsData: { date: string; channel: string; campaign: string; impressions: number; clicks: number; spend: number; revenue: number; roas: number; ctr: number; cpc: number }[] = [];
   
   // 매출 데이터 생성
   for (const region of regions) {
@@ -207,23 +306,30 @@ async function saveToDatabase(data: any, tableName: string) {
   }
 }
 
-// 크론 작업 로그 저장
+// 크론 작업 로그 저장 (테이블이 없으면 콘솔에만 출력)
 async function logCronJob(jobName: string, status: string, startedAt: Date, completedAt?: Date, recordsProcessed = 0, errorMessage?: string) {
   try {
-    const { error } = await supabase
-      .from('cron_job_logs')
-      .insert({
-        job_name: jobName,
-        status,
-        started_at: startedAt.toISOString(),
-        completed_at: completedAt?.toISOString(),
-        records_processed: recordsProcessed,
-        error_message: errorMessage
-      });
-    
-    if (error) {
-      console.error('Error logging cron job:', error);
+    // 로그 테이블이 없을 수 있으므로 콘솔에만 출력
+    console.log(`📝 Cron Job Log: ${jobName} - ${status} - Records: ${recordsProcessed}`);
+    if (errorMessage) {
+      console.log(`❌ Error: ${errorMessage}`);
     }
+    
+    // 향후 로그 테이블이 생성되면 아래 코드 활성화
+    // const { error } = await supabase
+    //   .from('cron_job_logs')
+    //   .insert({
+    //     job_name: jobName,
+    //     status,
+    //     started_at: startedAt.toISOString(),
+    //     completed_at: completedAt?.toISOString(),
+    //     records_processed: recordsProcessed,
+    //     error_message: errorMessage
+    //   });
+    
+    // if (error) {
+    //   console.error('Error logging cron job:', error);
+    // }
   } catch (error) {
     console.error('Failed to log cron job:', error);
   }
@@ -287,7 +393,7 @@ export async function runCafe24Ingest() {
 }
 
 // 스크립트로 직접 실행할 때
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   runCafe24Ingest()
     .then(() => {
       console.log('Cron job completed');
