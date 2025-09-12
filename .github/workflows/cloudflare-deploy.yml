@@ -52,4 +52,4 @@ jobs:
           workingDirectory: apps/web-admin
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: 4
+          wranglerVersion: 4.36.0
