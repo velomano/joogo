@@ -58,6 +58,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
           
+      - name: Install ingest-worker dependencies
+        run: |
+          cd apps/ingest-worker
+          echo "📦 Installing ingest-worker dependencies..."
+          pnpm install --no-frozen-lockfile
+          
       - name: Run cron job
         run: |
           cd apps/ingest-worker
