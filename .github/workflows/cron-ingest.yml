@@ -45,8 +45,8 @@ jobs:
       - name: Check required secrets
         run: |
           echo "🔍 Checking required secrets..."
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "❌ SUPABASE_URL secret is not set"
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "❌ NEXT_PUBLIC_SUPABASE_URL secret is not set"
             exit 1
           fi
           if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
@@ -55,7 +55,7 @@ jobs:
           fi
           echo "✅ All required secrets are available"
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
           
       - name: Run cron job
@@ -64,7 +64,7 @@ jobs:
           echo "🚀 Starting cron job..."
           echo "⏰ Job started at: $(date)"
           echo "📊 Environment check:"
-          echo "  - SUPABASE_URL: ${SUPABASE_URL:0:20}..."
+          echo "  - NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:0:20}..."
           echo "  - SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:0:20}..."
           
           pnpm run cron:dev
@@ -76,7 +76,7 @@ jobs:
           echo "  - Weather data: Updated" 
           echo "  - Ads data: Updated"
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET || '' }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN || '' }}
