@@ -10,24 +10,26 @@ function seedRand(seed: number) {
 export async function GET(req: Request) {
   try {
     console.log('Cafe24 Mock API called');
-    const { searchParams } = new URL(req.url);
-    const from = searchParams.get('from') ?? '2025-01-01';
-    const to = searchParams.get('to') ?? '2025-12-31';
-    const kind = searchParams.get('kind') ?? 'calendar';
+    const url = new URL(req.url);
+    const from = url.searchParams.get('from') ?? '2025-01-01';
+    const to = url.searchParams.get('to') ?? '2025-12-31';
+    const kind = url.searchParams.get('kind') ?? 'calendar';
     
     console.log('Cafe24 API params:', { from, to, kind });
     
     // 필터 파라미터들
-    const region = searchParams.get('region')?.split(',') || [];
-    const channel = searchParams.get('channel')?.split(',') || [];
-    const category = searchParams.get('category')?.split(',') || [];
-    const sku = searchParams.get('sku')?.split(',') || [];
+    const region = url.searchParams.get('region')?.split(',') || [];
+    const channel = url.searchParams.get('channel')?.split(',') || [];
+    const category = url.searchParams.get('category')?.split(',') || [];
+    const sku = url.searchParams.get('sku')?.split(',') || [];
     
     console.log('Mock API 필터:', { from, to, kind, region, channel, category, sku });
     
     const start = new Date(from);
     const end = new Date(to);
     const days = Math.ceil((+end - +start) / 86400000) + 1;
+    
+    console.log('Calculated days:', days);
     
     // 실시간 시드: 현재 시간 기반으로 매번 다른 데이터 생성
     const now = new Date();
@@ -36,7 +38,8 @@ export async function GET(req: Request) {
 
     if (kind === 'calendar') {
       console.log('Generating calendar data for', days, 'days');
-      const arr = Array.from({ length: days }).map((_, i) => {
+      const arr = [];
+      for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const mm = d.getMonth();
         const seasonal = 1 + ((mm === 5 || mm === 10) ? 0.4 : 0) + ((mm >= 6 && mm <= 8) ? 0.2 : 0);
@@ -72,13 +75,14 @@ export async function GET(req: Request) {
         const random = (rng() - 0.5) * 8; // 랜덤 변동
         const tavg = +(baseTemp + tempSeasonal + daily + random).toFixed(1);
         
-        return { date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event, tavg };
-      });
+        arr.push({ date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event, tavg });
+      }
       console.log('Generated calendar data length:', arr.length);
       return NextResponse.json(arr);
     }
 
     if (kind === 'channel_region') {
+      console.log('Generating channel_region data');
       const allChannels = ['web', 'app', 'mobile', 'kiosk'];
       const allRegions = [
         'SEOUL', 'BUSAN', 'DAEGU', 'INCHEON', 'GWANGJU', 'DAEJEON', 'ULSAN', 
@@ -90,7 +94,7 @@ export async function GET(req: Request) {
       const channels = channel.length > 0 ? allChannels.filter(c => channel.includes(c)) : allChannels;
       const regions = region.length > 0 ? allRegions.filter(r => region.includes(r)) : allRegions;
       
-      const out: any[] = [];
+      const out = [];
       
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
@@ -148,12 +152,14 @@ export async function GET(req: Request) {
           }
         }
       }
+      console.log('Generated channel_region data length:', out.length);
       return NextResponse.json(out);
     }
 
     if (kind === 'treemap' || kind === 'treemap_pareto') {
+      console.log('Generating treemap data');
       const cats = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC'];
-      const out: any[] = [];
+      const out = [];
       
       // 카테고리 필터링
       const filteredCats = category.length > 0 ? cats.filter(cat => category.includes(cat)) : cats;
@@ -174,9 +180,11 @@ export async function GET(req: Request) {
           out.push({ category: cat, sku: skuCode, revenue: rev, roas });
         }
       }
+      console.log('Generated treemap data length:', out.length);
       return NextResponse.json(out);
     }
 
+    console.log('Unknown kind, returning default response');
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Mock API error:', error);
