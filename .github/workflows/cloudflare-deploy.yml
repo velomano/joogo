@@ -33,19 +33,21 @@ jobs:
       - name: Build web-admin
         run: |
           cd apps/web-admin
+          pnpm install --frozen-lockfile
           pnpm run build
+          npx @cloudflare/next-on-pages@latest
 
       - name: Check bundle size
         run: |
           cd apps/web-admin
           echo "Checking bundle sizes..."
-          find .next -name "*.js" -size +20M -exec ls -lh {} \; || echo "No files larger than 20MB found"
+          find .vercel/output/static -name "*.js" -size +20M -exec ls -lh {} \; || echo "No files larger than 20MB found"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           projectName: joogo
-          directory: .next
+          directory: .vercel/output/static
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           workingDirectory: apps/web-admin
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
