@@ -1,4 +1,4 @@
--- 리셋 함수 생성
+-- 리셋 함수 수정 (더 안전하고 간단하게)
 create or replace function public.board_reset_tenant_data(
   p_tenant_id uuid,
   p_hard boolean default true
@@ -12,22 +12,29 @@ declare
   fact_deleted integer := 0;
   stage_deleted integer := 0;
   total_deleted integer := 0;
+  error_msg text := '';
 begin
-  -- fact_sales 테이블에서 해당 테넌트 데이터 삭제
-  delete from analytics.fact_sales where tenant_id = p_tenant_id;
-  get diagnostics fact_deleted = row_count;
+  -- 에러 처리
+  begin
+    -- fact_sales 테이블에서 해당 테넌트 데이터 삭제
+    delete from analytics.fact_sales where tenant_id = p_tenant_id;
+    get diagnostics fact_deleted = row_count;
+  exception when others then
+    error_msg := error_msg || 'fact_sales 삭제 오류: ' || SQLERRM || '; ';
+  end;
   
-  -- stage_sales 테이블에서 해당 테넌트 데이터 삭제
-  delete from analytics.stage_sales where tenant_id = p_tenant_id;
-  get diagnostics stage_deleted = row_count;
+  begin
+    -- stage_sales 테이블에서 해당 테넌트 데이터 삭제
+    delete from analytics.stage_sales where tenant_id = p_tenant_id;
+    get diagnostics stage_deleted = row_count;
+  exception when others then
+    error_msg := error_msg || 'stage_sales 삭제 오류: ' || SQLERRM || '; ';
+  end;
   
   total_deleted := fact_deleted + stage_deleted;
   
-  -- 하드 리셋이면 더 강하게
+  -- 하드 리셋이면 추가 작업 (시퀀스 리셋은 제외)
   if p_hard then
-    -- 시퀀스 리셋 등 추가 작업 (bigserial은 자동으로 시퀀스 생성)
-    -- perform setval(pg_get_serial_sequence('analytics.fact_sales', 'id'), 1, false);
-    
     -- 관련 테이블들도 정리 (필요시)
     -- delete from analytics.dim_products where tenant_id = p_tenant_id;
     -- delete from analytics.dim_regions where tenant_id = p_tenant_id;
@@ -41,7 +48,11 @@ begin
     'fact_deleted', fact_deleted,
     'stage_deleted', stage_deleted,
     'total_deleted', total_deleted,
-    'message', '데이터 리셋이 완료되었습니다.'
+    'message', case 
+      when error_msg != '' then '일부 오류 발생: ' || error_msg
+      else '데이터 리셋이 완료되었습니다.'
+    end,
+    'error_details', error_msg
   );
 end;
 $$;
