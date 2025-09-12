@@ -588,8 +588,8 @@ export default function BoardPage() {
       
       if (!confirmed) return;
 
-      // API 라우트를 통한 리셋 호출
-      const res = await fetch('/api/reset', {
+      // 개선된 API 라우트를 통한 리셋 호출
+      const res = await fetch('/api/board/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId, hard: true }), // 하드 리셋 플래그
@@ -601,7 +601,9 @@ export default function BoardPage() {
         setErrMsg(data?.error || '리셋 실패');
         return;
       }
-      console.log('✅ 리셋 성공');
+      
+      console.log('✅ 리셋 성공:', data);
+      setIngestMsg(`✅ 리셋 완료! 삭제된 행 수: ${data.total_deleted || 0}개 (fact: ${data.fact_deleted || 0}, stage: ${data.stage_deleted || 0})`);
       
       // 총 행수 초기화
       setTotalUploadedRows(0);
@@ -609,7 +611,9 @@ export default function BoardPage() {
       // SWR 캐시 무효화하여 데이터 새로고침
       if (typeof window !== 'undefined') {
         // 모든 SWR 캐시 무효화
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // 2초 후 새로고침하여 사용자가 메시지를 볼 수 있도록
       }
       
     } catch (e: any) {

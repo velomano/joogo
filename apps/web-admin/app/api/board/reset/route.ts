@@ -6,24 +6,29 @@ import { supaAdmin } from "../../../../lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
-    let tenant_id;
+    let tenantId, hard;
     try {
       const body = await req.json();
-      tenant_id = body?.tenant_id;
+      tenantId = body?.tenantId || body?.tenant_id;
+      hard = body?.hard || false;
     } catch (jsonError) {
       // JSON 파싱 실패 시 기본값 사용
-      tenant_id = '00000000-0000-0000-0000-000000000001';
+      tenantId = '00000000-0000-0000-0000-000000000001';
+      hard = false;
     }
     
-    if (!tenant_id) {
-      return NextResponse.json({ ok: false, error: "tenant_id missing" }, { status: 400 });
+    if (!tenantId) {
+      return NextResponse.json({ ok: false, error: "tenantId missing" }, { status: 400 });
     }
+
+    console.log(`[reset] 시작: tenantId=${tenantId}, hard=${hard}`);
 
     const sb = supaAdmin();
     
     // RPC 함수를 사용하여 데이터 삭제
     const { data: result, error } = await sb.rpc("board_reset_tenant_data", {
-      p_tenant_id: tenant_id
+      p_tenant_id: tenantId,
+      p_hard: hard
     });
 
     if (error) {
@@ -31,14 +36,13 @@ export async function POST(req: NextRequest) {
       throw error;
     }
 
-    console.log(`[reset] Success: tenant=${tenant_id}, deleted=${result?.deleted_rows || 0} rows`);
+    console.log(`[reset] 성공: tenantId=${tenantId}, result=`, result);
 
     return NextResponse.json({
       ok: true,
-      tenant_id,
-      deleted_rows: result?.deleted_rows || 0,
-      fact_deleted: result?.fact_deleted || 0,
-      stage_deleted: result?.stage_deleted || 0
+      tenantId,
+      hard,
+      ...result
     });
 
   } catch (e: any) {

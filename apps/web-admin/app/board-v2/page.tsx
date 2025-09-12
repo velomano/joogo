@@ -203,6 +203,7 @@ function DataTable({ title, columns, data, maxHeight = 200 }: {
 export default function BoardV2Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [tenantId, setTenantId] = useState<string>('00000000-0000-0000-0000-000000000001');
   
   // 필터 상태 직접 관리
   const [from, setFrom] = useState('2025-01-01');
@@ -290,10 +291,50 @@ export default function BoardV2Page() {
 
   // 버튼 이벤트 핸들러
 
-  const handleReset = () => {
-    console.log('데이터 초기화');
-    resetFilters(); // React 상태 리셋 함수 호출
-    alert('데이터가 초기화되었습니다.');
+  const handleReset = async () => {
+    console.log('데이터 초기화 시작');
+    
+    try {
+      setIsLoading(true);
+      
+      const confirmed = window.confirm(
+        `정말로 "${tenantId}" 테넌트의 모든 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`
+      );
+      
+      if (!confirmed) {
+        setIsLoading(false);
+        return;
+      }
+
+      // 개선된 API 라우트를 통한 리셋 호출
+      const res = await fetch('/api/board/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, hard: true }), // 하드 리셋 플래그
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        console.error('❌ 리셋 실패:', data?.error || res.statusText);
+        alert(`리셋 실패: ${data?.error || '알 수 없는 오류'}`);
+        return;
+      }
+      
+      console.log('✅ 리셋 성공:', data);
+      alert(`✅ 리셋 완료! 삭제된 행 수: ${data.total_deleted || 0}개 (fact: ${data.fact_deleted || 0}, stage: ${data.stage_deleted || 0})`);
+      
+      // 필터 리셋
+      resetFilters();
+      
+      // 데이터 새로고침
+      setRefreshTrigger(prev => prev + 1);
+      
+    } catch (e: any) {
+      console.error('❌ 리셋 오류:', e);
+      alert(`리셋 오류: ${e?.message ?? "알 수 없는 오류"}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

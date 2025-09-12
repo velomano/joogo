@@ -38,19 +38,24 @@ export async function strongReset(params: { tenantId: string; hard?: boolean }) 
 }
 
 // 클라이언트 사이드 리셋 함수
-export async function strongClientReset(tenantId: string): Promise<void> {
+export async function strongClientReset(tenantId: string, hard: boolean = true): Promise<any> {
   try {
+    console.log(`🔄 클라이언트 리셋 시작: tenantId=${tenantId}, hard=${hard}`);
+    
     const response = await fetch('/api/board/reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantId, hard: true })
+      body: JSON.stringify({ tenantId, hard })
     });
     
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const result = await response.json();
+    
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
     }
     
-    console.log('✅ 클라이언트 리셋 완료');
+    console.log('✅ 클라이언트 리셋 완료:', result);
+    return result;
   } catch (error) {
     console.error('❌ 클라이언트 리셋 실패:', error);
     throw error;
