@@ -54,10 +54,10 @@ function KpiBar() {
         console.log('KpiBar 데이터 로드 완료:', data.length, '개 항목');
         
         const sum = data.reduce((a, b) => a + b.revenue, 0);
-        const roas = 2.0; // 고정값
-        const spend = sum / roas;
+        const fixedRoas = 2.0; // 고정값
+        const spend = sum / fixedRoas;
         
-        console.log('KpiBar 계산:', { sum, roas, spend });
+        console.log('KpiBar 계산:', { sum, fixedRoas, spend });
         
         // 실제 데이터 기반 계산
         const totalRows = data.length;
@@ -80,7 +80,6 @@ function KpiBar() {
         // ROAS 계산
         const roasValues = data.map(item => item.roas || 2.0);
         const avgRoas = roasValues.reduce((sum, val) => sum + val, 0) / roasValues.length;
-        const roas = avgRoas;
         
         setKpis([
           { 

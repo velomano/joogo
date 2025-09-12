@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runCafe24Ingest } from '../../../../ingest-worker/src/cron/cafe24-ingest';
+import { runCafe24Ingest } from '../../../../../ingest-worker/src/cron/cafe24-ingest';
 
 export const runtime = 'edge';
 
