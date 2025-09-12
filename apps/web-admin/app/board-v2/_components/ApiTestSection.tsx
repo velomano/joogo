@@ -14,6 +14,7 @@ export default function ApiTestSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // 실제 기상청 API에서 날씨 정보 가져오기
   const fetchWeatherData = useCallback(async () => {
@@ -71,6 +72,9 @@ export default function ApiTestSection() {
           second: '2-digit' 
         }));
         
+        // 성공 메시지 표시
+        setMessage({ type: 'success', text: '✅ 모든 데이터를 성공적으로 불러왔습니다!' });
+        
         // 데이터 불러오기 성공 이벤트 발생
         window.dispatchEvent(new CustomEvent('apiTestSuccess', {
           detail: { 
@@ -84,6 +88,7 @@ export default function ApiTestSection() {
       }
     } catch (error) {
       console.error('데이터 불러오기 실패:', error);
+      setMessage({ type: 'error', text: '❌ 데이터 불러오기에 실패했습니다. 다시 시도해주세요.' });
     } finally {
       setIsLoading(false);
     }
@@ -93,6 +98,16 @@ export default function ApiTestSection() {
   useEffect(() => {
     fetchWeatherData();
   }, [fetchWeatherData]);
+
+  // 메시지 자동 사라지기
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -156,6 +171,23 @@ export default function ApiTestSection() {
         {isLoading ? '⏳' : '🔄'} 
         {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
       </button>
+
+      {/* 메시지 표시 */}
+      {message && (
+        <div style={{
+          marginTop: '8px',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontSize: '11px',
+          fontWeight: '500',
+          textAlign: 'center',
+          backgroundColor: message.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white',
+          animation: 'fadeInOut 3s ease-in-out'
+        }}>
+          {message.text}
+        </div>
+      )}
 
       {/* 마지막 업데이트 시간 */}
       {lastUpdate && (

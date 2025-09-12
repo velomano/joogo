@@ -403,3 +403,19 @@ canvas {
     opacity: 0.5;
   }
 }
+
+/* 메시지 페이드 애니메이션 */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  20%, 80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
