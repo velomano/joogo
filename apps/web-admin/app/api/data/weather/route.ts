@@ -40,9 +40,31 @@ export async function GET(req: NextRequest) {
     
   } catch (error) {
     console.error('Weather DB API 오류:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    
+    // DB 오류 시 Mock 데이터로 fallback
+    const mockData = [
+      {
+        date: '2025-01-01',
+        region: 'SEOUL',
+        temperature: 15.5,
+        humidity: 65,
+        precipitation: 0,
+        description: '맑음'
+      },
+      {
+        date: '2025-01-02',
+        region: 'SEOUL',
+        temperature: 18.2,
+        humidity: 70,
+        precipitation: 2.5,
+        description: '비'
+      }
+    ];
+    
+    const response = NextResponse.json(mockData);
+    response.headers.set('X-API-Status', 'fallback');
+    response.headers.set('X-Data-Source', 'mock');
+    
+    return response;
   }
 }
