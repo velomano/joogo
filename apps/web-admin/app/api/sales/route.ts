@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     const generateFallbackData = (from: string, to: string) => {
       const startDate = new Date(from);
       const endDate = new Date(to);
-      const data = [];
+      const data: { ts: string; value: number }[] = [];
       
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().slice(0, 10);
