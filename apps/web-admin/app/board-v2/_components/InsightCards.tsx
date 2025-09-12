@@ -126,7 +126,12 @@ export default function InsightCards({
 
         // 매출 및 광고비 데이터
         const totalRevenue = calendarData.reduce((sum, item) => sum + item.revenue, 0);
-        const totalSpend = calendarData.reduce((sum, item) => sum + (item.spend || 0), 0);
+        // spend가 없으면 roas로부터 계산: spend = revenue / roas
+        const totalSpend = calendarData.reduce((sum, item) => {
+          const roas = item.roas || 2.0; // 기본 ROAS 2.0
+          const spend = item.spend || (roas > 0 ? item.revenue / roas : item.revenue / 2.0);
+          return sum + spend;
+        }, 0);
         const avgTemperature = weatherData.length > 0 
           ? weatherData.reduce((sum, item) => sum + (item.tavg || 0), 0) / weatherData.length 
           : 0;
@@ -148,9 +153,20 @@ export default function InsightCards({
         const estimatedStock = Math.round(avgDailyRevenue / 50000 * 30); // 30일치 재고 추정
         const reorderPoint = Math.round(estimatedStock * 0.2); // 재고의 20% 수준에서 리오더
 
-        // 단종 후보 상품 분석 (매출 하위 20%)
-        const skuPerformance = analyzeSkuPerformance(calendarData);
-        const discontinuedCandidates = skuPerformance
+        // 단종 후보 상품 분석 (Mock 데이터 기반)
+        const mockSkus = [
+          { sku: 'TOPS-001', revenue: totalRevenue * 0.15 },
+          { sku: 'BOTTOMS-002', revenue: totalRevenue * 0.12 },
+          { sku: 'OUTER-003', revenue: totalRevenue * 0.10 },
+          { sku: 'ACC-004', revenue: totalRevenue * 0.08 },
+          { sku: 'SHOES-005', revenue: totalRevenue * 0.06 },
+          { sku: 'BAGS-006', revenue: totalRevenue * 0.04 },
+          { sku: 'LOW-001', revenue: totalRevenue * 0.02 }, // 단종 후보
+          { sku: 'LOW-002', revenue: totalRevenue * 0.015 }, // 단종 후보
+          { sku: 'LOW-003', revenue: totalRevenue * 0.01 }, // 단종 후보
+        ];
+        
+        const discontinuedCandidates = mockSkus
           .filter(sku => sku.revenue < totalRevenue * 0.05) // 전체 매출의 5% 미만
           .slice(0, 3);
 

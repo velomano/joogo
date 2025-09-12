@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "node --import=tsx ./src/index.ts",
     "start": "node --enable-source-maps dist/index.js",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "cron": "node --import=tsx ./scripts/run-cron.ts",
+    "cron:dev": "node --import=tsx ./scripts/run-cron.ts",
+    "server": "node --import=tsx ./src/server.ts",
+    "server:dev": "node --import=tsx ./src/server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

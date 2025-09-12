@@ -1,0 +1,16 @@
+name = "joogo-ingest-worker"
+main = "src/cron/cafe24-ingest.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "joogo-ingest-worker"
+
+# 크론 트리거 설정 (1시간마다 실행)
+[[triggers]]
+crons = ["0 * * * *"]  # 매시간 정각에 실행
+
+# 환경변수
+[vars]
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+CRON_SECRET = "your-cron-secret"

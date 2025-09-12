@@ -9,6 +9,7 @@ import { useFilters } from '@/lib/state/filters';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 export default function RevenueSpendChart() {
+  console.log('RevenueSpendChart 컴포넌트 렌더링 시작');
   const { from, to } = useFilters();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -17,15 +18,41 @@ export default function RevenueSpendChart() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('RevenueSpendChart 시작 - 날짜 범위:', { from, to });
         const chartData = await Adapters.calendarHeatmap({ from, to }, {});
+        console.log('RevenueSpendChart 원본 데이터 샘플:', chartData.slice(0, 3));
+        console.log('RevenueSpendChart 전체 데이터 개수:', chartData.length);
         
         // 데이터 가공
         const labels = chartData.map(d => d.date);
         const revenueData = chartData.map(d => d.revenue / 1000000); // 백만원 단위로 변환
-        const spendData = chartData.map(d => (d.spend || 0) / 1000000); // 백만원 단위로 변환
-        const roasData = chartData.map(d => d.spend ? d.revenue / d.spend : 0);
+        const spendData = chartData.map(d => {
+          // spend가 없으면 roas로부터 계산: spend = revenue / roas
+          // roas가 0이거나 없으면 기본값 2.0 사용
+          const roas = d.roas || 2.0;
+          const spend = d.spend || (roas > 0 ? d.revenue / roas : d.revenue / 2.0);
+          return spend / 1000000; // 백만원 단위로 변환
+        });
+        const roasData = chartData.map(d => d.roas || 2.0);
         
-        setData({
+        // 계산된 데이터 확인
+        const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+        const totalSpend = spendData.reduce((sum, val) => sum + val, 0);
+        const avgRoas = roasData.reduce((sum, val) => sum + val, 0) / roasData.length;
+        
+        console.log('RevenueSpendChart 계산 결과:', {
+          totalRevenue: `${totalRevenue.toFixed(1)}M원`,
+          totalSpend: `${totalSpend.toFixed(1)}M원`,
+          avgRoas: avgRoas.toFixed(2),
+          dataLength: chartData.length,
+          sampleData: {
+            revenue: revenueData.slice(0, 3),
+            spend: spendData.slice(0, 3),
+            roas: roasData.slice(0, 3)
+          }
+        });
+        
+        const chartDataObj = {
           labels,
           datasets: [
             {
@@ -54,7 +81,16 @@ export default function RevenueSpendChart() {
               tension: 0.4
             }
           ]
+        };
+        
+        console.log('RevenueSpendChart 차트 데이터 설정:', {
+          labelsCount: labels.length,
+          revenueDataSample: revenueData.slice(0, 3),
+          spendDataSample: spendData.slice(0, 3),
+          roasDataSample: roasData.slice(0, 3)
         });
+        
+        setData(chartDataObj);
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
       } finally {
@@ -65,7 +101,10 @@ export default function RevenueSpendChart() {
     fetchData();
   }, [from, to]);
 
+  console.log('RevenueSpendChart 렌더링 상태:', { loading, hasData: !!data, dataKeys: data ? Object.keys(data) : null });
+
   if (loading) {
+    console.log('RevenueSpendChart 로딩 중...');
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
@@ -77,6 +116,7 @@ export default function RevenueSpendChart() {
   }
 
   if (!data) {
+    console.log('RevenueSpendChart 데이터 없음');
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#e25b5b' }}>
@@ -86,6 +126,8 @@ export default function RevenueSpendChart() {
       </div>
     );
   }
+
+  console.log('RevenueSpendChart 차트 렌더링:', { hasData: !!data, dataKeys: data ? Object.keys(data) : null });
 
   return (
     <div style={{ height: '130px' }}>

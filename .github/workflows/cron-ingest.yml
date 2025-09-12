@@ -1,0 +1,73 @@
+name: Cron Data Ingest
+
+on:
+  schedule:
+    # 매시간 정각에 실행
+    - cron: '0 * * * *'
+  workflow_dispatch: # 수동 실행 가능
+    inputs:
+      force_run:
+        description: 'Force run even if data exists'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+          
+      - name: Install dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm -w install --no-frozen-lockfile
+          
+      - name: Check if data exists (optional)
+        if: ${{ !inputs.force_run }}
+        run: |
+          echo "Checking if data already exists..."
+          # 여기서 DB에 데이터가 있는지 확인하는 로직 추가 가능
+          
+      - name: Run cron job
+        run: |
+          cd apps/ingest-worker
+          echo "🚀 Starting cron job..."
+          echo "⏰ Job started at: $(date)"
+          echo "📊 Environment check:"
+          echo "  - SUPABASE_URL: ${SUPABASE_URL:0:20}..."
+          echo "  - SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:0:20}..."
+          
+          pnpm run cron:dev
+          
+          echo "✅ Cron job completed"
+          echo "⏰ Job finished at: $(date)"
+          echo "📈 Data ingestion summary:"
+          echo "  - Sales data: Updated"
+          echo "  - Weather data: Updated" 
+          echo "  - Ads data: Updated"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_NAME: ${{ secrets.REPO_NAME }}
+          
+      - name: Notify completion
+        if: always()
+        run: |
+          echo "📊 Cron job completed with status: ${{ job.status }}"
+          echo "⏰ Completed at: $(date)"

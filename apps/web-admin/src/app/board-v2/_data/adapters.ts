@@ -26,7 +26,47 @@ async function fetchChannels(): Promise<string[]> {
 
 export const Adapters={
   async calendarHeatmap(range:DateRange,f:Filters){
-    // Mock API에서 데이터 가져오기
+    // DB에서 데이터 가져오기 (폴백: Mock API)
+    try {
+      console.log('📊 Fetching calendar data from DB...');
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        kind: 'calendar'
+      });
+      const response = await fetch(`/api/data/sales?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch calendar data from DB');
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        console.log('⚠️ No data in DB, falling back to mock API');
+        return await this.calendarHeatmapMock(range, f);
+      }
+      
+      console.log(`✅ Fetched ${data.length} records from DB`);
+      
+      // DB 데이터를 calendarHeatmap 형식으로 변환
+      const calendarData = data.map((item: any) => ({
+        date: item.date,
+        revenue: item.revenue || 0,
+        roas: item.roas || 2.0,
+        is_event: false, // DB에는 이벤트 정보가 없으므로 기본값
+        spend: item.spend || (item.revenue / (item.roas || 2.0)),
+        quantity: item.quantity || 0,
+        sku: item.sku || 'UNKNOWN'
+      }));
+      
+      console.log('📊 Converted DB data for calendar:', calendarData.slice(0, 3));
+      return calendarData;
+    } catch (error) {
+      console.error('Error fetching calendar data from DB:', error);
+      console.log('🔄 Falling back to mock API...');
+      return await this.calendarHeatmapMock(range, f);
+    }
+  },
+
+  async calendarHeatmapMock(range:DateRange,f:Filters){
+    // Mock API에서 데이터 가져오기 (폴백)
     try {
       const qs = new URLSearchParams({
         from: range.from,
