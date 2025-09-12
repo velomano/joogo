@@ -26,9 +26,9 @@ async function fetchCafe24Data(date: string) {
   const channels = ['web', 'app', 'mobile', 'kiosk'];
   const categories = ['TOPS', 'BOTTOMS', 'OUTER', 'ACC', 'SHOES', 'BAGS'];
   
-  const salesData = [];
-  const weatherData = [];
-  const adsData = [];
+  const salesData: { date: string; region: string; channel: string; category: string; sku: string; revenue: number; quantity: number; roas: number; spend: number; is_event: boolean }[] = [];
+  const weatherData: { date: string; region: string; tavg: number; tmin: number; tmax: number; humidity: number; precipitation: number }[] = [];
+  const adsData: { date: string; channel: string; campaign: string; impressions: number; clicks: number; spend: number; revenue: number; roas: number; ctr: number; cpc: number }[] = [];
   
   // 매출 데이터 생성
   for (const region of regions) {
