@@ -31,12 +31,12 @@ async function fetchAdSpendData(from: string, to: string, channel?: string) {
     }
     
     const data = await response.json();
-    return data.points || [];
+    return { success: true, data: data.points || [] };
     
   } catch (error) {
     console.error('Mock-ads API 호출 실패:', error);
-    // API 실패 시 fallback 데이터 생성
-    return generateFallbackData(from, to, channel);
+    // API 실패 시 fallback 데이터 생성하되 실패 상태 표시
+    return { success: false, data: generateFallbackData(from, to, channel), error: error.message };
   }
 }
 
@@ -114,10 +114,19 @@ export async function GET(req: Request) {
     console.log('Ads API 호출:', { from, to, channel });
     
     // Mock-ads API에서 데이터 가져오기
-    const rawData = await fetchAdSpendData(from, to, channel);
+    const result = await fetchAdSpendData(from, to, channel);
     
-    console.log('가져온 광고비 데이터 개수:', rawData.length);
-    return NextResponse.json(rawData);
+    console.log('가져온 광고비 데이터 개수:', result.data.length);
+    console.log('Mock-ads API 성공 여부:', result.success);
+    
+    // 실패 상태를 헤더에 포함
+    const response = NextResponse.json(result.data);
+    response.headers.set('X-API-Status', result.success ? 'success' : 'fallback');
+    if (!result.success) {
+      response.headers.set('X-API-Error', result.error || 'Unknown error');
+    }
+    
+    return response;
     
   } catch (error) {
     console.error('Ads API 오류:', error);

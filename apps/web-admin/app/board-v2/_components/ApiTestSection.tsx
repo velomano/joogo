@@ -92,7 +92,14 @@ export default function ApiTestSection() {
           try {
             const data = await result.value.json();
             const count = Array.isArray(data) ? data.length : 1;
-            details.push(`${apiName}: ${count}개`);
+            
+            // 헤더에서 실제 API 상태 확인
+            const apiStatus = result.value.headers.get('X-API-Status');
+            if (apiStatus === 'fallback') {
+              details.push(`${apiName}: ${count}개 (Fallback)`);
+            } else {
+              details.push(`${apiName}: ${count}개`);
+            }
           } catch {
             details.push(`${apiName}: 성공`);
           }
