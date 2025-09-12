@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 export async function GET() {
   try {
     // 기상청 API 키 확인
