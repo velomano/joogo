@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supaAdmin } from '../../../../../lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -13,10 +13,17 @@ export async function GET(req: NextRequest) {
     
     console.log('Ads DB API 호출:', { from, to, channel });
     
-    const sb = supaAdmin();
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Missing Supabase URL or Anon Key');
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // DB에서 광고 데이터 조회
-    let query = sb
+    let query = supabase
       .from('ads_data')
       .select('*')
       .gte('date', from)
