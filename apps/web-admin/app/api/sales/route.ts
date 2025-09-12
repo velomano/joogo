@@ -5,16 +5,17 @@ export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  try {
-    const sp = req.nextUrl.searchParams;
-    const from = sp.get("from");
-    const to = sp.get("to");
-    const g = sp.get("g") ?? "day";
+  const sp = req.nextUrl.searchParams;
+  const from = sp.get("from");
+  const to = sp.get("to");
+  const g = sp.get("g") ?? "day";
 
-    // 기본값 가드(누락 시 오늘 기준 최근 30일)
-    const today = new Date().toISOString().slice(0,10);
-    const _to = to ?? today;
-    const _from = from ?? new Date(Date.now()-29*86400000).toISOString().slice(0,10);
+  // 기본값 가드(누락 시 오늘 기준 최근 30일)
+  const today = new Date().toISOString().slice(0,10);
+  const _to = to ?? today;
+  const _from = from ?? new Date(Date.now()-29*86400000).toISOString().slice(0,10);
+
+  try {
 
     console.log('Sales API 호출 (Mock 서버에서 조회):', { from: _from, to: _to, granularity: g });
 
