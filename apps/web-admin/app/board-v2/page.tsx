@@ -554,10 +554,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -568,10 +564,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <ChartPanel title="⑨ 토글 비교">
@@ -586,10 +578,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -600,10 +588,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <ChartPanel title="⑪ 산점도: 할인율 vs 이익">
@@ -611,10 +595,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -625,10 +605,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <ChartPanel title="⑬ 날씨→판매 지연 상관" subtitle="(±7일)">
@@ -636,10 +612,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -650,10 +622,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <ChartPanel title="⑮ 할인 탄력성" subtitle="(할인율 vs log(Q+1))">
@@ -661,10 +629,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -675,10 +639,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <ChartPanel title="⑰ 요일×할인 구간 히트맵">
@@ -686,10 +646,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
         </section>
@@ -700,10 +656,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <DataTable 
@@ -723,10 +675,6 @@ export default function BoardV2Page() {
               refreshTrigger={refreshTrigger} 
               from={from} 
               to={to} 
-              region={region} 
-              channel={channel} 
-              category={category} 
-              sku={sku} 
             />
           </ChartPanel>
           <DataTable 

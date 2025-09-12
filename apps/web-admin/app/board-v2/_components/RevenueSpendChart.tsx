@@ -143,7 +143,7 @@ export default function RevenueSpendChart({
           roasData = weeklyData.map(d => d.spend ? d.revenue / d.spend : 0);
         } else {
           // 3개월 초과: 월별 집계
-          const monthlyData = [];
+          const monthlyData: { date: string; revenue: number; spend: number }[] = [];
           const monthMap = new Map();
           chartData.forEach(d => {
             const date = new Date(d.date);

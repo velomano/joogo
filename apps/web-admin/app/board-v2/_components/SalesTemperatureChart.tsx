@@ -100,7 +100,7 @@ export default function SalesTemperatureChart({
           tempData = weeklyData.map(d => d.tavg);
         } else {
           // 3개월 초과: 월별 집계
-          const monthlyData = [];
+          const monthlyData: { date: string; revenue: number; tavg: number }[] = [];
           const monthMap = new Map();
           filteredData.forEach(d => {
             const date = new Date(d.date);
