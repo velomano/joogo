@@ -82,6 +82,7 @@ jobs:
           echo "  - Weather data: Updated" 
           echo "  - Ads data: Updated"
         env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET || '' }}
