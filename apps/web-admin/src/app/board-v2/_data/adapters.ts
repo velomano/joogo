@@ -95,6 +95,33 @@ export const Adapters={
   },
   
   async channelRegion(range:DateRange,f:Filters){
+    // DB에서 데이터 가져오기 (폴백: Mock API)
+    try {
+      console.log('📊 Fetching channel region data from DB...');
+      const qs = new URLSearchParams({
+        from: range.from,
+        to: range.to,
+        kind: 'channel_region'
+      });
+      const response = await fetch(`/api/data/sales?${qs}`);
+      if (!response.ok) throw new Error('Failed to fetch channel region data from DB');
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        console.log('⚠️ No data in DB, falling back to mock API');
+        return await this.channelRegionMock(range, f);
+      }
+      
+      console.log(`✅ Fetched ${data.length} channel region records from DB`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching channel region data from DB:', error);
+      console.log('🔄 Falling back to mock API...');
+      return await this.channelRegionMock(range, f);
+    }
+  },
+
+  async channelRegionMock(range:DateRange,f:Filters){
     // Mock API에서 풍부한 데이터 가져오기
     try {
       const qs = new URLSearchParams({
@@ -109,7 +136,7 @@ export const Adapters={
       console.error('Error fetching channel region data:', error);
       // Fallback to basic data
       const channels = ['web', 'app'];
-      const regions = ['SEOUL', 'BUSAN'];
+      const regions = ['SEOUL', 'BUSAN', 'INCHEON', 'DAEGU', 'GWANGJU', 'DAEJEON', 'ULSAN'];
       const start = new Date(range.from);
       const end = new Date(range.to);
       const days = Math.ceil((+end - +start) / 86400000) + 1;

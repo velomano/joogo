@@ -21,28 +21,34 @@ export default function WeatherLagChart() {
         setLoading(true);
         
         const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
+        const weatherData = await Adapters.weatherData({ from, to }, 'SEOUL');
         
-        // 날씨와 판매량 데이터 준비
-        const weatherData = calendarData
-          .filter(d => d.tavg !== null && d.tavg !== undefined)
-          .map(d => ({ date: d.date, temp: d.tavg, sales: d.revenue }));
+        // 날씨와 판매량 데이터 매칭
+        const combinedData = calendarData.map(cal => {
+          const weather = weatherData.find(w => w.date === cal.date);
+          return {
+            date: cal.date,
+            temp: weather?.tavg || 20, // 기본값 20도
+            sales: cal.revenue
+          };
+        }).filter(d => d.temp !== null && d.temp !== undefined);
         
         // 지연 상관관계 계산 (-7일 ~ +7일)
         const lags = Array.from({ length: 15 }, (_, i) => i - 7);
         const correlations: number[] = lags.map((lag: number) => {
           const pairs: LagPoint[] = [];
           
-          for (let i = 0; i < weatherData.length; i++) {
-            const currentDate = new Date(weatherData[i].date);
+          for (let i = 0; i < combinedData.length; i++) {
+            const currentDate = new Date(combinedData[i].date);
             const targetDate = new Date(currentDate);
             targetDate.setDate(currentDate.getDate() + lag);
             
             const targetDateStr = targetDate.toISOString().split('T')[0];
-            const targetWeather = weatherData.find(w => w.date === targetDateStr);
+            const targetWeather = combinedData.find(w => w.date === targetDateStr);
             
             if (targetWeather) {
               const pair: { temp: number; sales: number } = {
-                temp: weatherData[i].temp,
+                temp: combinedData[i].temp,
                 sales: targetWeather.sales
               };
               pairs.push(pair);
