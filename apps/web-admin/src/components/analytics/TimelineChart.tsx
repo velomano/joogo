@@ -308,7 +308,7 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
         border: '1px solid #374151', 
         borderRadius: '12px', 
         padding: '20px',
-        maxHeight: '300px',
+        maxHeight: '400px',
         overflowY: 'auto'
       }}>
         <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0', color: '#ffffff' }}>상세 데이터</h4>
@@ -320,8 +320,8 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
           gap: '12px',
           fontSize: '12px',
           fontWeight: 'bold',
-          color: '#6b7280',
-          borderBottom: '1px solid #e5e7eb',
+          color: '#d1d5db',
+          borderBottom: '1px solid #374151',
           paddingBottom: '8px',
           marginBottom: '8px'
         }}>
@@ -341,8 +341,9 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
             gap: '12px',
             fontSize: '12px',
             padding: '8px 0',
-            borderBottom: index < 19 ? '1px solid #f3f4f6' : 'none',
-            backgroundColor: item.isPeakHour || item.isWeekend || item.isHolidayMonth ? '#f8fafc' : 'transparent'
+            borderBottom: index < 19 ? '1px solid #374151' : 'none',
+            backgroundColor: item.isPeakHour || item.isWeekend || item.isHolidayMonth ? '#374151' : 'transparent',
+            color: '#ffffff'
           }}>
             <div style={{ fontWeight: 'bold' }}>{item.timestamp}</div>
             <div>{formatCurrency(item.revenue)}</div>
