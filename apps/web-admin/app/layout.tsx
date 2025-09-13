@@ -22,7 +22,7 @@ export default function RootLayout({
               <div className="logo-section">
                 <a href="/board-v2" className="logo-link">
                   <div className="logo">Joogo</div>
-                  <div className="company-name">Joogo Test Company</div>
+                  <div className="company-name">Company</div>
                 </a>
               </div>
               
