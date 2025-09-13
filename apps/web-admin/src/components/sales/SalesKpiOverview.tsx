@@ -44,6 +44,7 @@ interface SalesKpiData {
     to: string;
     days: number;
   };
+  comparisonLabel: string;
 }
 
 interface SalesKpiOverviewProps {
@@ -174,7 +175,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.revenueGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.revenueGrowth >= 0 ? '+' : ''}{kpiData.revenueGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
@@ -195,7 +196,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.quantityGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.quantityGrowth >= 0 ? '+' : ''}{kpiData.quantityGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
@@ -216,7 +217,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.orderGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.orderGrowth >= 0 ? '+' : ''}{kpiData.orderGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
@@ -237,7 +238,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.aovGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.aovGrowth >= 0 ? '+' : ''}{kpiData.aovGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
@@ -258,7 +259,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.conversionGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.conversionGrowth >= 0 ? '+' : ''}{kpiData.conversionGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
@@ -282,7 +283,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           }}>
             <span>{kpiData.roasGrowth >= 0 ? '↗' : '↘'}</span>
             <span>{kpiData.roasGrowth >= 0 ? '+' : ''}{kpiData.roasGrowth.toFixed(1)}%</span>
-            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+            <span style={{ color: '#6b7280' }}>({kpiData.comparisonLabel})</span>
           </div>
         </div>
 
