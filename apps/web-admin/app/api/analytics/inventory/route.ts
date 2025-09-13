@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       turnoverRate: cat.totalProducts > 0 ? cat.turnoverRate / cat.totalProducts : 0
     }));
 
-    const inventoryData = {
+    const responseData = {
       summary: {
         totalProducts,
         inStockProducts,
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(inventoryData);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Inventory analysis API error:', error);
     return NextResponse.json(
