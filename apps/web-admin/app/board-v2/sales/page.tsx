@@ -4,9 +4,20 @@ import React, { useState } from 'react';
 import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
 
 export default function SalesAnalysisPage() {
+  // 오늘 기준 한 달 전부터 오늘까지
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    
+    return {
+      from: oneMonthAgo.toISOString().split('T')[0],
+      to: today.toISOString().split('T')[0],
+    };
+  };
+
   const [filters, setFilters] = useState({
-    from: '2025-01-01',
-    to: '2025-01-31',
+    ...getDefaultDateRange(),
     region: [],
     channel: [],
     category: [],
@@ -20,8 +31,7 @@ export default function SalesAnalysisPage() {
 
   const resetFilters = () => {
     setFilters({
-      from: '2025-01-01',
-      to: '2025-01-31',
+      ...getDefaultDateRange(),
       region: [],
       channel: [],
       category: [],
