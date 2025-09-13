@@ -178,14 +178,16 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
         borderRadius: '8px', 
         padding: '20px',
         backgroundColor: '#1f2937',
-        position: 'relative'
+        position: 'relative',
+        overflowX: 'auto'
       }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'end', 
           height: '100%', 
-          gap: '2px',
-          justifyContent: 'space-between'
+          gap: data.length > 30 ? '1px' : '2px',
+          minWidth: data.length > 30 ? `${data.length * 8}px` : '100%',
+          width: data.length > 30 ? `${data.length * 8}px` : '100%'
         }}>
           {data.map((item, index) => {
             const value = getMetricValue(item);
@@ -196,11 +198,12 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
               <div
                 key={item.date}
                 style={{
-                  flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  minWidth: '20px'
+                  width: data.length > 30 ? '6px' : '100%',
+                  flex: data.length > 30 ? 'none' : 1,
+                  minWidth: data.length > 30 ? '6px' : '20px'
                 }}
               >
                 <div
@@ -216,13 +219,17 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
                   title={`${item.date}: ${getMetricFormatter()(value)}`}
                 />
                 <div style={{ 
-                  fontSize: '10px', 
+                  fontSize: data.length > 30 ? '8px' : '10px', 
                   color: '#9ca3af', 
                   marginTop: '5px',
-                  transform: 'rotate(-45deg)',
-                  whiteSpace: 'nowrap'
+                  transform: data.length > 30 ? 'none' : 'rotate(-45deg)',
+                  whiteSpace: 'nowrap',
+                  display: data.length > 30 ? (index % Math.ceil(data.length / 10) === 0 ? 'block' : 'none') : 'block'
                 }}>
-                  {new Date(item.date).getDate()}
+                  {data.length > 30 ? 
+                    (index % Math.ceil(data.length / 10) === 0 ? new Date(item.date).getDate() : '') :
+                    new Date(item.date).getDate()
+                  }
                 </div>
               </div>
             );

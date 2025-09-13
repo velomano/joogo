@@ -201,9 +201,10 @@ export default function TimeGranularity({ filters, refreshTrigger }: TimeGranula
           display: 'flex', 
           alignItems: 'end', 
           height: '100%', 
-          gap: '2px',
-          minWidth: '100%',
-          justifyContent: granularity === 'hourly' ? 'space-between' : 'flex-start'
+          gap: data.length > 30 ? '1px' : '2px',
+          minWidth: data.length > 30 ? `${data.length * 8}px` : '100%',
+          width: data.length > 30 ? `${data.length * 8}px` : '100%',
+          justifyContent: data.length > 30 ? 'flex-start' : 'space-between'
         }}>
           {data.map((item, index) => {
             const maxRevenue = getMaxValue('revenue');
@@ -213,11 +214,12 @@ export default function TimeGranularity({ filters, refreshTrigger }: TimeGranula
               <div
                 key={item.period}
                 style={{
-                  flex: granularity === 'hourly' ? '0 0 auto' : 1,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  minWidth: granularity === 'hourly' ? '30px' : '20px',
+                  width: data.length > 30 ? '6px' : '100%',
+                  flex: data.length > 30 ? 'none' : 1,
+                  minWidth: data.length > 30 ? '6px' : '20px',
                   cursor: 'pointer'
                 }}
                 title={`${item.period}: ${formatCurrency(item.revenue)}`}
@@ -233,16 +235,23 @@ export default function TimeGranularity({ filters, refreshTrigger }: TimeGranula
                   }}
                 />
                 <div style={{ 
-                  fontSize: granularity === 'hourly' ? '8px' : '10px', 
+                  fontSize: data.length > 30 ? '8px' : '10px', 
                   color: '#9ca3af', 
                   marginTop: '5px',
-                  transform: granularity === 'hourly' ? 'rotate(-45deg)' : 'none',
+                  transform: data.length > 30 ? 'none' : (granularity === 'hourly' ? 'rotate(-45deg)' : 'none'),
                   whiteSpace: 'nowrap',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  display: data.length > 30 ? (index % Math.ceil(data.length / 10) === 0 ? 'block' : 'none') : 'block'
                 }}>
-                  {granularity === 'daily' ? new Date(item.period).getDate() : 
-                   granularity === 'weekly' ? `W${index + 1}` :
-                   item.period.split(':')[0]}
+                  {data.length > 30 ? 
+                    (index % Math.ceil(data.length / 10) === 0 ? 
+                      (granularity === 'daily' ? new Date(item.period).getDate() : 
+                       granularity === 'weekly' ? `W${index + 1}` :
+                       item.period.split(':')[0]) : '') :
+                    (granularity === 'daily' ? new Date(item.period).getDate() : 
+                     granularity === 'weekly' ? `W${index + 1}` :
+                     item.period.split(':')[0])
+                  }
                 </div>
               </div>
             );
