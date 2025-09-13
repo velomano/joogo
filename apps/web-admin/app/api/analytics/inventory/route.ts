@@ -9,64 +9,64 @@ export async function GET(request: NextRequest) {
     // 카페24 실제 API에서 제공되는 재고 데이터 기반
     const inventoryData = {
       summary: {
-        totalProducts: 150,
-        inStockProducts: 120,
-        lowStockProducts: 25,
-        outOfStockProducts: 5,
-        totalInventoryValue: 45000000,
-        avgTurnoverRate: 4.2
+        totalProducts: 2847,
+        inStockProducts: 2156,
+        lowStockProducts: 523,
+        outOfStockProducts: 168,
+        totalInventoryValue: 1250000000,
+        avgTurnoverRate: 3.8
       },
       categories: [
         {
           category: 'TOPS',
-          totalProducts: 45,
-          inStock: 38,
-          lowStock: 5,
-          outOfStock: 2,
-          inventoryValue: 15000000,
-          turnoverRate: 5.2
+          totalProducts: 1247,
+          inStock: 956,
+          lowStock: 223,
+          outOfStock: 68,
+          inventoryValue: 450000000,
+          turnoverRate: 4.2
         },
         {
           category: 'BOTTOMS',
-          totalProducts: 35,
-          inStock: 28,
-          lowStock: 6,
-          outOfStock: 1,
-          inventoryValue: 12000000,
-          turnoverRate: 4.8
+          totalProducts: 892,
+          inStock: 678,
+          lowStock: 156,
+          outOfStock: 58,
+          inventoryValue: 320000000,
+          turnoverRate: 3.9
         },
         {
           category: 'SHOES',
-          totalProducts: 25,
-          inStock: 20,
-          lowStock: 4,
-          outOfStock: 1,
-          inventoryValue: 10000000,
+          totalProducts: 456,
+          inStock: 342,
+          lowStock: 78,
+          outOfStock: 36,
+          inventoryValue: 280000000,
           turnoverRate: 3.5
         },
         {
           category: 'ACCESSORIES',
-          totalProducts: 30,
-          inStock: 28,
-          lowStock: 2,
-          outOfStock: 0,
-          inventoryValue: 5000000,
-          turnoverRate: 6.1
+          totalProducts: 178,
+          inStock: 134,
+          lowStock: 32,
+          outOfStock: 12,
+          inventoryValue: 89000000,
+          turnoverRate: 4.8
         },
         {
           category: 'OUTERWEAR',
-          totalProducts: 15,
-          inStock: 6,
-          lowStock: 8,
-          outOfStock: 1,
-          inventoryValue: 3000000,
+          totalProducts: 74,
+          inStock: 46,
+          lowStock: 18,
+          outOfStock: 10,
+          inventoryValue: 110000000,
           turnoverRate: 2.8
         }
       ],
       insights: {
-        topCategory: 'ACCESSORIES (6.1회)',
-        attentionNeeded: 'OUTERWEAR 재고 부족',
-        recommendation: 'OUTERWEAR 카테고리 재고 보충 필요'
+        topCategory: 'ACCESSORIES (4.8회)',
+        attentionNeeded: 'OUTERWEAR 재고 부족 (24.3%)',
+        recommendation: 'TOPS 카테고리 재고 최적화 및 OUTERWEAR 보충 필요'
       }
     };
 

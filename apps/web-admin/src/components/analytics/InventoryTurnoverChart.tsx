@@ -46,97 +46,41 @@ export default function InventoryTurnoverChart({ filters }: InventoryTurnoverCha
         console.error('Error fetching inventory turnover data:', err);
         setError('재고 회전율 데이터를 불러오는 중 오류가 발생했습니다.');
         
-        // Fallback mock data - 후드티 포함
-        setData([
-          {
-            sku: 'SKU101',
-            productName: '오버핏 후드티',
-            category: '의류',
-            currentStock: 85,
-            avgDailySales: 18.5,
-            turnoverRate: 4.2,
-            daysOfSupply: 5,
-            reorderPoint: 30,
-            status: 'healthy'
-          },
-          {
-            sku: 'SKU102',
-            productName: '기본 후드티',
-            category: '의류',
-            currentStock: 12,
-            avgDailySales: 25.3,
-            turnoverRate: 5.8,
-            daysOfSupply: 0,
-            reorderPoint: 20,
-            status: 'critical'
-          },
-          {
-            sku: 'SKU103',
-            productName: '프리미엄 후드티',
-            category: '의류',
-            currentStock: 0,
-            avgDailySales: 8.7,
-            turnoverRate: 2.1,
-            daysOfSupply: 0,
-            reorderPoint: 15,
-            status: 'critical'
-          },
-          {
-            sku: 'SKU104',
-            productName: '스포츠 후드티',
-            category: '의류',
-            currentStock: 45,
-            avgDailySales: 12.2,
-            turnoverRate: 3.3,
-            daysOfSupply: 4,
-            reorderPoint: 25,
-            status: 'low'
-          },
-          {
-            sku: 'SKU105',
-            productName: '데님 후드티',
-            category: '의류',
-            currentStock: 8,
-            avgDailySales: 15.8,
-            turnoverRate: 4.5,
-            daysOfSupply: 1,
-            reorderPoint: 18,
-            status: 'critical'
-          },
-          {
-            sku: 'SKU106',
-            productName: '기모 후드티',
-            category: '의류',
-            currentStock: 120,
-            avgDailySales: 6.4,
-            turnoverRate: 1.8,
-            daysOfSupply: 19,
-            reorderPoint: 35,
-            status: 'overstock'
-          },
-          {
-            sku: 'SKU107',
-            productName: '그래픽 후드티',
-            category: '의류',
-            currentStock: 0,
-            avgDailySales: 4.2,
-            turnoverRate: 1.1,
-            daysOfSupply: 0,
-            reorderPoint: 12,
-            status: 'critical'
-          },
-          {
-            sku: 'SKU108',
-            productName: '집업 후드티',
-            category: '의류',
-            currentStock: 35,
-            avgDailySales: 9.1,
-            turnoverRate: 2.6,
-            daysOfSupply: 4,
-            reorderPoint: 22,
-            status: 'low'
+        // Fallback mock data - 대규모 재고 데이터
+        const generateMockData = () => {
+          const categories = ['TOPS', 'BOTTOMS', 'SHOES', 'ACCESSORIES', 'OUTERWEAR'];
+          const products = [];
+          
+          for (let i = 1; i <= 50; i++) {
+            const category = categories[Math.floor(Math.random() * categories.length)];
+            const currentStock = Math.floor(Math.random() * 500) + 10;
+            const avgDailySales = Math.random() * 20 + 1;
+            const turnoverRate = avgDailySales * 30 / currentStock;
+            const daysOfSupply = Math.floor(currentStock / avgDailySales);
+            const reorderPoint = Math.floor(currentStock * 0.3);
+            
+            let status = 'healthy';
+            if (daysOfSupply < 3) status = 'critical';
+            else if (daysOfSupply < 7) status = 'low';
+            else if (daysOfSupply > 30) status = 'overstock';
+            
+            products.push({
+              sku: `SKU${String(i).padStart(3, '0')}`,
+              productName: `${category} 상품 ${i}번`,
+              category: category,
+              currentStock: currentStock,
+              avgDailySales: Number(avgDailySales.toFixed(1)),
+              turnoverRate: Number(turnoverRate.toFixed(1)),
+              daysOfSupply: daysOfSupply,
+              reorderPoint: reorderPoint,
+              status: status
+            });
           }
-        ]);
+          
+          return products.sort((a, b) => b.turnoverRate - a.turnoverRate);
+        };
+        
+        setData(generateMockData());
       } finally {
         setLoading(false);
       }
