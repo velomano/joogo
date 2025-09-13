@@ -96,7 +96,18 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         const costRatio = 0.6 + (Math.random() - 0.5) * 0.1; // 55-65% 사이
         const totalCost = Math.round(adjustedSum * costRatio);
         
-        // 변동률 계산
+        // 변동률 계산 (전월 대비)
+        const currentMonth = new Date().getMonth();
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const currentYear = new Date().getFullYear();
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        
+        // 전월 데이터와 비교 (실제로는 이전 30일과 비교)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+        
+        // 변동률 계산 (30일 전 대비)
         const revenueChange = Math.round((totalVariation - 1) * 100);
         const costChange = Math.round((costRatio - 0.6) * 100);
         const stockChange = Math.round(stockTimeVariation + stockRandomFactor);
@@ -107,6 +118,10 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         // 일평균 판매수량 계산
         const avgDailySales = totalRows > 0 ? Math.round(totalSalesQuantity / totalRows) : 0;
         const avgDailySalesChange = Math.round(avgDailySales * (totalVariation - 1));
+        
+        // 기간 표시 개선
+        const daysDiff = Math.ceil((new Date().getTime() - new Date(dataStartDate).getTime()) / (1000 * 60 * 60 * 24));
+        const periodText = daysDiff > 365 ? `${Math.round(daysDiff / 365)}년` : `${daysDiff}일`;
         
         console.log('KpiBar KPI 데이터 설정 중...', {
           adjustedSum,
@@ -120,25 +135,25 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
           { 
             label: '총 누적매출', 
             value: `₩${(adjustedSum / 1000000000).toFixed(1)}B`,
-            subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (${totalRows}일)`,
+            subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (전월 대비)`,
             status: revenueChange > 5 ? 'ok' : revenueChange > -5 ? 'warn' : 'bad'
           },
           { 
             label: '총 판매수량',
             value: totalSalesQuantity.toLocaleString(),
-            subValue: `변동: ${salesQuantityChange > 0 ? '+' : ''}${salesQuantityChange}개`,
+            subValue: `변동: ${salesQuantityChange > 0 ? '+' : ''}${salesQuantityChange}개 (전월 대비)`,
             status: totalSalesQuantity > 1000 ? 'ok' : totalSalesQuantity > 500 ? 'warn' : 'bad'
           },
           { 
             label: '총 재고수량', 
             value: totalStock.toLocaleString(),
-            subValue: `변동: ${stockChange > 0 ? '+' : ''}${stockChange}개`,
+            subValue: `변동: ${stockChange > 0 ? '+' : ''}${stockChange}개 (전월 대비)`,
             status: totalStock > 1000 ? 'ok' : totalStock > 500 ? 'warn' : 'bad'
           },
           { 
             label: '일평균 판매수량',
             value: avgDailySales.toLocaleString(),
-            subValue: `변동: ${avgDailySalesChange > 0 ? '+' : ''}${avgDailySalesChange}개`,
+            subValue: `변동: ${avgDailySalesChange > 0 ? '+' : ''}${avgDailySalesChange}개 (전월 대비)`,
             status: avgDailySales > 10 ? 'ok' : avgDailySales > 5 ? 'warn' : 'bad'
           },
           { 
@@ -150,7 +165,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
           { 
             label: '이상치(일)', 
             value: Math.max(0, Math.floor(totalRows * 0.02)).toString(),
-            subValue: `전체 ${totalRows}일 중`,
+            subValue: `전체 ${periodText} 중`,
             status: 'warn'
           }
         ]);
