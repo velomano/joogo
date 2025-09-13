@@ -152,10 +152,11 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
           onChange={(e) => setSelectedCategory(e.target.value)}
           style={{
             padding: '8px 12px',
-            border: '1px solid #d1d5db',
+            border: '1px solid #374151',
             borderRadius: '6px',
             fontSize: '14px',
-            backgroundColor: '#ffffff'
+            backgroundColor: '#1f2937',
+            color: '#ffffff'
           }}
         >
           <option value="all">전체 카테고리</option>
@@ -209,14 +210,14 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
             key={product.productId}
             style={{ 
               padding: '20px', 
-              border: '1px solid #e5e7eb', 
+              border: '1px solid #374151', 
               borderRadius: '12px',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#1f2937'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
               <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, marginBottom: '4px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, marginBottom: '4px', color: '#ffffff' }}>
                   {product.productName}
                 </h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

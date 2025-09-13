@@ -172,9 +172,9 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
             key={channel.channel}
             style={{ 
               padding: '20px', 
-              border: '1px solid #e5e7eb', 
+              border: '1px solid #374151', 
               borderRadius: '12px',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#1f2937'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -187,15 +187,15 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
                   marginRight: '8px' 
                 }}
               />
-              <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0 }}>
+              <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
                 {channel.name}
               </h4>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>매출</span>
-                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#111827' }}>
+                <span style={{ fontSize: '14px', color: '#d1d5db', fontWeight: '500' }}>매출</span>
+                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff' }}>
                   {formatCurrency(channel.revenue)}
                 </span>
               </div>
@@ -215,7 +215,7 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
                   }}
                 />
               </div>
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
                 {channel.revenueShare}% 점유율
               </div>
             </div>

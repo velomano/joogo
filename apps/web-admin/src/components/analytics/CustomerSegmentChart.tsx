@@ -224,9 +224,9 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
             key={segment.segment}
             style={{ 
               padding: '20px', 
-              border: '1px solid #e5e7eb', 
+              border: '1px solid #374151', 
               borderRadius: '12px',
-              backgroundColor: '#ffffff',
+              backgroundColor: '#1f2937',
               position: 'relative'
             }}
           >
@@ -236,7 +236,7 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
                 {segmentIcons[segment.segment as keyof typeof segmentIcons]}
               </div>
               <div>
-                <h4 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, marginBottom: '4px' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, marginBottom: '4px', color: '#ffffff' }}>
                   {segment.name}
                 </h4>
                 <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>
