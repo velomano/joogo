@@ -206,11 +206,12 @@ export default function TimeGranularity({ filters, refreshTrigger }: TimeGranula
           alignItems: 'end', 
           height: '100%', 
           gap: '2px',
-          minWidth: '100%',
           width: '100%',
           maxWidth: '100%',
+          minWidth: '100%',
           boxSizing: 'border-box',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexWrap: 'nowrap'
         }}>
           {data.map((item, index) => {
             const maxRevenue = getMaxValue('revenue');
@@ -223,9 +224,11 @@ export default function TimeGranularity({ filters, refreshTrigger }: TimeGranula
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  flex: 1,
+                  flex: '1 1 0',
                   minWidth: '20px',
                   maxWidth: '30px',
+                  width: 'auto',
+                  boxSizing: 'border-box',
                   cursor: 'pointer'
                 }}
                 title={`${item.period}: ${formatCurrency(item.revenue)}`}

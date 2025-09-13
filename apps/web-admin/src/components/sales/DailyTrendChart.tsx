@@ -190,11 +190,12 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
           alignItems: 'end', 
           height: '100%', 
           gap: '2px',
-          minWidth: '100%',
           width: '100%',
           maxWidth: '100%',
+          minWidth: '100%',
           boxSizing: 'border-box',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexWrap: 'nowrap'
         }}>
           {data.map((item, index) => {
             const value = getMetricValue(item);
@@ -208,9 +209,11 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  flex: 1,
+                  flex: '1 1 0',
                   minWidth: '20px',
-                  maxWidth: '30px'
+                  maxWidth: '30px',
+                  width: 'auto',
+                  boxSizing: 'border-box'
                 }}
               >
                 <div

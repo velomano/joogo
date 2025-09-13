@@ -480,9 +480,18 @@ canvas {
   min-width: 0 !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
+  position: relative !important;
 }
 
 .chart-container > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 차트 내부 차트 영역 강제 폭 고정 */
+.chart-container > div > div {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
