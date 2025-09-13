@@ -41,10 +41,10 @@ export default function MonthlyComparison({ filters, refreshTrigger }: MonthlyCo
       const currentParams = new URLSearchParams({
         from: filters.from,
         to: filters.to,
-        ...(filters.region.length > 0 && { region: filters.region.join(',') }),
-        ...(filters.channel.length > 0 && { channel: filters.channel.join(',') }),
-        ...(filters.category.length > 0 && { category: filters.category.join(',') }),
-        ...(filters.sku.length > 0 && { sku: filters.sku.join(',') }),
+        ...(filters.region && filters.region.length > 0 && { region: filters.region.join(',') }),
+        ...(filters.channel && filters.channel.length > 0 && { channel: filters.channel.join(',') }),
+        ...(filters.category && filters.category.length > 0 && { category: filters.category.join(',') }),
+        ...(filters.sku && filters.sku.length > 0 && { sku: filters.sku.join(',') }),
       });
 
       // 이전 월 데이터 (현재 월의 1일부터 30일 전까지)
@@ -57,10 +57,10 @@ export default function MonthlyComparison({ filters, refreshTrigger }: MonthlyCo
       const previousParams = new URLSearchParams({
         from: prevMonthStart.toISOString().split('T')[0],
         to: prevMonthEnd.toISOString().split('T')[0],
-        ...(filters.region.length > 0 && { region: filters.region.join(',') }),
-        ...(filters.channel.length > 0 && { channel: filters.channel.join(',') }),
-        ...(filters.category.length > 0 && { category: filters.category.join(',') }),
-        ...(filters.sku.length > 0 && { sku: filters.sku.join(',') }),
+        ...(filters.region && filters.region.length > 0 && { region: filters.region.join(',') }),
+        ...(filters.channel && filters.channel.length > 0 && { channel: filters.channel.join(',') }),
+        ...(filters.category && filters.category.length > 0 && { category: filters.category.join(',') }),
+        ...(filters.sku && filters.sku.length > 0 && { sku: filters.sku.join(',') }),
       });
 
       const [currentResponse, previousResponse] = await Promise.all([

@@ -95,10 +95,10 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
       const params = new URLSearchParams({
         from: filters.from,
         to: filters.to,
-        ...(filters.region.length > 0 && { region: filters.region.join(',') }),
-        ...(filters.channel.length > 0 && { channel: filters.channel.join(',') }),
-        ...(filters.category.length > 0 && { category: filters.category.join(',') }),
-        ...(filters.sku.length > 0 && { sku: filters.sku.join(',') }),
+        ...(filters.region && filters.region.length > 0 && { region: filters.region.join(',') }),
+        ...(filters.channel && filters.channel.length > 0 && { channel: filters.channel.join(',') }),
+        ...(filters.category && filters.category.length > 0 && { category: filters.category.join(',') }),
+        ...(filters.sku && filters.sku.length > 0 && { sku: filters.sku.join(',') }),
       });
 
       const response = await fetch(`/api/sales/kpi?${params}`);
