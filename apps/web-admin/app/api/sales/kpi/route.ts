@@ -27,26 +27,13 @@ export async function GET(request: NextRequest) {
     const avgOrderValue = 232142;
     const totalSpend = Math.round(23214285 * baseMultiplier);
     
-    // 이전 기간 데이터 계산 (동일한 길이의 이전 기간)
-    const prevFromDate = new Date(fromDate);
-    prevFromDate.setDate(fromDate.getDate() - daysDiff);
-    const prevToDate = new Date(toDate);
-    prevToDate.setDate(toDate.getDate() - daysDiff);
-    
-    const prevTotalRevenue = Math.round(65000000 * baseMultiplier * 0.85); // 15% 감소
-    const prevTotalQuantity = Math.round(1250 * baseMultiplier * 0.88);
-    const prevTotalOrders = Math.round(280 * baseMultiplier * 0.87);
-    const prevAvgOrderValue = 225000;
-    const prevConversionRate = 3.0;
-    const prevRoas = 2.4;
-    
-    // 전월대비 성장률 계산
-    const revenueGrowth = ((totalRevenue - prevTotalRevenue) / prevTotalRevenue) * 100;
-    const quantityGrowth = ((totalQuantity - prevTotalQuantity) / prevTotalQuantity) * 100;
-    const orderGrowth = ((totalOrders - prevTotalOrders) / prevTotalOrders) * 100;
-    const aovGrowth = ((avgOrderValue - prevAvgOrderValue) / prevAvgOrderValue) * 100;
-    const conversionGrowth = ((3.2 - prevConversionRate) / prevConversionRate) * 100;
-    const roasGrowth = ((2.8 - prevRoas) / prevRoas) * 100;
+    // 전월대비 성장률 (고정값 - 기간에 관계없이 동일)
+    const revenueGrowth = 17.6;
+    const quantityGrowth = 13.6;
+    const orderGrowth = 14.9;
+    const aovGrowth = 3.2;
+    const conversionGrowth = 6.7;
+    const roasGrowth = 16.7;
     
     // 최고/최저 매출일 계산
     const peakDay = new Date(toDate);
@@ -64,13 +51,13 @@ export async function GET(request: NextRequest) {
       roas: 2.8,
       totalSpend,
       
-      // 성장률 지표 (실제 계산된 값)
-      revenueGrowth: Math.round(revenueGrowth * 10) / 10,
-      quantityGrowth: Math.round(quantityGrowth * 10) / 10,
-      orderGrowth: Math.round(orderGrowth * 10) / 10,
-      aovGrowth: Math.round(aovGrowth * 10) / 10,
-      conversionGrowth: Math.round(conversionGrowth * 10) / 10,
-      roasGrowth: Math.round(roasGrowth * 10) / 10,
+      // 성장률 지표 (고정값 - 전월대비)
+      revenueGrowth,
+      quantityGrowth,
+      orderGrowth,
+      aovGrowth,
+      conversionGrowth,
+      roasGrowth,
       
       // 일일 평균 지표
       dailyAvgRevenue: Math.round(totalRevenue / daysDiff),
