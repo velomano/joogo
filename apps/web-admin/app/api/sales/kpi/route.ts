@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supaAdmin } from '../../../../lib/supabase/server';
+import { supabase } from '../../../../src/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,17 +13,16 @@ export async function GET(request: NextRequest) {
 
     console.log('Sales KPI API called with params:', { from, to, region, channel, category, sku });
     
-    const sb = supaAdmin();
     const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00'; // 기본 tenant ID
     
     // Supabase RPC 함수를 사용하여 실제 데이터 조회
     const [salesData, skuData] = await Promise.all([
-      sb.rpc("board_sales_daily", { 
+      supabase.rpc("board_sales_daily", { 
         p_tenant_id: tenantId,
         p_from: from, 
         p_to: to 
       }),
-      sb.rpc("board_top_skus", { 
+      supabase.rpc("board_top_skus", { 
         p_tenant_id: tenantId, 
         p_from: from, 
         p_to: to, 
@@ -53,18 +52,9 @@ export async function GET(request: NextRequest) {
     const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     // 실제 데이터에서 계산
-    let totalRevenue = salesArray.reduce((sum: number, row: any) => sum + Number(row.revenue || 0), 0);
-    let totalQuantity = salesArray.reduce((sum: number, row: any) => sum + Number(row.qty || 0), 0);
-    let totalOrders = salesArray.reduce((sum: number, row: any) => sum + Number(row.orders || 0), 0);
-    
-    // Supabase 데이터가 없을 때 fallback 데이터 사용
-    if (totalRevenue === 0 && totalQuantity === 0 && totalOrders === 0) {
-      console.log('Supabase 데이터가 없어 fallback 데이터 사용');
-      const baseMultiplier = Math.max(1, daysDiff / 30); // 기간에 따른 배수
-      totalRevenue = Math.round(65000000 * baseMultiplier);
-      totalQuantity = Math.round(1250 * baseMultiplier);
-      totalOrders = Math.round(280 * baseMultiplier);
-    }
+    const totalRevenue = salesArray.reduce((sum: number, row: any) => sum + Number(row.revenue || 0), 0);
+    const totalQuantity = salesArray.reduce((sum: number, row: any) => sum + Number(row.qty || 0), 0);
+    const totalOrders = salesArray.reduce((sum: number, row: any) => sum + Number(row.orders || 0), 0);
     
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const conversionRate = 3.2; // 기본값 (실제 계산 로직 필요)
