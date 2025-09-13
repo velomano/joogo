@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import SalesKpiOverview from '../../src/components/sales/SalesKpiOverview';
+import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
 
 export default function SalesAnalysisPage() {
   const [filters, setFilters] = useState({
