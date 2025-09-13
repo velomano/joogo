@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../../src/lib/supabase/server';
+import { supaAdmin } from '../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     console.log('Inventory Turnover API called with search:', search);
     
     // 실제 Supabase 판매 데이터에서 재고 회전율 정보 추출 (fact_sales 테이블 사용)
-    const { data: salesData, error: salesError } = await supabase
+    const sb = supaAdmin();
+    const { data: salesData, error: salesError } = await sb
       .from('fact_sales')
       .select(`
         sku,

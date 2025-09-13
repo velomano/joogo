@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../../src/lib/supabase/server';
+import { supaAdmin } from '../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,16 +13,17 @@ export async function GET(request: NextRequest) {
 
     console.log('Sales KPI API called with params:', { from, to, region, channel, category, sku });
     
+    const sb = supaAdmin();
     const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00'; // 기본 tenant ID
     
     // Supabase RPC 함수를 사용하여 실제 데이터 조회
     const [salesData, skuData] = await Promise.all([
-      supabase.rpc("board_sales_daily", { 
+      sb.rpc("board_sales_daily", { 
         p_tenant_id: tenantId,
         p_from: from, 
         p_to: to 
       }),
-      supabase.rpc("board_top_skus", { 
+      sb.rpc("board_top_skus", { 
         p_tenant_id: tenantId, 
         p_from: from, 
         p_to: to, 
