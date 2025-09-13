@@ -16,8 +16,7 @@ interface InventoryTurnoverData {
 
 interface InventoryTurnoverChartProps {
   filters: {
-    from: string;
-    to: string;
+    search?: string;
   };
 }
 
@@ -31,10 +30,10 @@ export default function InventoryTurnoverChart({ filters }: InventoryTurnoverCha
     const fetchData = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams({
-          from: filters.from,
-          to: filters.to,
-        });
+        const params = new URLSearchParams();
+        if (filters.search) {
+          params.append('search', filters.search);
+        }
 
         const response = await fetch(`/api/analytics/inventory-turnover?${params}`);
         if (!response.ok) {
@@ -47,62 +46,95 @@ export default function InventoryTurnoverChart({ filters }: InventoryTurnoverCha
         console.error('Error fetching inventory turnover data:', err);
         setError('재고 회전율 데이터를 불러오는 중 오류가 발생했습니다.');
         
-        // Fallback mock data
+        // Fallback mock data - 후드티 포함
         setData([
           {
-            sku: 'SKU001',
-            productName: '프리미엄 티셔츠',
+            sku: 'SKU101',
+            productName: '오버핏 후드티',
             category: '의류',
-            currentStock: 150,
-            avgDailySales: 12.5,
-            turnoverRate: 3.2,
-            daysOfSupply: 12,
-            reorderPoint: 50,
+            currentStock: 85,
+            avgDailySales: 18.5,
+            turnoverRate: 4.2,
+            daysOfSupply: 5,
+            reorderPoint: 30,
             status: 'healthy'
           },
           {
-            sku: 'SKU002',
-            productName: '데님 재킷',
+            sku: 'SKU102',
+            productName: '기본 후드티',
             category: '의류',
-            currentStock: 25,
-            avgDailySales: 8.2,
-            turnoverRate: 2.1,
-            daysOfSupply: 3,
-            reorderPoint: 30,
+            currentStock: 12,
+            avgDailySales: 25.3,
+            turnoverRate: 5.8,
+            daysOfSupply: 0,
+            reorderPoint: 20,
             status: 'critical'
           },
           {
-            sku: 'SKU003',
-            productName: '운동화',
-            category: '신발',
-            currentStock: 200,
-            avgDailySales: 5.8,
-            turnoverRate: 1.1,
-            daysOfSupply: 34,
-            reorderPoint: 40,
-            status: 'overstock'
+            sku: 'SKU103',
+            productName: '프리미엄 후드티',
+            category: '의류',
+            currentStock: 0,
+            avgDailySales: 8.7,
+            turnoverRate: 2.1,
+            daysOfSupply: 0,
+            reorderPoint: 15,
+            status: 'critical'
           },
           {
-            sku: 'SKU004',
-            productName: '가방',
-            category: '액세서리',
+            sku: 'SKU104',
+            productName: '스포츠 후드티',
+            category: '의류',
             currentStock: 45,
-            avgDailySales: 6.5,
-            turnoverRate: 2.8,
-            daysOfSupply: 7,
+            avgDailySales: 12.2,
+            turnoverRate: 3.3,
+            daysOfSupply: 4,
             reorderPoint: 25,
             status: 'low'
           },
           {
-            sku: 'SKU005',
-            productName: '시계',
-            category: '액세서리',
-            currentStock: 80,
-            avgDailySales: 3.2,
-            turnoverRate: 1.5,
-            daysOfSupply: 25,
-            reorderPoint: 20,
-            status: 'healthy'
+            sku: 'SKU105',
+            productName: '데님 후드티',
+            category: '의류',
+            currentStock: 8,
+            avgDailySales: 15.8,
+            turnoverRate: 4.5,
+            daysOfSupply: 1,
+            reorderPoint: 18,
+            status: 'critical'
+          },
+          {
+            sku: 'SKU106',
+            productName: '기모 후드티',
+            category: '의류',
+            currentStock: 120,
+            avgDailySales: 6.4,
+            turnoverRate: 1.8,
+            daysOfSupply: 19,
+            reorderPoint: 35,
+            status: 'overstock'
+          },
+          {
+            sku: 'SKU107',
+            productName: '그래픽 후드티',
+            category: '의류',
+            currentStock: 0,
+            avgDailySales: 4.2,
+            turnoverRate: 1.1,
+            daysOfSupply: 0,
+            reorderPoint: 12,
+            status: 'critical'
+          },
+          {
+            sku: 'SKU108',
+            productName: '집업 후드티',
+            category: '의류',
+            currentStock: 35,
+            avgDailySales: 9.1,
+            turnoverRate: 2.6,
+            daysOfSupply: 4,
+            reorderPoint: 22,
+            status: 'low'
           }
         ]);
       } finally {
@@ -111,7 +143,7 @@ export default function InventoryTurnoverChart({ filters }: InventoryTurnoverCha
     };
 
     fetchData();
-  }, [filters.from, filters.to]);
+  }, [filters.search]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -3,10 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get('from') || '2024-01-01';
-    const to = searchParams.get('to') || new Date().toISOString().split('T')[0];
+    const search = searchParams.get('search') || '';
 
-    console.log('Inventory Turnover API called with params:', { from, to });
+    console.log('Inventory Turnover API called with search:', search);
 
     // Mock 데이터 생성 (실제로는 Supabase에서 조회)
     const mockData = [
@@ -100,10 +99,26 @@ export async function GET(request: NextRequest) {
       }
     ];
 
+    // 검색 로직
+    let filteredData = mockData;
+    if (search) {
+      const searchTerm = search.toLowerCase();
+      filteredData = mockData.filter(item => 
+        item.sku.toLowerCase().includes(searchTerm) ||
+        item.productName.toLowerCase().includes(searchTerm) ||
+        item.category.toLowerCase().includes(searchTerm) ||
+        // 빠른 필터 검색
+        (searchTerm === 'low-stock' && item.status === 'low') ||
+        (searchTerm === 'out-of-stock' && item.status === 'critical') ||
+        (searchTerm === 'high-turnover' && item.turnoverRate > 4) ||
+        (searchTerm === 'dead-stock' && item.turnoverRate < 2)
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      data: mockData,
-      total: mockData.length
+      data: filteredData,
+      total: filteredData.length
     });
 
   } catch (error) {
