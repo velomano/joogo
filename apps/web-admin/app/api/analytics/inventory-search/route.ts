@@ -136,6 +136,111 @@ export async function GET(request: NextRequest) {
         reorderPoint: 8,
         unitCost: 250000,
         status: 'in-stock'
+      },
+      // 의류 카테고리 상품들
+      {
+        sku: 'SKU101',
+        productName: '오버핏 후드티',
+        category: '의류',
+        brand: 'StreetWear',
+        currentStock: 85,
+        avgDailySales: 18.5,
+        turnoverRate: 4.2,
+        daysOfSupply: 5,
+        reorderPoint: 30,
+        unitCost: 45000,
+        status: 'in-stock'
+      },
+      {
+        sku: 'SKU102',
+        productName: '기본 후드티',
+        category: '의류',
+        brand: 'BasicBrand',
+        currentStock: 12,
+        avgDailySales: 25.3,
+        turnoverRate: 5.8,
+        daysOfSupply: 0,
+        reorderPoint: 20,
+        unitCost: 32000,
+        status: 'low-stock'
+      },
+      {
+        sku: 'SKU103',
+        productName: '프리미엄 후드티',
+        category: '의류',
+        brand: 'LuxuryWear',
+        currentStock: 0,
+        avgDailySales: 8.7,
+        turnoverRate: 2.1,
+        daysOfSupply: 0,
+        reorderPoint: 15,
+        unitCost: 89000,
+        status: 'out-of-stock'
+      },
+      {
+        sku: 'SKU104',
+        productName: '스포츠 후드티',
+        category: '의류',
+        brand: 'SportTech',
+        currentStock: 45,
+        avgDailySales: 12.2,
+        turnoverRate: 3.3,
+        daysOfSupply: 4,
+        reorderPoint: 25,
+        unitCost: 55000,
+        status: 'in-stock'
+      },
+      {
+        sku: 'SKU105',
+        productName: '데님 후드티',
+        category: '의류',
+        brand: 'DenimCo',
+        currentStock: 8,
+        avgDailySales: 15.8,
+        turnoverRate: 4.5,
+        daysOfSupply: 1,
+        reorderPoint: 18,
+        unitCost: 67000,
+        status: 'low-stock'
+      },
+      {
+        sku: 'SKU106',
+        productName: '기모 후드티',
+        category: '의류',
+        brand: 'WinterWear',
+        currentStock: 120,
+        avgDailySales: 6.4,
+        turnoverRate: 1.8,
+        daysOfSupply: 19,
+        reorderPoint: 35,
+        unitCost: 38000,
+        status: 'in-stock'
+      },
+      {
+        sku: 'SKU107',
+        productName: '그래픽 후드티',
+        category: '의류',
+        brand: 'ArtWear',
+        currentStock: 0,
+        avgDailySales: 4.2,
+        turnoverRate: 1.1,
+        daysOfSupply: 0,
+        reorderPoint: 12,
+        unitCost: 75000,
+        status: 'out-of-stock'
+      },
+      {
+        sku: 'SKU108',
+        productName: '집업 후드티',
+        category: '의류',
+        brand: 'ZipWear',
+        currentStock: 35,
+        avgDailySales: 9.1,
+        turnoverRate: 2.6,
+        daysOfSupply: 4,
+        reorderPoint: 22,
+        unitCost: 52000,
+        status: 'in-stock'
       }
     ];
 
