@@ -49,7 +49,16 @@ async function fetchWeatherData(region: string, from: string, to: string) {
   console.log(`기상청 API 응답 아이템 수: ${items.length}`);
   
   // 기상청 데이터를 우리 형식으로 변환
-  const weatherData = [];
+  type WeatherRow = {
+    date: string;
+    region: string;
+    temperature: number;
+    humidity: number;
+    precipitation: number;
+    description: string;
+  };
+  
+  const weatherData: WeatherRow[] = [];
   const processedDates = new Set();
   
   for (const item of items) {
