@@ -123,10 +123,13 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
 
   return (
     <div className="chart-container" style={{ padding: '20px', minHeight: '400px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: '20px', marginRight: '8px' }}>📊</span>
         <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>채널별 성과 분석</h3>
       </div>
+      <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 20px 0' }}>
+        각 판매 채널의 성과를 비교하여 가장 효과적인 마케팅 채널을 파악할 수 있습니다.
+      </p>
 
       {/* 요약 지표 */}
       <div style={{ 

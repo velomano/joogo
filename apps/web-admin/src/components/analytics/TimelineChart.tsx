@@ -249,11 +249,17 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
         padding: '20px',
         marginBottom: '20px'
       }}>
-        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0', color: '#ffffff' }}>
+        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#ffffff' }}>
           {selectedGranularity === 'hour' ? '시간별' : 
            selectedGranularity === 'day' ? '일별' : 
            selectedGranularity === 'week' ? '주별' : '월별'} 매출 트렌드
         </h4>
+        <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 16px 0' }}>
+          {selectedGranularity === 'hour' ? '시간대별 매출 패턴을 확인하여 피크 시간대를 파악할 수 있습니다.' :
+           selectedGranularity === 'day' ? '일별 매출 추이를 통해 주간 패턴과 특별한 이벤트의 영향을 분석할 수 있습니다.' :
+           selectedGranularity === 'week' ? '주별 매출 트렌드를 통해 계절성과 장기적인 성장 패턴을 파악할 수 있습니다.' :
+           '월별 매출 데이터로 계절적 변동과 연간 성장률을 분석할 수 있습니다.'}
+        </p>
         
         {/* 간단한 바 차트 */}
         <div style={{ 
@@ -281,14 +287,14 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
               }} />
               <div style={{ 
                 fontSize: '10px', 
-                color: '#6b7280', 
+                color: '#9ca3af', 
                 textAlign: 'center',
                 transform: selectedGranularity === 'hour' ? 'rotate(-45deg)' : 'none',
                 whiteSpace: 'nowrap'
               }}>
                 {selectedGranularity === 'hour' ? item.timestamp : 
                  selectedGranularity === 'day' ? item.timestamp.split('-').slice(1).join('/') :
-                 selectedGranularity === 'week' ? `W${index + 1}` :
+                 selectedGranularity === 'week' ? `${index + 1}주차` :
                  item.timestamp}
               </div>
             </div>

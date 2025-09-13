@@ -142,10 +142,13 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
 
   return (
     <div className="chart-container" style={{ padding: '20px', minHeight: '400px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: '20px', marginRight: '8px' }}>👥</span>
         <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>고객 세그먼트 분석</h3>
       </div>
+      <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 20px 0' }}>
+        고객을 구매 행동과 가치에 따라 세분화하여 맞춤형 마케팅 전략을 수립할 수 있습니다.
+      </p>
 
       {/* 요약 지표 */}
       <div style={{ 

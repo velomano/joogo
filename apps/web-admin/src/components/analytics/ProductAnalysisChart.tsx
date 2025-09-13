@@ -140,7 +140,7 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
 
   return (
     <div className="chart-container" style={{ padding: '20px', minHeight: '400px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '20px', marginRight: '8px' }}>📦</span>
           <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>상품별 성과 분석</h3>
@@ -165,6 +165,9 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
           ))}
         </select>
       </div>
+      <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 20px 0' }}>
+        상품별 매출, 수익성, 재고 상태를 분석하여 인기 상품과 개선이 필요한 상품을 파악할 수 있습니다.
+      </p>
 
       {/* 요약 지표 */}
       <div style={{ 
