@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { formatNumber, formatCurrency, formatPercentage } from '../../lib/format';
+import { formatNumber, formatCurrency } from '../../lib/format';
 
 interface SalesKpiData {
   totalRevenue: number;
@@ -145,7 +145,6 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-      {/* 매출 관련 카드들 */}
       <KpiCard
         title="총 매출"
         value={formatCurrency(data.totalRevenue)}
@@ -178,7 +177,6 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
         color="#f59e0b"
       />
 
-      {/* 광고 성과 카드들 */}
       <KpiCard
         title="ROAS"
         value={data.roas.toFixed(2) + 'x'}
@@ -196,7 +194,6 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
         color="#06b6d4"
       />
 
-      {/* 성장 지표 카드들 */}
       <KpiCard
         title="매출 성장률"
         value={data.revenueGrowth >= 0 ? '+' : ''}{data.revenueGrowth.toFixed(1) + '%'}
