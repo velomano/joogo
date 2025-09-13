@@ -10,19 +10,8 @@ export default function InventoryAnalysisPage() {
   console.log('InventoryAnalysisPage 렌더링됨');
 
   // 오늘 기준 한 달 전부터 오늘까지
-  const getDefaultDateRange = () => {
-    const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(today.getMonth() - 1);
-    
-    return {
-      from: oneMonthAgo.toISOString().split('T')[0],
-      to: today.toISOString().split('T')[0],
-    };
-  };
-
   const [filters, setFilters] = useState({
-    ...getDefaultDateRange(),
+    search: '',
   });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -32,7 +21,7 @@ export default function InventoryAnalysisPage() {
 
   const resetFilters = () => {
     setFilters({
-      ...getDefaultDateRange(),
+      search: '',
     });
   };
 
@@ -58,78 +47,48 @@ export default function InventoryAnalysisPage() {
         </div>
 
         <hr className="line" />
-        <label className="muted">기간</label>
+        <label className="muted">상품 검색</label>
         <div className="row">
           <input 
-            type="date" 
-            id="fromDate" 
-            style={{ flex: 1 }} 
-            title="시작 날짜" 
-            value={filters.from} 
-            onChange={(e) => setFilters(prev => ({ ...prev, from: e.target.value }))}
-          />
-          <input 
-            type="date" 
-            id="toDate" 
-            style={{ flex: 1 }} 
-            title="종료 날짜" 
-            value={filters.to} 
-            onChange={(e) => setFilters(prev => ({ ...prev, to: e.target.value }))}
+            type="text" 
+            placeholder="SKU, 상품명, 카테고리 검색..." 
+            value={filters.search} 
+            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            style={{ 
+              width: '100%', 
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
           />
         </div>
         
-        {/* 기간별 선택 버튼 */}
+        {/* 검색 옵션 */}
         <div style={{ marginBottom: '12px' }}>
-          <div className="muted" style={{ marginBottom: '6px' }}>빠른 선택</div>
+          <div className="muted" style={{ marginBottom: '6px' }}>빠른 필터</div>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {[
-              { value: 'today', label: '오늘' },
-              { value: '1week', label: '1주일' },
-              { value: '1month', label: '1개월' },
-              { value: '3months', label: '3개월' },
-              { value: '6months', label: '6개월' },
-              { value: '1year', label: '1년' }
+              { value: 'low-stock', label: '재고부족' },
+              { value: 'out-of-stock', label: '품절' },
+              { value: 'high-turnover', label: '고회전율' },
+              { value: 'dead-stock', label: '악성재고' }
             ].map((option) => (
               <button
                 key={option.value}
                 onClick={() => {
-                  const today = new Date();
-                  let fromDate = new Date();
-                  
-                  switch(option.value) {
-                    case 'today':
-                      fromDate = new Date(today);
-                      break;
-                    case '1week':
-                      fromDate.setDate(today.getDate() - 7);
-                      break;
-                    case '1month':
-                      fromDate.setMonth(today.getMonth() - 1);
-                      break;
-                    case '3months':
-                      fromDate.setMonth(today.getMonth() - 3);
-                      break;
-                    case '6months':
-                      fromDate.setMonth(today.getMonth() - 6);
-                      break;
-                    case '1year':
-                      fromDate.setFullYear(today.getFullYear() - 1);
-                      break;
-                  }
-                  
                   setFilters(prev => ({
                     ...prev,
-                    from: fromDate.toISOString().split('T')[0],
-                    to: today.toISOString().split('T')[0]
+                    search: option.value
                   }));
                 }}
                 className="btn"
                 style={{ 
                   fontSize: '11px', 
                   padding: '4px 8px',
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: filters.search === option.value ? '#3b82f6' : '#f3f4f6',
                   border: '1px solid #d1d5db',
-                  color: '#374151',
+                  color: filters.search === option.value ? '#ffffff' : '#374151',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   margin: '2px'

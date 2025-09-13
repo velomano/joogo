@@ -2,58 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 
-interface InventoryData {
-  category: string;
-  totalProducts: number;
-  inStock: number;
-  lowStock: number;
-  outOfStock: number;
-  inventoryValue: number;
-  turnoverRate: number;
-}
-
-interface InventoryAnalytics {
-  summary: {
-    totalProducts: number;
-    inStockProducts: number;
-    lowStockProducts: number;
-    outOfStockProducts: number;
-    totalInventoryValue: number;
-    avgTurnoverRate: number;
-  };
-  categories: InventoryData[];
-  insights: {
-    topCategory: string;
-    attentionNeeded: string;
-    recommendation: string;
-  };
-}
-
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('ko-KR').format(value);
-};
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
 export default function InventoryStatusChart({ filters }: { filters: any }) {
-  const [data, setData] = useState<InventoryAnalytics | null>(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const params = new URLSearchParams({
-          from: filters.from,
-          to: filters.to,
+          search: filters.search || '',
         });
 
         const response = await fetch(`/api/analytics/inventory?${params}`);
@@ -109,7 +68,7 @@ export default function InventoryStatusChart({ filters }: { filters: any }) {
     };
 
     fetchData();
-  }, [filters.from, filters.to]);
+  }, [filters.search]);
 
   if (loading) {
     return (
@@ -130,6 +89,19 @@ export default function InventoryStatusChart({ filters }: { filters: any }) {
   }
 
   if (!data) return null;
+
+  const formatNumber = (value) => {
+    return new Intl.NumberFormat('ko-KR').format(value);
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151', marginBottom: '20px' }}>
