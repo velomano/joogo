@@ -17,11 +17,8 @@ export async function GET(request: NextRequest) {
         product_name,
         color,
         size,
-        stock_on_hand,
-        avg_daily_7,
-        days_of_supply,
-        reorder_point,
-        unit_cost
+        qty,
+        revenue
       `)
       .eq('tenant_id', tenantId);
 

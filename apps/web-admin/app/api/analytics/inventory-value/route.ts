@@ -17,10 +17,8 @@ export async function GET(request: NextRequest) {
         product_name,
         color,
         size,
-        stock_on_hand,
-        unit_cost,
-        avg_daily_7,
-        days_of_supply
+        qty,
+        revenue
       `)
       .eq('tenant_id', tenantId)
       .order('unit_cost', { ascending: false });

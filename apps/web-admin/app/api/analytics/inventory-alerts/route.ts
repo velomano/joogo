@@ -18,8 +18,7 @@ export async function GET(request: NextRequest) {
         color,
         size,
         qty,
-        revenue,
-        orders
+        revenue
       `)
       .eq('tenant_id', tenantId)
       .order('qty', { ascending: true });
