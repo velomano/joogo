@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Navigation } from "../src/components/layout/Navigation";
 
 export const metadata: Metadata = {
   title: "Joogo - 판매·재고·마케팅 통합 보드",
@@ -19,11 +20,14 @@ export default function RootLayout({
           <header className="app-header">
             <div className="header-content">
               <div className="logo-section">
-                <a href="/" className="logo-link">
+                <a href="/board-v2" className="logo-link">
                   <div className="logo">Joogo</div>
                   <div className="company-name">Joogo Test Company</div>
                 </a>
               </div>
+              
+              {/* 네비게이션 메뉴 */}
+              <Navigation />
               
               <div className="status-section">
                 <div className="status-badge">시스템 정상</div>

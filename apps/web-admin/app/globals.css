@@ -49,6 +49,36 @@ body {
   max-width: 100%;
 }
 
+/* 네비게이션 메뉴 */
+.nav-menu {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nav-item {
+  padding: 8px 16px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  background: var(--nav-hover);
+  color: var(--txt);
+  border-color: var(--br);
+}
+
+.nav-item.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
 .logo-section {
   display: flex;
   align-items: center;

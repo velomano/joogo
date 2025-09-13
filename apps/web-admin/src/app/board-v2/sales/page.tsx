@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
-import { GridLayout, GridItem } from '../../../components/dashboard/GridLayout';
 import { useFilters } from '../../../hooks/useFilters';
 
 // Dynamic imports for better performance
@@ -49,48 +47,28 @@ export default function SalesAnalysisPage() {
 
   const filtersComponent = (
     <div>
-      <label className="muted" style={{ color: '#9ca3af' }}>기간</label>
+      <hr className="line" />
+      <label className="muted">기간</label>
       <div className="row" style={{ margin: '8px 0' }}>
         <input
           type="date"
           value={filters.from}
           onChange={(e) => setFrom(e.target.value)}
-          style={{ 
-            marginRight: '8px',
-            backgroundColor: '#374151',
-            border: '1px solid #4b5563',
-            color: '#f9fafb',
-            borderRadius: '4px',
-            padding: '4px 8px'
-          }}
+          style={{ marginRight: '8px' }}
         />
         <input
           type="date"
           value={filters.to}
           onChange={(e) => setTo(e.target.value)}
-          style={{
-            backgroundColor: '#374151',
-            border: '1px solid #4b5563',
-            color: '#f9fafb',
-            borderRadius: '4px',
-            padding: '4px 8px'
-          }}
         />
       </div>
 
-      <label className="muted" style={{ color: '#9ca3af' }}>지역</label>
+      <label className="muted">지역</label>
       <select 
         multiple 
         value={filters.region}
         onChange={(e) => setRegion(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ 
-          marginBottom: '8px',
-          backgroundColor: '#374151',
-          border: '1px solid #4b5563',
-          color: '#f9fafb',
-          borderRadius: '4px',
-          padding: '4px 8px'
-        }}
+        style={{ marginBottom: '8px' }}
       >
         <option value="SEOUL">서울</option>
         <option value="BUSAN">부산</option>
@@ -101,19 +79,12 @@ export default function SalesAnalysisPage() {
         <option value="ULSAN">울산</option>
       </select>
 
-      <label className="muted" style={{ color: '#9ca3af' }}>채널</label>
+      <label className="muted">채널</label>
       <select 
         multiple 
         value={filters.channel}
         onChange={(e) => setChannel(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ 
-          marginBottom: '8px',
-          backgroundColor: '#374151',
-          border: '1px solid #4b5563',
-          color: '#f9fafb',
-          borderRadius: '4px',
-          padding: '4px 8px'
-        }}
+        style={{ marginBottom: '8px' }}
       >
         <option value="naver">네이버</option>
         <option value="coupang">쿠팡</option>
@@ -121,19 +92,12 @@ export default function SalesAnalysisPage() {
         <option value="meta">메타</option>
       </select>
 
-      <label className="muted" style={{ color: '#9ca3af' }}>카테고리</label>
+      <label className="muted">카테고리</label>
       <select 
         multiple 
         value={filters.category}
         onChange={(e) => setCategory(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ 
-          marginBottom: '8px',
-          backgroundColor: '#374151',
-          border: '1px solid #4b5563',
-          color: '#f9fafb',
-          borderRadius: '4px',
-          padding: '4px 8px'
-        }}
+        style={{ marginBottom: '8px' }}
       >
         <option value="TOPS">상의</option>
         <option value="BOTTOMS">하의</option>
@@ -142,19 +106,12 @@ export default function SalesAnalysisPage() {
         <option value="ACCESSORIES">액세서리</option>
       </select>
 
-      <label className="muted" style={{ color: '#9ca3af' }}>SKU</label>
+      <label className="muted">SKU</label>
       <select 
         multiple 
         value={filters.sku}
         onChange={(e) => setSku(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ 
-          marginBottom: '8px',
-          backgroundColor: '#374151',
-          border: '1px solid #4b5563',
-          color: '#f9fafb',
-          borderRadius: '4px',
-          padding: '4px 8px'
-        }}
+        style={{ marginBottom: '8px' }}
       >
         <option value="TOPS-001">TOPS-001</option>
         <option value="BOTTOMS-001">BOTTOMS-001</option>
@@ -166,6 +123,7 @@ export default function SalesAnalysisPage() {
 
   const actionsComponent = (
     <div>
+      <hr className="line" />
       <button 
         className="btn" 
         onClick={handleRefresh}
@@ -173,11 +131,7 @@ export default function SalesAnalysisPage() {
           backgroundColor: '#3b82f6', 
           color: 'white',
           width: '100%',
-          marginBottom: '8px',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '8px 12px',
-          cursor: 'pointer'
+          marginBottom: '8px'
         }}
       >
         🔄 데이터 새로고침
@@ -189,11 +143,7 @@ export default function SalesAnalysisPage() {
         style={{ 
           backgroundColor: '#6b7280', 
           color: 'white',
-          width: '100%',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '8px 12px',
-          cursor: 'pointer'
+          width: '100%'
         }}
       >
         초기화
@@ -202,125 +152,131 @@ export default function SalesAnalysisPage() {
   );
 
   return (
-    <DashboardLayout
-      title="판매 분석"
-      subtitle="v2 (통합 대시보드)"
-      filters={filtersComponent}
-      actions={actionsComponent}
-    >
-      <GridLayout page="sales">
-        {/* KPI 오버뷰 */}
-        <GridItem id="kpi">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📊 KPI 오버뷰</h3>
-          <SalesKpiOverview 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+    <div className="wrap">
+      <aside className="sidebar panel">
+        <h1>판매 분석 <span className="muted">v2 (통합 대시보드)</span></h1>
+        
+        {filtersComponent}
+        {actionsComponent}
+      </aside>
 
-        {/* 일별 추이 + 시즌성 */}
-        <GridItem id="trend">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📈 일별 추이</h3>
-          <SalesTrendChart 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+      <main className="main">
+        <section className="panel">
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {/* KPI 오버뷰 */}
+            <div className="chart-container">
+              <h3>📊 KPI 오버뷰</h3>
+              <SalesKpiOverview 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 캘린더 히트맵 */}
-        <GridItem id="calendar">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📅 캘린더 히트맵</h3>
-          <CalendarHeatmap 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+            {/* 일별 추이 + 시즌성 */}
+            <div className="chart-container">
+              <h3>📈 일별 추이</h3>
+              <SalesTrendChart 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 채널 성과/ROAS */}
-        <GridItem id="channel">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📺 채널 성과</h3>
-          <ChannelPerformance 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+            {/* 캘린더 히트맵 */}
+            <div className="chart-container">
+              <h3>📅 캘린더 히트맵</h3>
+              <CalendarHeatmap 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 지역 성과 */}
-        <GridItem id="region">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🗺️ 지역 성과</h3>
-          <RegionPerformance 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+            {/* 채널 성과/ROAS */}
+            <div className="chart-container">
+              <h3>📺 채널 성과</h3>
+              <ChannelPerformance 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 파레토/ABC 분석 */}
-        <GridItem id="pareto">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📊 파레토 분석</h3>
-          <ParetoAnalysis 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+            {/* 지역 성과 */}
+            <div className="chart-container">
+              <h3>🗺️ 지역 성과</h3>
+              <RegionPerformance 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 가격 탄력성 */}
-        <GridItem id="elasticity">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>💰 가격 탄력성</h3>
-          <PriceElasticity 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
+            {/* 파레토/ABC 분석 */}
+            <div className="chart-container">
+              <h3>📊 파레토 분석</h3>
+              <ParetoAnalysis 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-        {/* 이상치 탐지 */}
-        <GridItem id="anomaly">
-          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>⚠️ 이상치 탐지</h3>
-          <AnomalyDetection 
-            from={filters.from}
-            to={filters.to}
-            region={filters.region}
-            channel={filters.channel}
-            category={filters.category}
-            sku={filters.sku}
-            refreshTrigger={refreshTrigger}
-          />
-        </GridItem>
-      </GridLayout>
-    </DashboardLayout>
+            {/* 가격 탄력성 */}
+            <div className="chart-container">
+              <h3>💰 가격 탄력성</h3>
+              <PriceElasticity 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+
+            {/* 이상치 탐지 */}
+            <div className="chart-container">
+              <h3>⚠️ 이상치 탐지</h3>
+              <AnomalyDetection 
+                from={filters.from}
+                to={filters.to}
+                region={filters.region}
+                channel={filters.channel}
+                category={filters.category}
+                sku={filters.sku}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }

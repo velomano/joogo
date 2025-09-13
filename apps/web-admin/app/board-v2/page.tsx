@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { TopNavigation } from '../../src/components/layout/TopNavigation';
 // import { useFilters } from '@/lib/state/filters'; // 제거
 import { Adapters } from './_data/adapters';
 import SalesTemperatureChart from './_components/SalesTemperatureChart';
@@ -373,11 +372,9 @@ export default function BoardV2Page() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <TopNavigation />
-      <div className="wrap" style={{ paddingTop: '0' }}>
-      <aside className="sidebar panel" style={{ backgroundColor: '#1f2937', border: 'none' }}>
-        <h1 style={{ color: '#f9fafb' }}>ALL-IN-ONE 보드 <span className="muted" style={{ color: '#9ca3af' }}>v6 (안정판 기반)</span></h1>
+    <div className="wrap">
+      <aside className="sidebar panel">
+        <h1>ALL-IN-ONE 보드 <span className="muted">v6 (안정판 기반)</span></h1>
         <ApiTestSection />
         
         <div className="row" style={{ margin: '8px 0' }}>
@@ -388,20 +385,13 @@ export default function BoardV2Page() {
           }}>초기화</button>
         </div>
 
-        <hr className="line" style={{ borderColor: '#374151' }} />
-        <label className="muted" style={{ color: '#9ca3af' }}>기간</label>
+        <hr className="line" />
+        <label className="muted">기간</label>
         <div className="row">
           <input 
             type="date" 
             id="fromDate" 
-            style={{ 
-              flex: 1,
-              backgroundColor: '#374151',
-              border: '1px solid #4b5563',
-              color: '#f9fafb',
-              borderRadius: '4px',
-              padding: '4px 8px'
-            }} 
+            style={{ flex: 1 }} 
             title="시작 날짜" 
             value={from} 
             onChange={(e) => setFrom(e.target.value)}
@@ -409,14 +399,7 @@ export default function BoardV2Page() {
           <input 
             type="date" 
             id="toDate" 
-            style={{ 
-              flex: 1,
-              backgroundColor: '#374151',
-              border: '1px solid #4b5563',
-              color: '#f9fafb',
-              borderRadius: '4px',
-              padding: '4px 8px'
-            }} 
+            style={{ flex: 1 }} 
             title="종료 날짜" 
             value={to} 
             onChange={(e) => setTo(e.target.value)}
@@ -907,7 +890,6 @@ export default function BoardV2Page() {
           />
         </section>
       </main>
-      </div>
     </div>
   );
 }
