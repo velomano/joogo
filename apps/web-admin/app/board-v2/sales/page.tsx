@@ -159,21 +159,14 @@ export default function SalesAnalysisPage() {
 
   return (
     <div className="wrap">
-      <aside className="sidebar panel">
-        <h1>판매 분석 <span className="muted">v2</span></h1>
-        
-        {filtersComponent}
-        {actionsComponent}
-      </aside>
-
       <main className="main">
         <section className="panel">
-                 <div style={{ display: 'grid', gap: '20px' }}>
-                   {/* 판매 KPI 오버뷰 */}
-                   <SalesKpiOverview 
-                     filters={filters} 
-                     refreshTrigger={refreshTrigger} 
-                   />
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {/* 판매 KPI 오버뷰 */}
+            <SalesKpiOverview 
+              filters={filters} 
+              refreshTrigger={refreshTrigger} 
+            />
 
             {/* 일별 추이 + 시즌성 */}
             <div className="chart-container">

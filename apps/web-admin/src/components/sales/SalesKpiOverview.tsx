@@ -101,7 +101,15 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
     return (
       <div className="chart-container">
         <h3>📊 판매 KPI 오버뷰</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 kpi-grid-layout">
+        <div 
+          className="kpi-grid-layout"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
+            width: '100%'
+          }}
+        >
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-gray-800 rounded-lg p-6 animate-pulse">
               <div className="h-4 bg-gray-700 rounded mb-3"></div>
@@ -194,28 +202,31 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         기간: {kpiData.period.from} ~ {kpiData.period.to} ({kpiData.period.days}일)
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 kpi-grid-layout">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {kpiCards.map((kpi, index) => {
           const growthStatus = getGrowthStatus(kpi.growth);
           return (
-            <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+            <div 
+              key={index} 
+              className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors shadow-lg"
+            >
               <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl">{kpi.icon}</span>
-                <span className={`text-sm font-medium ${growthStatus.color}`}>
+                <span className="text-4xl">{kpi.icon}</span>
+                <span className={`text-sm font-medium px-2 py-1 rounded-full ${growthStatus.color} bg-gray-700`}>
                   {growthStatus.icon} {formatPercentage(Math.abs(kpi.growth), 1)}
                 </span>
               </div>
               
-              <div className="mb-3">
-                <div className={`text-3xl font-bold mb-2 ${kpi.status}`}>
+              <div className="mb-4">
+                <div className={`text-4xl font-bold mb-2 ${kpi.status}`}>
                   {kpi.value}
                 </div>
-                <div className="text-base text-gray-400 font-medium">
+                <div className="text-lg text-gray-400 font-medium">
                   {kpi.label}
                 </div>
               </div>
               
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 bg-gray-700 px-3 py-2 rounded-lg">
                 {kpi.growth > 0 ? '전월 대비 증가' : kpi.growth < 0 ? '전월 대비 감소' : '변화 없음'}
               </div>
             </div>
