@@ -50,21 +50,27 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
   useEffect(() => {
     (async () => {
       try {
+        console.log('KpiBar 데이터 로딩 시작...');
         // 데이터 생성일부터 오늘까지의 전체 데이터 가져오기
         const today = new Date().toISOString().split('T')[0];
         const dataStartDate = '2024-01-01'; // 데이터 생성 시작일
         
+        console.log('KpiBar 날짜 범위:', { dataStartDate, today });
         const data = await Adapters.calendarHeatmap({ from: dataStartDate, to: today }, {});
+        console.log('KpiBar 캘린더 데이터:', data.length, '개');
         const sum = data.reduce((a, b) => a + b.revenue, 0);
+        console.log('KpiBar 총 매출:', sum);
         
         // 광고비 데이터도 전체 기간으로 가져오기
         const adsData = await Adapters.ads({ from: dataStartDate, to: today }, {});
+        console.log('KpiBar 광고비 데이터:', adsData.length, '개');
         const spend = adsData.reduce((a, b) => a + (b.cost || b.spend || 0), 0);
+        console.log('KpiBar 총 광고비:', spend);
         const roas = spend ? sum / spend : 0;
+        console.log('KpiBar ROAS:', roas);
         
-        // 총 판매수량 계산 (매출 기반 추정)
-        const avgOrderValue = 50000; // 평균 주문 금액
-        const totalSalesQuantity = Math.round(sum / avgOrderValue);
+        // 총 판매수량 계산 (실제 quantity 데이터 사용)
+        const totalSalesQuantity = data.reduce((a, b) => a + (b.quantity || 0), 0);
         
         // 실제 데이터 기반 계산
         const totalRows = data.length;
@@ -101,6 +107,14 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         // 일평균 판매수량 계산
         const avgDailySales = totalRows > 0 ? Math.round(totalSalesQuantity / totalRows) : 0;
         const avgDailySalesChange = Math.round(avgDailySales * (totalVariation - 1));
+        
+        console.log('KpiBar KPI 데이터 설정 중...', {
+          adjustedSum,
+          totalSalesQuantity,
+          totalStock,
+          avgDailySales,
+          roas
+        });
         
         setKpis([
           { 
@@ -227,6 +241,7 @@ export default function BoardV2Page() {
   const [channel, setChannel] = useState<string[]>([]);
   const [category, setCategory] = useState<string[]>([]);
   const [sku, setSku] = useState<string[]>([]);
+  const [showGlossary, setShowGlossary] = useState(false);
 
   // API 테스트 이벤트 리스너
   useEffect(() => {
@@ -514,9 +529,116 @@ export default function BoardV2Page() {
         </select>
 
         <hr className="line" />
-        <div className="muted info" title="ROAS: 광고수익률 = 매출 ÷ 광고비 / SKU: 상품코드 / 이동평균(7일): 최근 7일 평균 / 탄력성: 가격·할인 변화에 대한 수요 반응계수">
-          용어 도움말(툴팁)
+        <div 
+          className="muted info" 
+          style={{ 
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '4px',
+            transition: 'background-color 0.2s'
+          }}
+          onClick={() => setShowGlossary(!showGlossary)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#2d3748';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          📚 용어 도움말 {showGlossary ? '▲' : '▼'}
         </div>
+        
+        {/* 용어 도움말 상세 내용 */}
+        {showGlossary && (
+          <div style={{
+            background: '#1a202c',
+            border: '1px solid #4a5568',
+            borderRadius: '6px',
+            padding: '12px',
+            marginTop: '8px',
+            fontSize: '11px',
+            color: '#a0aec0',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            <div style={{ marginBottom: '12px' }}>
+              <strong style={{ color: '#e2e8f0', fontSize: '12px' }}>📊 차트 관련 용어</strong>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#3b82f6' }}>• ROAS (Return on Ad Spend):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>광고수익률 = 매출 ÷ 광고비. 광고비 1원당 얼마의 매출을 창출하는지 측정</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#3b82f6' }}>• SKU (Stock Keeping Unit):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>상품코드. 재고 관리의 최소 단위로 각 상품을 고유하게 식별하는 코드</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#3b82f6' }}>• 이동평균 (7일):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>최근 7일간의 평균값. 단기 변동을 완화하여 트렌드를 파악하는 기법</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#3b82f6' }}>• 탄력성 (Elasticity):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>가격·할인 변화에 대한 수요 반응계수. 가격 변화 1%당 수요 변화율</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#3b82f6' }}>• 상관계수 (Correlation):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>-1~1 사이의 값으로 두 변수 간 선형 관계의 강도와 방향을 나타냄</span>
+            </div>
+            
+            <div style={{ marginBottom: '12px' }}>
+              <strong style={{ color: '#e2e8f0', fontSize: '12px' }}>📈 분석 관련 용어</strong>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#10b981' }}>• 파레토 분석 (80-20 법칙):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>전체 매출의 80%를 상위 20% 상품이 차지하는 현상을 분석</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#10b981' }}>• ABC 분석:</strong><br/>
+              <span style={{ marginLeft: '8px' }}>상품을 매출 비중에 따라 A(중요), B(보통), C(낮음)로 분류</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#10b981' }}>• 리오더 포인트:</strong><br/>
+              <span style={{ marginLeft: '8px' }}>재고가 이 수준 이하로 떨어지면 주문해야 하는 기준점</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#10b981' }}>• 이상치 (Outlier):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>정상 범위를 벗어난 극값으로, 특별한 원인 분석이 필요한 데이터</span>
+            </div>
+            
+            <div style={{ marginBottom: '12px' }}>
+              <strong style={{ color: '#e2e8f0', fontSize: '12px' }}>🎯 비즈니스 용어</strong>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#f59e0b' }}>• CTR (Click Through Rate):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>클릭률 = 클릭수 ÷ 노출수 × 100. 광고의 효과성을 측정</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#f59e0b' }}>• CPC (Cost Per Click):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>클릭당 비용 = 광고비 ÷ 클릭수. 광고 효율성 지표</span>
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#f59e0b' }}>• LTV (Life Time Value):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>고객 생애 가치. 한 고객이 평생 동안 창출하는 총 수익</span>
+            </div>
+            
+            <div style={{ marginBottom: '0' }}>
+              <strong style={{ color: '#f59e0b' }}>• 리드타임 (Lead Time):</strong><br/>
+              <span style={{ marginLeft: '8px' }}>주문부터 입고까지 소요되는 시간. 재고 관리의 핵심 요소</span>
+            </div>
+          </div>
+        )}
       </aside>
 
       <main className="main">

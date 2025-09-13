@@ -14,7 +14,7 @@ interface AdSpendData {
   cost: number;
 }
 
-// Fallback 데이터 생성 (API 실패 시)
+// Fallback 데이터 생성 (API 실패 시) - 주간 단위로 생성
 function generateFallbackData(from: string, to: string, channel?: string): AdSpendData[] {
   const start = new Date(from);
   const end = new Date(to);
@@ -29,45 +29,45 @@ function generateFallbackData(from: string, to: string, channel?: string): AdSpe
     return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
   }
   
+  // 주간 단위로 광고비 생성 (매주 월요일에만 생성)
   for (let i = 0; i < days; i++) {
     const currentDate = new Date(+start + i * 86400000);
-    const dateStr = currentDate.toISOString().split('T')[0];
-    
-    // 요일별 변동 (주말에는 광고비 감소)
     const dayOfWeek = currentDate.getDay();
-    const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.7 : 1.0;
+    
+    // 월요일(1)에만 광고비 데이터 생성
+    if (dayOfWeek !== 1) continue;
     
     // 계절별 변동 (12월, 1월에 광고비 증가)
     const month = currentDate.getMonth();
     const seasonalMultiplier = (month === 11 || month === 0) ? 1.3 : 1.0;
     
     for (const ch of channels) {
-      // 채널별 기본 광고비
+      // 채널별 기본 광고비 (주간 단위로 증가)
       const baseCosts = {
-        'naver': 150000,
-        'coupang': 200000,
-        'google': 300000,
-        'meta': 100000
+        'naver': 800000,    // 주간 광고비
+        'coupang': 1200000,
+        'google': 1500000,
+        'meta': 600000
       };
       
-      const baseCost = baseCosts[ch as keyof typeof baseCosts] || 150000;
-      const rng = seedRand(i * 1000 + ch.charCodeAt(0));
+      const baseCost = baseCosts[ch as keyof typeof baseCosts] || 800000;
+      const rng = seedRand(Math.floor(i / 7) * 1000 + ch.charCodeAt(0)); // 주간 시드
       
-      // 변동성 있는 광고비 계산
-      const randomFactor = 0.7 + rng() * 0.6; // 0.7 ~ 1.3
+      // 변동성 있는 광고비 계산 (주간 단위)
+      const randomFactor = 0.6 + rng() * 0.8; // 0.6 ~ 1.4 (더 큰 변동)
       const cost = Math.round(
-        baseCost * randomFactor * weekendMultiplier * seasonalMultiplier
+        baseCost * randomFactor * seasonalMultiplier
       );
       
-      // 노출수, 클릭수 계산
-      const impressions = Math.round(cost * (80 + rng() * 40)); // 80-120 per 1원
-      const ctr = 0.01 + rng() * 0.02; // 1-3% CTR
+      // 노출수, 클릭수 계산 (주간 단위)
+      const impressions = Math.round(cost * (60 + rng() * 40)); // 60-100 per 1원
+      const ctr = 0.008 + rng() * 0.015; // 0.8-2.3% CTR
       const clicks = Math.round(impressions * ctr);
       
       data.push({
         ts: currentDate.toISOString(),
         channel: ch,
-        campaign_id: `CAMP-${String(i % 3 + 1).padStart(3, '0')}`,
+        campaign_id: `CAMP-${String(Math.floor(i / 7) % 4 + 1).padStart(3, '0')}`, // 주간별 캠페인
         impressions,
         clicks,
         cost

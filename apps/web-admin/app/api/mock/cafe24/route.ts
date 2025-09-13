@@ -38,17 +38,46 @@ export async function GET(req: Request) {
 
     if (kind === 'calendar') {
       console.log('Generating calendar data for', days, 'days');
-      const arr: { date: string; revenue: number; roas: number; is_event: boolean; tavg: number }[] = [];
+      
+      // SKU 목록 정의 (리오더/단종 후보 테스트용)
+      const skuList = [
+        'TOPS-001', 'TOPS-002', 'TOPS-003', 'TOPS-004', 'TOPS-005',
+        'BOTTOMS-001', 'BOTTOMS-002', 'BOTTOMS-003', 'BOTTOMS-004', 'BOTTOMS-005',
+        'OUTER-001', 'OUTER-002', 'OUTER-003', 'OUTER-004', 'OUTER-005',
+        'ACC-001', 'ACC-002', 'ACC-003', 'ACC-004', 'ACC-005'
+      ];
+      
+      // SKU별 기본 판매량 (일부는 낮게 설정하여 단종 후보로 만들기)
+      const skuBaseQuantity = {
+        'TOPS-001': 50, 'TOPS-002': 30, 'TOPS-003': 25, 'TOPS-004': 15, 'TOPS-005': 5, // TOPS-005는 단종 후보
+        'BOTTOMS-001': 40, 'BOTTOMS-002': 35, 'BOTTOMS-003': 20, 'BOTTOMS-004': 8, 'BOTTOMS-005': 3, // BOTTOMS-005는 단종 후보
+        'OUTER-001': 20, 'OUTER-002': 15, 'OUTER-003': 10, 'OUTER-004': 6, 'OUTER-005': 2, // OUTER-005는 단종 후보
+        'ACC-001': 30, 'ACC-002': 25, 'ACC-003': 12, 'ACC-004': 7, 'ACC-005': 1 // ACC-005는 단종 후보
+      };
+      
+      const arr: { date: string; revenue: number; roas: number; is_event: boolean; tavg: number; quantity: number; sku: string }[] = [];
+      
       for (let i = 0; i < days; i++) {
         const d = new Date(+start + i * 86400000);
         const mm = d.getMonth();
         const seasonal = 1 + ((mm === 5 || mm === 10) ? 0.4 : 0) + ((mm >= 6 && mm <= 8) ? 0.2 : 0);
         const event = (d.getDate() === 1 || d.getDate() === 15) ? 1 : 0;
         
+        // 온도 데이터 생성 (계절성 반영)
+        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const baseTemp = 15; // 연평균 15도
+        const tempSeasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365); // 계절 변동
+        const daily = 5 * Math.sin(dayOfYear * 0.1); // 일일 변동
+        const random = (rng() - 0.5) * 8; // 랜덤 변동
+        const tavg = +(baseTemp + tempSeasonal + daily + random).toFixed(1);
+        
+        // 기온과 판매량의 상관관계 (15-25도에서 최고, 극한 온도에서는 감소)
+        const tempEffect = Math.max(0.3, 1 - Math.abs(tavg - 20) / 20); // 20도에서 최고, 극한 온도에서 감소
+        
         // 필터에 따른 매출 조정 + 실시간 변동성 추가
         const timeVariation = Math.sin(now.getHours() / 24 * Math.PI * 2) * 0.1; // 시간대별 변동
         const randomVariation = (rng() - 0.5) * 0.3; // 랜덤 변동
-        let baseRevenue = 500000 + 4500000 * seasonal * (0.7 + rng() + timeVariation + randomVariation);
+        let baseRevenue = 500000 + 4500000 * seasonal * tempEffect * (0.7 + rng() + timeVariation + randomVariation);
         
         // 지역 필터가 있으면 해당 지역의 매출만 반영
         if (region.length > 0) {
@@ -67,15 +96,26 @@ export async function GET(req: Request) {
         const rev = Math.round(baseRevenue);
         const roas = +(2.0 + (rng() - 0.5) * 0.6).toFixed(2);
         
-        // 온도 데이터 생성 (계절성 반영)
-        const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-        const baseTemp = 15; // 연평균 15도
-        const tempSeasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365); // 계절 변동
-        const daily = 5 * Math.sin(dayOfYear * 0.1); // 일일 변동
-        const random = (rng() - 0.5) * 8; // 랜덤 변동
-        const tavg = +(baseTemp + tempSeasonal + daily + random).toFixed(1);
+        // SKU별 판매량 계산 (기온 효과 반영)
+        const totalQuantity = Math.round(200 * tempEffect * seasonal * (0.8 + rng() * 0.4));
         
-        arr.push({ date: d.toISOString().slice(0, 10), revenue: rev, roas, is_event: !!event, tavg });
+        // 각 SKU별로 판매량 분배
+        for (const sku of skuList) {
+          const baseQty = skuBaseQuantity[sku as keyof typeof skuBaseQuantity] || 10;
+          const skuQuantity = Math.round(baseQty * tempEffect * (0.5 + rng() * 1.0));
+          
+          if (skuQuantity > 0) {
+            arr.push({ 
+              date: d.toISOString().slice(0, 10), 
+              revenue: Math.round(rev * (skuQuantity / totalQuantity)), // SKU별 매출 분배
+              roas, 
+              is_event: !!event, 
+              tavg,
+              quantity: skuQuantity,
+              sku
+            });
+          }
+        }
       }
       console.log('Generated calendar data length:', arr.length);
       return NextResponse.json(arr);

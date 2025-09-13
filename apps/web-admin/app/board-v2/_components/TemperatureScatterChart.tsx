@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
 import { Adapters } from '../_data/adapters';
@@ -11,7 +11,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 export default function TemperatureScatterChart({ 
   refreshTrigger, 
   from, 
-  to 
+  to
 }: { 
   refreshTrigger: number;
   from: string;
@@ -20,6 +20,7 @@ export default function TemperatureScatterChart({
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [correlation, setCorrelation] = useState<any>(null);
+  const correlationSent = useRef(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +89,7 @@ export default function TemperatureScatterChart({
         const minX = Math.min(...scatterData.map(d => d.x));
         const maxX = Math.max(...scatterData.map(d => d.x));
         
-        setCorrelation({
+        const correlationData = {
           r: r.toFixed(2),
           strength: Math.abs(r) < 0.2 ? '미약' : 
                    Math.abs(r) < 0.4 ? '약함' : 
@@ -99,7 +100,11 @@ export default function TemperatureScatterChart({
             { x: minX, y: slope * minX + intercept },
             { x: maxX, y: slope * maxX + intercept }
           ]
-        });
+        };
+        
+        setCorrelation(correlationData);
+        
+        // 상관계수 데이터 저장만 (콜백 제거)
         
         setData({
           datasets: [

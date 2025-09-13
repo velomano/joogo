@@ -234,7 +234,7 @@ export default function ApiTestSection() {
           gap: '6px'
         }}
       >
-        {isLoading ? '⏳' : '🔄'} 
+        {isLoading ? '⏳' : ''} 
         {isLoading ? '데이터 불러오는 중...' : '데이터 불러오기'}
       </button>
 
