@@ -62,9 +62,6 @@ export async function GET(request: NextRequest) {
     const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     // 실제 데이터 기반 계산 (이미 위에서 계산됨)
-    const conversionRate = 3.2; // 기본값 (실제 계산 로직 필요)
-    const roas = 2.8; // 기본값 (실제 계산 로직 필요)
-    const totalSpend = totalRevenue * 0.3; // 추정값
     
     // 기간별 전월대비 성장률 (실제 비즈니스 로직에 맞게)
     let revenueGrowth, quantityGrowth, orderGrowth, aovGrowth, conversionGrowth, roasGrowth;

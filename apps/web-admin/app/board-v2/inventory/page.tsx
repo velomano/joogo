@@ -1,5 +1,10 @@
+'use client';
+
 import React, { useState } from 'react';
 import InventoryStatusChart from '../../../src/components/analytics/InventoryStatusChart';
+import InventoryTurnoverChart from '../../../src/components/analytics/InventoryTurnoverChart';
+import InventoryAlertsChart from '../../../src/components/analytics/InventoryAlertsChart';
+import InventoryValueChart from '../../../src/components/analytics/InventoryValueChart';
 
 export default function InventoryAnalysisPage() {
   console.log('InventoryAnalysisPage 렌더링됨');
@@ -137,12 +142,27 @@ export default function InventoryAnalysisPage() {
         </div>
       </aside>
 
-      <main className="main">
-        {/* 재고 현황 */}
-        <InventoryStatusChart 
-          filters={filters} 
-        />
-      </main>
+             <main className="main">
+               {/* 재고 현황 */}
+               <InventoryStatusChart 
+                 filters={filters} 
+               />
+               
+               {/* 재고 회전율 분석 */}
+               <InventoryTurnoverChart 
+                 filters={filters} 
+               />
+               
+               {/* 재고 부족 알림 */}
+               <InventoryAlertsChart 
+                 filters={filters} 
+               />
+               
+               {/* 재고 가치 분석 */}
+               <InventoryValueChart 
+                 filters={filters} 
+               />
+             </main>
     </div>
   );
 }
