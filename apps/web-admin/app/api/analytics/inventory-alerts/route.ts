@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supaAdmin } from '../../../../lib/supabase/server';
+import { supabase } from '../../../../src/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,10 +9,8 @@ export async function GET(request: NextRequest) {
 
     console.log('Inventory Alerts API called with search:', search);
     
-    const sb = supaAdmin();
-    
     // 실제 Supabase 재고 데이터에서 재고 부족 상품 조회
-    const { data: inventoryData, error: inventoryError } = await sb
+    const { data: inventoryData, error: inventoryError } = await supabase
       .from('fact_inventory')
       .select(`
         sku,
