@@ -57,12 +57,12 @@ body {
 }
 
 .nav-item {
-  padding: 8px 16px;
+  padding: 10px 18px;
   color: var(--muted);
   text-decoration: none;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   transition: all 0.2s;
   border: 1px solid transparent;
 }
@@ -74,9 +74,10 @@ body {
 }
 
 .nav-item.active {
-  background: var(--accent);
-  color: white;
+  background: var(--nav-hover);
+  color: var(--txt);
   border-color: var(--accent);
+  font-weight: 700;
 }
 
 .logo-section {
