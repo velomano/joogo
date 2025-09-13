@@ -375,6 +375,86 @@ export default function BoardV2Page() {
     <div className="wrap">
       <aside className="sidebar panel">
         <h1>ALL-IN-ONE 보드 <span className="muted">v6 (안정판 기반)</span></h1>
+        
+        {/* 페이지 네비게이션 */}
+        <div style={{ marginBottom: '16px' }}>
+          <div className="muted" style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
+            📊 분석 페이지
+          </div>
+          <div style={{ display: 'grid', gap: '4px' }}>
+            <a 
+              href="/board-v2" 
+              style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#3b82f6', 
+                color: 'white', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+            >
+              🏠 통합 대시보드
+            </a>
+            <a 
+              href="/board-v2/sales" 
+              style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f3f4f6', 
+                color: '#374151', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+            >
+              📈 판매 분석
+            </a>
+            <a 
+              href="/board-v2/inventory" 
+              style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f3f4f6', 
+                color: '#374151', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+            >
+              📦 재고 분석
+            </a>
+            <a 
+              href="/board-v2/ai" 
+              style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f3f4f6', 
+                color: '#374151', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+            >
+              🤖 AI 분석
+            </a>
+            <a 
+              href="/board-v2/help" 
+              style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f3f4f6', 
+                color: '#374151', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+            >
+              ❓ 도움말
+            </a>
+          </div>
+        </div>
+        
         <ApiTestSection />
         
         <div className="row" style={{ margin: '8px 0' }}>
