@@ -8,6 +8,9 @@ interface ProductData {
   productName: string;
   category: string;
   sku: string;
+  color?: string;
+  size?: string;
+  options?: string;
   revenue: number;
   quantity: number;
   orders: number;
@@ -223,7 +226,7 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
                 <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, marginBottom: '4px', color: '#ffffff' }}>
                   {product.productName}
                 </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span 
                     style={{ 
                       padding: '2px 8px', 
@@ -239,6 +242,17 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
                   <span style={{ fontSize: '12px', color: '#6b7280' }}>
                     {product.sku}
                   </span>
+                  {product.options && (
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#9ca3af',
+                      backgroundColor: '#374151',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      {product.options}
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>

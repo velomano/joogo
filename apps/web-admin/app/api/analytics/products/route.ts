@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
         productName: '프리미엄 티셔츠',
         category: 'TOPS',
         sku: 'TSH-001',
+        color: '블랙',
+        size: 'L',
+        options: '블랙/L',
         revenue: Math.round(65000000 * daysDiff * 0.25), // 25%
         quantity: Math.round(1250 * daysDiff * 0.25),
         orders: Math.round(280 * daysDiff * 0.25),
@@ -37,6 +40,9 @@ export async function GET(request: NextRequest) {
         productName: '데님 팬츠',
         category: 'BOTTOMS',
         sku: 'PTS-002',
+        color: '블루',
+        size: '30',
+        options: '블루/30',
         revenue: Math.round(65000000 * daysDiff * 0.20), // 20%
         quantity: Math.round(1250 * daysDiff * 0.20),
         orders: Math.round(280 * daysDiff * 0.20),
@@ -52,6 +58,9 @@ export async function GET(request: NextRequest) {
         productName: '가디건',
         category: 'OUTER',
         sku: 'CARD-003',
+        color: '베이지',
+        size: 'M',
+        options: '베이지/M',
         revenue: Math.round(65000000 * daysDiff * 0.18), // 18%
         quantity: Math.round(1250 * daysDiff * 0.18),
         orders: Math.round(280 * daysDiff * 0.18),
@@ -67,6 +76,9 @@ export async function GET(request: NextRequest) {
         productName: '스니커즈',
         category: 'SHOES',
         sku: 'SNK-004',
+        color: '화이트',
+        size: '270',
+        options: '화이트/270',
         revenue: Math.round(65000000 * daysDiff * 0.15), // 15%
         quantity: Math.round(1250 * daysDiff * 0.15),
         orders: Math.round(280 * daysDiff * 0.15),
@@ -82,6 +94,9 @@ export async function GET(request: NextRequest) {
         productName: '백팩',
         category: 'BAGS',
         sku: 'BAG-005',
+        color: '블랙',
+        size: 'ONE',
+        options: '블랙/ONE',
         revenue: Math.round(65000000 * daysDiff * 0.12), // 12%
         quantity: Math.round(1250 * daysDiff * 0.12),
         orders: Math.round(280 * daysDiff * 0.12),
@@ -97,6 +112,9 @@ export async function GET(request: NextRequest) {
         productName: '액세서리 세트',
         category: 'ACC',
         sku: 'ACC-006',
+        color: '골드',
+        size: 'ONE',
+        options: '골드/ONE',
         revenue: Math.round(65000000 * daysDiff * 0.10), // 10%
         quantity: Math.round(1250 * daysDiff * 0.10),
         orders: Math.round(280 * daysDiff * 0.10),
