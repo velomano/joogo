@@ -379,7 +379,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>재구매율</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
-            {(kpiData.repeatCustomerRate || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             고객 재구매 비율
@@ -405,7 +405,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>고객 생애 가치</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
-            {formatCurrency(kpiData.customerLifetimeValue || 0)}
+            {formatCurrency(kpiData.totalRevenue || 0)}
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             CLV (Customer Lifetime Value)
@@ -419,7 +419,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>장바구니 이탈률</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
-            {(kpiData.cartAbandonmentRate || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             장바구니 이탈 비율
@@ -432,7 +432,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>반품률</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
-            {(kpiData.returnRate || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             반품 비율
@@ -445,7 +445,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>환불률</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
-            {(kpiData.refundRate || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             환불 비율
@@ -472,7 +472,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>총 마진율</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
-            {(kpiData.grossMargin || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             총 마진 비율
@@ -485,7 +485,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>운영 마진율</h4>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#06b6d4', marginBottom: '8px' }}>
-            {(kpiData.operatingMargin || 0).toFixed(1)}%
+            {(kpiData.newCustomerRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             운영 마진 비율

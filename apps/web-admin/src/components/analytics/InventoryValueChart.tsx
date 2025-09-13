@@ -31,8 +31,8 @@ export default function InventoryValueChart({ filters }: InventoryValueChartProp
       try {
         setLoading(true);
         const params = new URLSearchParams({
-          from: filters.from,
-          to: filters.to,
+          from: filters.from || '',
+          to: filters.to || '',
         });
 
         const response = await fetch(`/api/analytics/inventory-value?${params}`);

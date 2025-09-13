@@ -153,7 +153,7 @@ export default function OrderStatusChart({
         color: '#ffffff',
         font: {
           size: 16,
-          weight: 'bold'
+          weight: 'bold' as const
         }
       },
       tooltip: {

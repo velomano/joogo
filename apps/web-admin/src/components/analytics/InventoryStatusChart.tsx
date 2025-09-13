@@ -60,7 +60,7 @@ export default function InventoryStatusChart({ filters }: InventoryStatusChartPr
       } catch (err) {
         console.error('Error fetching inventory turnover data:', err);
         setError('재고 데이터를 불러오는 중 오류가 발생했습니다.');
-        setData([]);
+        setData(null);
       } finally {
         setLoading(false);
       }

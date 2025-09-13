@@ -179,7 +179,7 @@ export default function RegionalShippingChart({
         color: '#ffffff',
         font: {
           size: 16,
-          weight: 'bold'
+          weight: 'bold' as const
         }
       },
       tooltip: {
