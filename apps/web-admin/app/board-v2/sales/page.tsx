@@ -1,47 +1,57 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// 판매 분석 전용 컴포넌트들 - 기존 board-v2 컴포넌트 재사용
+// 지연 로딩을 위한 컴포넌트들 - ssr: false로 클라이언트에서만 로드
 const RevenueSpendChart = dynamic(() => import('../_components/RevenueSpendChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>매출/광고비 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>매출/광고비 차트 로딩 중...</div>
 });
 
 const SalesTemperatureChart = dynamic(() => import('../_components/SalesTemperatureChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>판매량/기온 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>판매량/기온 차트 로딩 중...</div>
 });
 
 const CategoryPieChart = dynamic(() => import('../_components/CategoryPieChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>카테고리 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>카테고리 차트 로딩 중...</div>
 });
 
 const RegionBarChart = dynamic(() => import('../_components/RegionBarChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>지역별 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>지역별 차트 로딩 중...</div>
 });
 
 const ParetoChart = dynamic(() => import('../_components/ParetoChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>파레토 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>파레토 차트 로딩 중...</div>
 });
 
 const SkuDetailChart = dynamic(() => import('../_components/SkuDetailChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>SKU 상세 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>SKU 상세 차트 로딩 중...</div>
 });
 
 const RankResponseChart = dynamic(() => import('../_components/RankResponseChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>순위 반응 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>순위 반응 차트 로딩 중...</div>
 });
 
 const EventImpactChart = dynamic(() => import('../_components/EventImpactChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>이벤트 임팩트 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>이벤트 임팩트 차트 로딩 중...</div>
 });
 
 const ToggleCompareChart = dynamic(() => import('../_components/ToggleCompareChart'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>토글 비교 차트 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>토글 비교 차트 로딩 중...</div>
 });
 
 const InsightCards = dynamic(() => import('../_components/InsightCards'), {
-  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>인사이트 카드 로딩 중...</div>
+  ssr: false,
+  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>인사이트 카드 로딩 중...</div>
 });
 
 export default function SalesAnalysisPage() {
@@ -204,60 +214,78 @@ export default function SalesAnalysisPage() {
             <InsightCards />
           </div>
 
-          {/* 차트 그리드 */}
+          {/* 차트 그리드 - 지연 로딩 */}
           <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: '1fr 1fr' }}>
             {/* 매출 × 광고비 × ROAS */}
             <div className="chart-container">
               <h3>매출 × 광고비 × ROAS</h3>
-              <RevenueSpendChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <RevenueSpendChart />
+              </div>
             </div>
 
             {/* 판매량 × 평균기온 */}
             <div className="chart-container">
               <h3>판매량 × 평균기온</h3>
-              <SalesTemperatureChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SalesTemperatureChart />
+              </div>
             </div>
 
             {/* 카테고리 매출 비중 */}
             <div className="chart-container">
               <h3>카테고리 매출 비중</h3>
-              <CategoryPieChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CategoryPieChart />
+              </div>
             </div>
 
             {/* 지역별 매출 */}
             <div className="chart-container">
               <h3>지역별 매출</h3>
-              <RegionBarChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <RegionBarChart />
+              </div>
             </div>
 
             {/* 파레토/ABC */}
             <div className="chart-container">
               <h3>파레토/ABC</h3>
-              <ParetoChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ParetoChart />
+              </div>
             </div>
 
             {/* 선택 SKU 상세 */}
             <div className="chart-container">
               <h3>선택 SKU 상세</h3>
-              <SkuDetailChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SkuDetailChart />
+              </div>
             </div>
 
             {/* 진열 순위 반응곡선 */}
             <div className="chart-container">
               <h3>진열 순위 반응곡선</h3>
-              <RankResponseChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <RankResponseChart />
+              </div>
             </div>
 
             {/* 이벤트 전/후 임팩트 */}
             <div className="chart-container">
               <h3>이벤트 전/후 임팩트</h3>
-              <EventImpactChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <EventImpactChart />
+              </div>
             </div>
 
             {/* 토글 비교 */}
             <div className="chart-container">
               <h3>토글 비교</h3>
-              <ToggleCompareChart />
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ToggleCompareChart />
+              </div>
             </div>
           </div>
         </section>
