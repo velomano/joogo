@@ -17,6 +17,28 @@ interface SalesKpiData {
   aovGrowth: number;
   conversionGrowth: number;
   roasGrowth: number;
+  // 추가 지표들
+  dailyAvgRevenue: number;
+  dailyAvgOrders: number;
+  dailyAvgQuantity: number;
+  peakRevenueDay: string;
+  peakRevenueAmount: number;
+  lowestRevenueDay: string;
+  lowestRevenueAmount: number;
+  repeatCustomerRate: number;
+  newCustomerRate: number;
+  customerLifetimeValue: number;
+  cartAbandonmentRate: number;
+  returnRate: number;
+  refundRate: number;
+  netRevenue: number;
+  grossMargin: number;
+  operatingMargin: number;
+  inventoryTurnover: number;
+  stockoutRate: number;
+  fulfillmentRate: number;
+  avgDeliveryTime: number;
+  customerSatisfactionScore: number;
   period: {
     from: string;
     to: string;
@@ -85,7 +107,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
           gap: '16px' 
         }}>
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 24 }).map((_, i) => (
             <div key={i} className="chart-container">
               <div className="skeleton" style={{ height: '120px' }}></div>
             </div>
@@ -297,6 +319,253 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             전월 대비
+          </div>
+        </div>
+
+        {/* 일일 평균 지표들 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📅</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>일일 평균 매출</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.dailyAvgRevenue)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            일일 평균
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📊</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>일일 평균 주문</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
+            {formatNumber(kpiData.dailyAvgOrders)}건
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            일일 평균
+          </div>
+        </div>
+
+        {/* 고객 관련 지표들 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🔄</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>재구매율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
+            {kpiData.repeatCustomerRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            고객 재구매 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>👥</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>신규 고객율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#06b6d4', marginBottom: '8px' }}>
+            {kpiData.newCustomerRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            신규 고객 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💎</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>고객 생애 가치</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.customerLifetimeValue)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            CLV (Customer Lifetime Value)
+          </div>
+        </div>
+
+        {/* 장바구니 및 반품 관련 지표들 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🛒</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>장바구니 이탈률</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {kpiData.cartAbandonmentRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            장바구니 이탈 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>↩️</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>반품률</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
+            {kpiData.returnRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            반품 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💰</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>환불률</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {kpiData.refundRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            환불 비율
+          </div>
+        </div>
+
+        {/* 수익성 지표들 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💵</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>순매출</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.netRevenue)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            반품/환불 제외
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📊</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>총 마진율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
+            {kpiData.grossMargin.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            총 마진 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>⚙️</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>운영 마진율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#06b6d4', marginBottom: '8px' }}>
+            {kpiData.operatingMargin.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            운영 마진 비율
+          </div>
+        </div>
+
+        {/* 재고 및 물류 지표들 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🔄</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>재고 회전율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {kpiData.inventoryTurnover.toFixed(1)}회
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            연간 재고 회전
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>❌</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>품절률</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {kpiData.stockoutRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            품절 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📦</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>배송 완료율</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {kpiData.fulfillmentRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            배송 완료 비율
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🚚</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>평균 배송시간</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
+            {kpiData.avgDeliveryTime.toFixed(1)}일
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            평균 배송 소요시간
+          </div>
+        </div>
+
+        {/* 고객 만족도 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>⭐</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>고객 만족도</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
+            {kpiData.customerSatisfactionScore.toFixed(1)}/5.0
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            고객 만족도 점수
+          </div>
+        </div>
+
+        {/* 최고/최저 매출일 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📈</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>최고 매출일</h4>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981', marginBottom: '4px' }}>
+            {kpiData.peakRevenueDay}
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.peakRevenueAmount)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            최고 매출 기록
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📉</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>최저 매출일</h4>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ef4444', marginBottom: '4px' }}>
+            {kpiData.lowestRevenueDay}
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.lowestRevenueAmount)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            최저 매출 기록
           </div>
         </div>
       </div>
