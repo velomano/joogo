@@ -25,6 +25,7 @@ import OutlierDetectionChart from './_components/OutlierDetectionChart';
 import ForecastChart from './_components/ForecastChart';
 import InsightCards from './_components/InsightCards';
 import ApiTestSection from './_components/ApiTestSection';
+import DataPreviewTable from './_components/DataPreviewTable';
 
 type KPI = { 
   label: string; 
@@ -856,14 +857,11 @@ export default function BoardV2Page() {
               to={to} 
             />
           </ChartPanel>
-          <DataTable 
+          <DataPreviewTable 
             title="⑲ 데이터 미리보기"
-            columns={['date', 'region', 'channel', 'sku', 'qty', 'revenue']}
-            data={[
-              ['2025-01-01', 'SEOUL', 'web', 'TOPS-001', '5', '142500'],
-              ['2025-01-02', 'SEOUL', 'web', 'TOPS-001', '7', '203700'],
-              ['2025-01-03', 'SEOUL', 'web', 'TOPS-001', '9', '261900']
-            ]}
+            from={from}
+            to={to}
+            refreshTrigger={refreshTrigger}
           />
         </section>
 
@@ -877,11 +875,13 @@ export default function BoardV2Page() {
           </ChartPanel>
           <DataTable 
             title="21 재고 소진 예상"
-            columns={['sku', 'stock_on_hand', 'avg_daily_7', 'days_of_supply', 'stockout_date']}
+            columns={['sku', 'product_name', 'options', 'stock_on_hand', 'avg_daily_7', 'days_of_supply', 'stockout_date']}
             data={[
-              ['TOPS-001', '300', '3.2', '93.8', '2025-04-15'],
-              ['BOTTOMS-002', '150', '2.1', '71.4', '2025-03-25'],
-              ['OUTER-003', '200', '1.8', '111.1', '2025-05-01']
+              ['TOPS-001', '프리미엄 후드티', '블랙/L', '300', '3.2', '93.8', '2025-04-15'],
+              ['BOTTOMS-002', '데님 스커트', '블루/28', '150', '2.1', '71.4', '2025-03-25'],
+              ['OUTER-003', '트렌치코트', '베이지/M', '200', '1.8', '111.1', '2025-05-01'],
+              ['SHOES-001', '스니커즈', '화이트/270', '80', '2.5', '32.0', '2025-02-15'],
+              ['ACC-001', '가죽 가방', '브라운', '45', '1.2', '37.5', '2025-03-01']
             ]}
           />
         </section>
@@ -897,11 +897,13 @@ export default function BoardV2Page() {
           />
           <DataTable 
             title="23 리오더/단종 제안" 
-            columns={['sku', 'avg_daily_14', 'stock_on_hand', 'lead_time_days', 'days_of_supply', 'reorder_gap_days', 'reco', 'discontinue_flag']}
+            columns={['sku', 'product_name', 'options', 'avg_daily_14', 'stock_on_hand', 'lead_time_days', 'days_of_supply', 'reorder_gap_days', 'reco', 'discontinue_flag']}
             data={[
-              ['TOPS-001', '3.2', '300', '7', '93.8', '86.8', '안정', ''],
-              ['BOTTOMS-002', '2.1', '150', '5', '71.4', '66.4', '안정', ''],
-              ['OUTER-003', '1.8', '200', '10', '111.1', '101.1', '안정', '']
+              ['TOPS-001', '프리미엄 후드티', '블랙/L', '3.2', '300', '7', '93.8', '86.8', '안정', ''],
+              ['BOTTOMS-002', '데님 스커트', '블루/28', '2.1', '150', '5', '71.4', '66.4', '안정', ''],
+              ['OUTER-003', '트렌치코트', '베이지/M', '1.8', '200', '10', '111.1', '101.1', '안정', ''],
+              ['SHOES-001', '스니커즈', '화이트/270', '2.5', '80', '14', '32.0', '18.0', '재주문', ''],
+              ['ACC-001', '가죽 가방', '브라운', '1.2', '45', '21', '37.5', '16.5', '재주문', '']
             ]}
           />
         </section>
