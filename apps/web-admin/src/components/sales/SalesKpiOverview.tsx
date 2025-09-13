@@ -136,9 +136,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
       }}>
         {/* 개별 KPI 카드들 */}
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💰</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>총 매출</h4>
-            <span style={{ fontSize: '20px' }}>💰</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
             {formatCurrency(kpiData.totalRevenue)}
@@ -157,9 +157,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📦</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>총 판매수량</h4>
-            <span style={{ fontSize: '20px' }}>📦</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
             {formatNumber(kpiData.totalQuantity)}개
@@ -178,9 +178,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🛒</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>총 주문수</h4>
-            <span style={{ fontSize: '20px' }}>🛒</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
             {formatNumber(kpiData.totalOrders)}건
@@ -199,9 +199,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💳</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>평균 주문금액</h4>
-            <span style={{ fontSize: '20px' }}>💳</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
             {formatCurrency(kpiData.avgOrderValue)}
@@ -220,9 +220,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🎯</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>전환율</h4>
-            <span style={{ fontSize: '20px' }}>🎯</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#06b6d4', marginBottom: '8px' }}>
             {kpiData.conversionRate.toFixed(1)}%
@@ -241,9 +241,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📈</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>ROAS</h4>
-            <span style={{ fontSize: '20px' }}>📈</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
             {kpiData.roas.toFixed(2)}x
@@ -265,9 +265,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📊</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>매출 성장률</h4>
-            <span style={{ fontSize: '20px' }}>📊</span>
           </div>
           <div style={{ 
             fontSize: '24px', 
@@ -283,9 +283,9 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         </div>
 
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📈</span>
             <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>주문 성장률</h4>
-            <span style={{ fontSize: '20px' }}>📈</span>
           </div>
           <div style={{ 
             fontSize: '24px', 
