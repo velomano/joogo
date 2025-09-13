@@ -36,21 +36,22 @@ interface SalesKpiCardsProps {
   refreshTrigger: number;
 }
 
-// KpiCard 컴포넌트를 함수 외부로 이동
-const KpiCard = ({ 
-  title, 
-  value, 
-  subValue, 
-  growth, 
-  icon, 
-  color = '#3b82f6' 
-}: {
+interface KpiCardProps {
   title: string;
   value: string;
   subValue?: string;
   growth?: number;
   icon: string;
   color?: string;
+}
+
+const KpiCard: React.FC<KpiCardProps> = ({ 
+  title, 
+  value, 
+  subValue, 
+  growth, 
+  icon, 
+  color = '#3b82f6' 
 }) => {
   return (
     <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
