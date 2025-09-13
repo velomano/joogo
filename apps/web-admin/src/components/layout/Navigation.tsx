@@ -8,11 +8,11 @@ export function Navigation() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/board-v2', label: '🏠 통합 대시보드' },
-    { href: '/board-v2/sales', label: '📈 판매 분석' },
-    { href: '/board-v2/inventory', label: '📦 재고 분석' },
-    { href: '/board-v2/ai', label: '🤖 AI 분석' },
-    { href: '/board-v2/help', label: '❓ 도움말' },
+    { href: '/board-v2', label: '통합 대시보드' },
+    { href: '/board-v2/sales', label: '판매 분석' },
+    { href: '/board-v2/inventory', label: '재고 분석' },
+    { href: '/board-v2/ai', label: 'AI 분석' },
+    { href: '/board-v2/help', label: '도움말' },
   ];
 
   return (
