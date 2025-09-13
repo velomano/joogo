@@ -31,7 +31,9 @@ interface InventoryAnalytics {
 
 interface InventoryStatusChartProps {
   filters: {
-    search: string;
+    search?: string;
+    from?: string;
+    to?: string;
   };
 }
 
@@ -57,73 +59,15 @@ export default function InventoryStatusChart({ filters }: InventoryStatusChartPr
         setData(result);
       } catch (err) {
         console.error('Error fetching inventory turnover data:', err);
-        setError('재고 회전율 데이터를 불러오는 중 오류가 발생했습니다.');
-        
-        // Fallback mock data
-        setData([
-          {
-            sku: 'SKU001',
-            productName: '프리미엄 티셔츠',
-            category: '의류',
-            currentStock: 150,
-            avgDailySales: 12.5,
-            turnoverRate: 3.2,
-            daysOfSupply: 12,
-            reorderPoint: 50,
-            status: 'healthy'
-          },
-          {
-            sku: 'SKU002',
-            productName: '데님 재킷',
-            category: '의류',
-            currentStock: 25,
-            avgDailySales: 8.2,
-            turnoverRate: 2.1,
-            daysOfSupply: 3,
-            reorderPoint: 30,
-            status: 'critical'
-          },
-          {
-            sku: 'SKU003',
-            productName: '운동화',
-            category: '신발',
-            currentStock: 200,
-            avgDailySales: 5.8,
-            turnoverRate: 1.1,
-            daysOfSupply: 34,
-            reorderPoint: 40,
-            status: 'overstock'
-          },
-          {
-            sku: 'SKU004',
-            productName: '가방',
-            category: '액세서리',
-            currentStock: 45,
-            avgDailySales: 6.5,
-            turnoverRate: 2.8,
-            daysOfSupply: 7,
-            reorderPoint: 25,
-            status: 'low'
-          },
-          {
-            sku: 'SKU005',
-            productName: '시계',
-            category: '액세서리',
-            currentStock: 80,
-            avgDailySales: 3.2,
-            turnoverRate: 1.5,
-            daysOfSupply: 25,
-            reorderPoint: 20,
-            status: 'healthy'
-          }
-        ]);
+        setError('재고 데이터를 불러오는 중 오류가 발생했습니다.');
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [filters.from, filters.to]);
+  }, [filters.search, filters.from, filters.to]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -158,7 +102,7 @@ export default function InventoryStatusChart({ filters }: InventoryStatusChartPr
         marginBottom: '20px'
       }}>
         <div style={{ textAlign: 'center', color: '#9ca3af' }}>
-          재고 회전율 데이터를 불러오는 중...
+          재고 데이터를 불러오는 중...
         </div>
       </div>
     );

@@ -67,7 +67,9 @@ export default function TemperatureScatterChart({
         
         if (scatterData.length === 0) {
           console.log('🌡️ TemperatureScatterChart: 산점도 데이터가 없습니다');
-          setData(null);
+          setData({
+            datasets: []
+          });
           return;
         }
         
@@ -146,19 +148,19 @@ export default function TemperatureScatterChart({
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>산점도 로딩 중...</div>
-          <div style={{ fontSize: '12px' }}>온도와 판매량 상관관계 분석 중</div>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로딩 중...</div>
+          <div style={{ fontSize: '12px' }}>데이터 없음</div>
         </div>
       </div>
     );
   }
 
-  if (!data) {
+  if (!data || (data.datasets && data.datasets.length === 0)) {
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-        <div style={{ textAlign: 'center', color: '#e25b5b' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로드 실패</div>
-          <div style={{ fontSize: '12px' }}>차트를 표시할 수 없습니다</div>
+        <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 없음</div>
+          <div style={{ fontSize: '12px' }}>온도와 판매량 데이터가 없습니다</div>
         </div>
       </div>
     );

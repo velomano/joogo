@@ -14,69 +14,6 @@ interface AdSpendData {
   cost: number;
 }
 
-// Fallback 데이터 생성 (API 실패 시) - 주간 단위로 생성
-function generateFallbackData(from: string, to: string, channel?: string): AdSpendData[] {
-  const start = new Date(from);
-  const end = new Date(to);
-  const days = Math.ceil((+end - +start) / 86400000) + 1;
-  
-  const channels = channel ? [channel] : ['naver', 'coupang', 'google', 'meta'];
-  const data: AdSpendData[] = [];
-  
-  // 시드 기반 랜덤 생성기 (일관된 데이터를 위해)
-  function seedRand(seed: number) {
-    let s = seed;
-    return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
-  }
-  
-  // 주간 단위로 광고비 생성 (매주 월요일에만 생성)
-  for (let i = 0; i < days; i++) {
-    const currentDate = new Date(+start + i * 86400000);
-    const dayOfWeek = currentDate.getDay();
-    
-    // 월요일(1)에만 광고비 데이터 생성
-    if (dayOfWeek !== 1) continue;
-    
-    // 계절별 변동 (12월, 1월에 광고비 증가)
-    const month = currentDate.getMonth();
-    const seasonalMultiplier = (month === 11 || month === 0) ? 1.3 : 1.0;
-    
-    for (const ch of channels) {
-      // 채널별 기본 광고비 (주간 단위로 증가)
-      const baseCosts = {
-        'naver': 800000,    // 주간 광고비
-        'coupang': 1200000,
-        'google': 1500000,
-        'meta': 600000
-      };
-      
-      const baseCost = baseCosts[ch as keyof typeof baseCosts] || 800000;
-      const rng = seedRand(Math.floor(i / 7) * 1000 + ch.charCodeAt(0)); // 주간 시드
-      
-      // 변동성 있는 광고비 계산 (주간 단위)
-      const randomFactor = 0.6 + rng() * 0.8; // 0.6 ~ 1.4 (더 큰 변동)
-      const cost = Math.round(
-        baseCost * randomFactor * seasonalMultiplier
-      );
-      
-      // 노출수, 클릭수 계산 (주간 단위)
-      const impressions = Math.round(cost * (60 + rng() * 40)); // 60-100 per 1원
-      const ctr = 0.008 + rng() * 0.015; // 0.8-2.3% CTR
-      const clicks = Math.round(impressions * ctr);
-      
-      data.push({
-        ts: currentDate.toISOString(),
-        channel: ch,
-        campaign_id: `CAMP-${String(Math.floor(i / 7) % 4 + 1).padStart(3, '0')}`, // 주간별 캠페인
-        impressions,
-        clicks,
-        cost
-      });
-    }
-  }
-  
-  return data;
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -85,69 +22,103 @@ export async function GET(req: NextRequest) {
     const to = searchParams.get('to') ?? '2025-12-31';
     const channel = searchParams.get('channel') ?? undefined;
     
-    console.log('Ads API 호출 (Mock 서버에서 조회):', { from, to, channel });
+    console.log('Ads API 호출 (Supabase에서 조회):', { from, to, channel });
     
-    // Mock-ads 서버에서 데이터 조회 (환경 변수 기반)
-    const mockServerUrl = process.env.MOCK_ADS_URL || process.env.ADS_BASE_URL;
+    const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00';
+    const sb = supaAdmin();
     
-    // Mock 서버 URL이 설정되지 않은 경우 Fallback 데이터 생성
-    if (!mockServerUrl) {
-      console.log('Mock 서버 URL이 설정되지 않음. Fallback 데이터 생성');
-      
-      const fallbackData = generateFallbackData(from, to, channel);
-      console.log(`Fallback으로 생성된 광고 데이터 개수: ${fallbackData.length}`);
+    // Supabase에서 광고 데이터 조회 (public.ads_data)
+    let query = sb
+      .from('ads_data')
+      .select(`
+        date,
+        channel,
+        spend,
+        impressions,
+        clicks,
+        revenue,
+        roas,
+        ctr,
+        cpc
+      `)
+      .eq('tenant_id', tenantId)
+      .gte('date', from)
+      .lte('date', to)
+      .order('date', { ascending: true });
 
-      const apiResponse = NextResponse.json(fallbackData);
-      apiResponse.headers.set('X-API-Status', 'success');
-      apiResponse.headers.set('X-Data-Source', 'fallback');
-      
-      return apiResponse;
+    // 채널 필터 적용
+    if (channel) {
+      query = query.eq('channel', channel);
     }
 
-    // Mock 서버가 설정된 경우
-    const params = new URLSearchParams({
-      from,
-      to,
-      ...(channel && { channel })
-    });
+    const { data: marketingData, error: marketingError } = await query;
     
-    const response = await fetch(`${mockServerUrl}/api/v1/ads/spend?${params}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Mock-ads 서버 오류: ${response.status}`);
+    if (marketingError) {
+      console.error('Marketing data query error:', marketingError);
+      // 데이터가 없으면 빈 배열 반환 (정상적인 상태)
+      console.log('No marketing data available - returning empty array');
+      return NextResponse.json([]);
     }
 
-    const data = await response.json();
-    const adsData = data.points || [];
+    // 일별 집계
+    const dailyData = new Map();
     
-    console.log(`Mock 서버에서 가져온 광고 데이터 개수: ${adsData.length}`);
+    marketingData?.forEach(item => {
+      const date = item.date;
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          cost: 0,
+          spend: 0,
+          impressions: 0,
+          clicks: 0,
+          revenue: 0,
+          roas: 0,
+          ctr: 0,
+          cpc: 0,
+          channels: new Set()
+        });
+      }
+      
+      const dayData = dailyData.get(date);
+      dayData.cost += item.spend || 0;
+      dayData.spend += item.spend || 0;
+      dayData.impressions += item.impressions || 0;
+      dayData.clicks += item.clicks || 0;
+      dayData.revenue += item.revenue || 0;
+      dayData.channels.add(item.channel);
+    });
+
+    // ROAS, CTR, CPC 계산
+    const result = Array.from(dailyData.values()).map(dayData => {
+      const roas = dayData.revenue > 0 && dayData.spend > 0 ? dayData.revenue / dayData.spend : 0;
+      const ctr = dayData.impressions > 0 ? (dayData.clicks / dayData.impressions) * 100 : 0;
+      const cpc = dayData.clicks > 0 ? dayData.spend / dayData.clicks : 0;
+
+      return {
+        date: dayData.date,
+        cost: Math.round(dayData.cost),
+        spend: Math.round(dayData.spend),
+        impressions: dayData.impressions,
+        clicks: dayData.clicks,
+        revenue: Math.round(dayData.revenue),
+        roas: Math.round(roas * 100) / 100,
+        ctr: Math.round(ctr * 100) / 100,
+        cpc: Math.round(cpc * 100) / 100
+      };
+    });
+    
+    console.log(`Supabase에서 가져온 광고 데이터 개수: ${result.length}`);
     
     // 응답 헤더에 상태 정보 추가
-    const apiResponse = NextResponse.json(adsData);
+    const apiResponse = NextResponse.json(result);
     apiResponse.headers.set('X-API-Status', 'success');
-    apiResponse.headers.set('X-Data-Source', 'mock-server');
+    apiResponse.headers.set('X-Data-Source', 'supabase');
     
     return apiResponse;
     
   } catch (error) {
     console.error('Ads API 오류:', error);
-    
-    // Mock 서버 오류 시 fallback 데이터
-    const fallbackData = generateFallbackData(
-      '2025-01-01',
-      '2025-01-02',
-      undefined
-    );
-    
-    const response = NextResponse.json(fallbackData);
-    response.headers.set('X-API-Status', 'fallback');
-    response.headers.set('X-Data-Source', 'fallback');
-    
-    return response;
+    return NextResponse.json([]);
   }
 }

@@ -60,7 +60,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         console.log('KpiBar 날짜 범위:', { dataStartDate, today });
         const data = await Adapters.calendarHeatmap({ from: dataStartDate, to: today }, {});
         console.log('KpiBar 캘린더 데이터:', data.length, '개');
-        const sum = data.reduce((a, b) => a + b.revenue, 0);
+      const sum = data.reduce((a, b) => a + b.revenue, 0);
         console.log('KpiBar 총 매출:', sum);
         
         // 광고비 데이터도 전체 기간으로 가져오기
@@ -87,12 +87,8 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         // 총매출 계산 (실제 데이터 + 변동성)
         const adjustedSum = Math.round(sum * totalVariation);
         
-        // 재고 및 원가 데이터 계산 (실제 데이터 기반)
-        const baseStock = 1000; // 기본 재고
-        const stockTimeVariation = Math.sin(Date.now() / 1000000) * 300; // 시간에 따른 변동 (±300)
-        const revenueFactor = Math.log(adjustedSum / 1000000 + 1) * 100; // 매출에 따른 재고 조정
-        const stockRandomFactor = (Math.random() - 0.5) * 200; // 랜덤 변동 (±100)
-        const totalStock = Math.round(Math.max(100, baseStock + stockTimeVariation + revenueFactor + stockRandomFactor));
+        // 재고 데이터는 실제 데이터베이스에서 가져오므로 0으로 설정
+        const totalStock = 0;
         
         // 원가 계산 (매출의 55-65% 사이에서 변동)
         const costRatio = 0.6 + (Math.random() - 0.5) * 0.1; // 55-65% 사이
@@ -112,7 +108,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         // 변동률 계산 (30일 전 대비)
         const revenueChange = Math.round((totalVariation - 1) * 100);
         const costChange = Math.round((costRatio - 0.6) * 100);
-        const stockChange = Math.round(stockTimeVariation + stockRandomFactor);
+        const stockChange = 0;
         
         // 판매수량 변동 계산
         const salesQuantityChange = Math.round(totalSalesQuantity * (totalVariation - 1));
@@ -174,7 +170,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
       } catch (error) {
         console.error('Failed to fetch KPI data:', error);
         // 에러 시 기본값
-        setKpis([
+      setKpis([
           { label: '총 누적매출', value: formatCurrency(0), subValue: '데이터 없음', status: 'bad' },
           { label: '총 판매수량', value: formatNumber(0), subValue: '데이터 없음', status: 'bad' },
           { label: '총 재고수량', value: formatNumber(0), subValue: '데이터 없음', status: 'bad' },
@@ -383,10 +379,10 @@ export default function BoardV2Page() {
     } catch (e: any) {
       console.error('❌ 리셋 오류:', e);
       alert(`리셋 오류: ${e?.message ?? "알 수 없는 오류"}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   return (
     <div className="wrap">
@@ -654,7 +650,7 @@ export default function BoardV2Page() {
               <strong style={{ color: '#f59e0b' }}>• 리드타임 (Lead Time):</strong><br/>
               <span style={{ marginLeft: '8px' }}>주문부터 입고까지 소요되는 시간. 재고 관리의 핵심 요소</span>
             </div>
-          </div>
+        </div>
         )}
       </aside>
 
@@ -876,13 +872,7 @@ export default function BoardV2Page() {
           <DataTable 
             title="21 재고 소진 예상"
             columns={['sku', 'product_name', 'options', 'stock_on_hand', 'avg_daily_7', 'days_of_supply', 'stockout_date']}
-            data={[
-              ['TOPS-001', '프리미엄 후드티', '블랙/L', '300', '3.2', '93.8', '2025-04-15'],
-              ['BOTTOMS-002', '데님 스커트', '블루/28', '150', '2.1', '71.4', '2025-03-25'],
-              ['OUTER-003', '트렌치코트', '베이지/M', '200', '1.8', '111.1', '2025-05-01'],
-              ['SHOES-001', '스니커즈', '화이트/270', '80', '2.5', '32.0', '2025-02-15'],
-              ['ACC-001', '가죽 가방', '브라운', '45', '1.2', '37.5', '2025-03-01']
-            ]}
+            data={[]}
           />
         </section>
 
@@ -890,21 +880,12 @@ export default function BoardV2Page() {
           <DataTable 
             title="22 캠페인 효율 요약"
             columns={['campaign', 'channel', 'impr_mkt', 'clicks_mkt', 'CTR', 'spend', 'CPC', 'revenue', 'RPC', 'ROAS']}
-            data={[
-              ['AlwaysOn', 'google', '12,000', '180', '1.50', '50,000', '277.78', '120,000', '666.67', '2.40'],
-              ['PromoPush', 'google', '8,500', '95', '1.12', '30,000', '315.79', '75,000', '789.47', '2.50']
-            ]}
+            data={[]}
           />
           <DataTable 
             title="23 리오더/단종 제안" 
             columns={['sku', 'product_name', 'options', 'avg_daily_14', 'stock_on_hand', 'lead_time_days', 'days_of_supply', 'reorder_gap_days', 'reco', 'discontinue_flag']}
-            data={[
-              ['TOPS-001', '프리미엄 후드티', '블랙/L', '3.2', '300', '7', '93.8', '86.8', '안정', ''],
-              ['BOTTOMS-002', '데님 스커트', '블루/28', '2.1', '150', '5', '71.4', '66.4', '안정', ''],
-              ['OUTER-003', '트렌치코트', '베이지/M', '1.8', '200', '10', '111.1', '101.1', '안정', ''],
-              ['SHOES-001', '스니커즈', '화이트/270', '2.5', '80', '14', '32.0', '18.0', '재주문', ''],
-              ['ACC-001', '가죽 가방', '브라운', '1.2', '45', '21', '37.5', '16.5', '재주문', '']
-            ]}
+            data={[]}
           />
         </section>
       </main>

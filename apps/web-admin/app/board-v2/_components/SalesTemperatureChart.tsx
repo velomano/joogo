@@ -168,8 +168,8 @@ export default function SalesTemperatureChart({
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>차트 데이터 로딩 중...</div>
-          <div style={{ fontSize: '12px' }}>Mock API에서 데이터를 가져오는 중</div>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로딩 중...</div>
+          <div style={{ fontSize: '12px' }}>데이터 없음</div>
         </div>
       </div>
     );

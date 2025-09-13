@@ -39,15 +39,7 @@ export default function DataPreviewTable({ title, from, to, refreshTrigger }: Da
       } catch (err) {
         console.error('Error fetching data preview:', err);
         setError('데이터를 불러오는 중 오류가 발생했습니다.');
-        // Fallback mock data
-        setData([
-          ['2025-01-01', 'SEOUL', 'web', 'TOPS-001', '프리미엄 후드티', '블랙/L', '5', '142500'],
-          ['2025-01-02', 'SEOUL', 'web', 'TOPS-001', '프리미엄 후드티', '화이트/M', '7', '203700'],
-          ['2025-01-03', 'SEOUL', 'web', 'TOPS-001', '프리미엄 후드티', '그레이/XL', '9', '261900'],
-          ['2025-01-01', 'BUSAN', 'app', 'BOTTOMS-002', '데님 스커트', '블루/28', '3', '89000'],
-          ['2025-01-02', 'BUSAN', 'app', 'BOTTOMS-002', '데님 스커트', '블루/30', '4', '118600'],
-          ['2025-01-03', 'INCHEON', 'mobile', 'SHOES-001', '스니커즈', '화이트/270', '2', '156000']
-        ]);
+        setData([]);
       } finally {
         setLoading(false);
       }

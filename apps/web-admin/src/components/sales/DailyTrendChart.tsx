@@ -35,46 +35,8 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
       setIsLoading(true);
       setError(null);
 
-      // Mock 데이터 생성
-      const fromDate = new Date(filters.from);
-      const toDate = new Date(filters.to);
-      const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      
-      const mockData: DailyTrendData[] = [];
-      
-      for (let i = 0; i < days; i++) {
-        const currentDate = new Date(fromDate);
-        currentDate.setDate(fromDate.getDate() + i);
-        
-        // 시즌성 패턴 (주말에 높은 매출, 월요일에 낮은 매출)
-        const dayOfWeek = currentDate.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const isMonday = dayOfWeek === 1;
-        
-        let baseMultiplier = 1;
-        if (isWeekend) baseMultiplier = 1.3;
-        else if (isMonday) baseMultiplier = 0.7;
-        
-        // 랜덤 변동 추가
-        const randomFactor = 0.8 + Math.random() * 0.4;
-        
-        const revenue = Math.round(2000000 * baseMultiplier * randomFactor);
-        const quantity = Math.round(40 * baseMultiplier * randomFactor);
-        const orders = Math.round(8 * baseMultiplier * randomFactor);
-        const avgOrderValue = Math.round(revenue / orders);
-        const conversionRate = 2.5 + Math.random() * 1.5;
-        
-        mockData.push({
-          date: currentDate.toISOString().split('T')[0],
-          revenue,
-          quantity,
-          orders,
-          avgOrderValue,
-          conversionRate
-        });
-      }
-      
-      setData(mockData);
+      // 데이터가 없으므로 빈 배열 설정
+      setData([]);
     } catch (err) {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
       console.error('DailyTrendChart error:', err);
@@ -135,6 +97,17 @@ export default function DailyTrendChart({ filters, refreshTrigger }: DailyTrendC
         <h3>📈 일별 추이 + 시즌성</h3>
         <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>
           {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="chart-container">
+        <h3>📈 일별 추이 + 시즌성</h3>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
+          <div>데이터 없음</div>
         </div>
       </div>
     );

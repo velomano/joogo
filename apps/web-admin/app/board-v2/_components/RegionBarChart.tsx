@@ -50,6 +50,16 @@ export default function RegionBarChart({
           }
         }
         
+        // 데이터가 없으면 빈 차트 표시
+        if (filteredData.length === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+          setLoading(false);
+          return;
+        }
+        
         // 지역별 매출 집계
         const regionMap = new Map<string, number>();
         filteredData.forEach(item => {
@@ -59,17 +69,26 @@ export default function RegionBarChart({
         
         const labels = Array.from(regionMap.keys());
         const values = Array.from(regionMap.values());
+        const total = values.reduce((sum, val) => sum + val, 0);
         
-        setData({
-          labels,
-          datasets: [{
-            label: '매출 (백만원)',
-            data: values.map(v => v / 1000000), // 백만원 단위로 변환
-            backgroundColor: '#5aa2ff',
-            borderColor: '#1b2533',
-            borderWidth: 1
-          }]
-        });
+        // 매출이 0이면 빈 차트 표시
+        if (total === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+        } else {
+          setData({
+            labels,
+            datasets: [{
+              label: '매출 (백만원)',
+              data: values.map(v => v / 1000000), // 백만원 단위로 변환
+              backgroundColor: '#5aa2ff',
+              borderColor: '#1b2533',
+              borderWidth: 1
+            }]
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
       } finally {
@@ -84,8 +103,8 @@ export default function RegionBarChart({
     return (
       <div style={{ height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>바차트 로딩 중...</div>
-          <div style={{ fontSize: '12px' }}>지역별 매출 데이터 분석 중</div>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로딩 중...</div>
+          <div style={{ fontSize: '12px' }}>데이터 없음</div>
         </div>
       </div>
     );

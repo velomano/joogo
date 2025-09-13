@@ -63,24 +63,17 @@ export default function EventImpactChart({
             eventCount: eventDates.length
           });
         } else {
-          // 이벤트가 없는 경우 - Mock 데이터로 강제 생성
-          const revenues = filteredCalendarData.map(d => d.revenue);
-          const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
-          
-          const preEvent = avgRevenue * 0.85;
-          const postEvent = avgRevenue * 1.15;
-          const diff = (postEvent - preEvent) / 1000;
-          
+          // 이벤트가 없는 경우 - 빈 데이터
           setImpactData({
-            diff: diff.toFixed(1),
-            preAvg: (preEvent / 1000).toFixed(1),
-            postAvg: (postEvent / 1000).toFixed(1),
-            tStat: 2.1,
-            df: 8.5,
-            pValue: 0.023,
-            isSignificant: true,
+            diff: '0',
+            preAvg: '0',
+            postAvg: '0',
+            tStat: '0',
+            df: '0',
+            pValue: '0',
+            isSignificant: false,
             eventCount: 0,
-            isMock: true
+            isMock: false
           });
         }
       } catch (error) {
@@ -97,8 +90,8 @@ export default function EventImpactChart({
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>이벤트 임팩트 분석 중...</div>
-          <div style={{ fontSize: '12px' }}>전후 평균 및 통계 검정 중</div>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로딩 중...</div>
+          <div style={{ fontSize: '12px' }}>데이터 없음</div>
         </div>
       </div>
     );

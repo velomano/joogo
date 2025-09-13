@@ -11,6 +11,7 @@ export function TopNavigation() {
     { href: '/board-v2', label: '🏠 통합 대시보드', key: 'dashboard' },
     { href: '/board-v2/sales', label: '📈 판매 분석', key: 'sales' },
     { href: '/board-v2/inventory', label: '📦 재고 분석', key: 'inventory' },
+    { href: '/board-v2/orders-shipping', label: '🚚 주문/배송 분석', key: 'orders-shipping' },
     { href: '/board-v2/ai', label: '🤖 AI 분석', key: 'ai' },
     { href: '/board-v2/help', label: '❓ 도움말', key: 'help' },
   ];

@@ -28,6 +28,14 @@ export default function DiscountElasticityChart({
         
         const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
         
+        // 데이터가 없으면 빈 차트 표시
+        if (calendarData.length === 0) {
+          setData({
+            datasets: []
+          });
+          return;
+        }
+        
         // 할인율과 수량 데이터 생성 (Mock)
         const discountData = calendarData.map(d => {
           const discountRate = Math.random() * 0.3; // 0-30% 할인율
@@ -102,19 +110,19 @@ export default function DiscountElasticityChart({
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
         <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>할인 탄력성 차트 로딩 중...</div>
-          <div style={{ fontSize: '12px' }}>할인율 vs log(Q+1) 분석 중</div>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로딩 중...</div>
+          <div style={{ fontSize: '12px' }}>데이터 없음</div>
         </div>
       </div>
     );
   }
 
-  if (!data) {
+  if (!data || (data.datasets && data.datasets.length === 0)) {
     return (
       <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1117', borderRadius: '8px', border: '1px solid #1d2835' }}>
-        <div style={{ textAlign: 'center', color: '#e25b5b' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 로드 실패</div>
-          <div style={{ fontSize: '12px' }}>차트를 표시할 수 없습니다</div>
+        <div style={{ textAlign: 'center', color: '#9aa0a6' }}>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>데이터 없음</div>
+          <div style={{ fontSize: '12px' }}>할인율과 수량 데이터가 없습니다</div>
         </div>
       </div>
     );

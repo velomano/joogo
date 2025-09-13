@@ -44,6 +44,7 @@ interface SalesKpiData {
   orderCancellationRate: number;
   orderRefundRate: number;
   avgOrderProcessingTime: number;
+  pendingOrders: number; // 미발송 주문수
   
   // Customer 섹션 (buyer history) 기반
   repeatOrderRate: number;
@@ -598,6 +599,20 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
             Customer buyer history
+          </div>
+        </div>
+
+        {/* 미발송 주문수 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📦</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>미발송 주문수</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {formatNumber(kpiData.pendingOrders || 0)}건
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Order 섹션
           </div>
         </div>
 

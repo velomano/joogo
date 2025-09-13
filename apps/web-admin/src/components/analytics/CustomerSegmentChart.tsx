@@ -124,7 +124,22 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
     );
   }
 
-  if (!data) return null;
+  if (!data || !data.summary) {
+    return (
+      <div className="chart-container" style={{ padding: '20px', minHeight: '400px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+          <span style={{ fontSize: '20px', marginRight: '8px' }}>👥</span>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>고객 세그먼트 분석</h3>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+            <div style={{ fontSize: '24px', marginBottom: '10px' }}>👥</div>
+            <div>데이터 없음</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const segmentColors = {
     'vip': '#8b5cf6',

@@ -17,6 +17,8 @@ interface InventoryTurnoverData {
 interface InventoryTurnoverChartProps {
   filters: {
     search?: string;
+    from?: string;
+    to?: string;
   };
 }
 
@@ -45,49 +47,14 @@ export default function InventoryTurnoverChart({ filters }: InventoryTurnoverCha
       } catch (err) {
         console.error('Error fetching inventory turnover data:', err);
         setError('재고 회전율 데이터를 불러오는 중 오류가 발생했습니다.');
-        
-        // Fallback mock data - 대규모 재고 데이터
-        const generateMockData = () => {
-          const categories = ['TOPS', 'BOTTOMS', 'SHOES', 'ACCESSORIES', 'OUTERWEAR'];
-          const products = [];
-          
-          for (let i = 1; i <= 50; i++) {
-            const category = categories[Math.floor(Math.random() * categories.length)];
-            const currentStock = Math.floor(Math.random() * 500) + 10;
-            const avgDailySales = Math.random() * 20 + 1;
-            const turnoverRate = avgDailySales * 30 / currentStock;
-            const daysOfSupply = Math.floor(currentStock / avgDailySales);
-            const reorderPoint = Math.floor(currentStock * 0.3);
-            
-            let status = 'healthy';
-            if (daysOfSupply < 3) status = 'critical';
-            else if (daysOfSupply < 7) status = 'low';
-            else if (daysOfSupply > 30) status = 'overstock';
-            
-            products.push({
-              sku: `SKU${String(i).padStart(3, '0')}`,
-              productName: `${category} 상품 ${i}번`,
-              category: category,
-              currentStock: currentStock,
-              avgDailySales: Number(avgDailySales.toFixed(1)),
-              turnoverRate: Number(turnoverRate.toFixed(1)),
-              daysOfSupply: daysOfSupply,
-              reorderPoint: reorderPoint,
-              status: status
-            });
-          }
-          
-          return products.sort((a, b) => b.turnoverRate - a.turnoverRate);
-        };
-        
-        setData(generateMockData());
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [filters.search]);
+  }, [filters.search, filters.from, filters.to]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

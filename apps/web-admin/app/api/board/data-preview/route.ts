@@ -17,53 +17,10 @@ export async function GET(req: NextRequest) {
 
     const sb = supaAdmin();
     
-    // 실제 데이터 조회 (상품명과 옵션 포함)
-    const { data: salesData, error: salesError } = await sb
-      .from('fact_sales')
-      .select(`
-        date,
-        region,
-        channel,
-        sku,
-        product_name,
-        color,
-        size,
-        qty,
-        revenue
-      `)
-      .eq('tenant_id', tenant)
-      .gte('date', from)
-      .lte('date', to)
-      .order('date', { ascending: false })
-      .limit(limit);
-
-    if (salesError) {
-      console.error('[data-preview] Sales data error:', salesError);
-      throw salesError;
-    }
-
-    // 재고 데이터 조회
-    const { data: inventoryData, error: inventoryError } = await sb
-      .from('fact_inventory')
-      .select(`
-        sku,
-        product_name,
-        color,
-        size,
-        stock_on_hand,
-        avg_daily_7,
-        days_of_supply,
-        lead_time_days,
-        reorder_gap_days
-      `)
-      .eq('tenant_id', tenant)
-      .order('stock_on_hand', { ascending: true })
-      .limit(limit);
-
-    if (inventoryError) {
-      console.error('[data-preview] Inventory data error:', inventoryError);
-      // 재고 데이터가 없어도 계속 진행
-    }
+    // 데이터가 없으므로 빈 배열 반환
+    console.log('[data-preview] No data available - returning empty arrays');
+    const salesData = [];
+    const inventoryData = [];
 
     // 데이터 포맷팅
     const formattedSalesData = salesData?.map(row => [

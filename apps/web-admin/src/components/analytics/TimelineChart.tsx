@@ -128,7 +128,22 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
     );
   }
 
-  if (!data) return null;
+  if (!data || !data.data) {
+    return (
+      <div className="chart-container" style={{ padding: '20px', minHeight: '400px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+          <span style={{ fontSize: '20px', marginRight: '8px' }}>📈</span>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>시간대별 트렌드 분석</h3>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+            <div style={{ fontSize: '24px', marginBottom: '10px' }}>📈</div>
+            <div>데이터 없음</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const granularityOptions = [
     { value: 'hour', label: '시간별' },

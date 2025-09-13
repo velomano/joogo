@@ -14,8 +14,9 @@ interface InventoryValueData {
 
 interface InventoryValueChartProps {
   filters: {
-    from: string;
-    to: string;
+    search?: string;
+    from?: string;
+    to?: string;
   };
 }
 
@@ -44,53 +45,14 @@ export default function InventoryValueChart({ filters }: InventoryValueChartProp
       } catch (err) {
         console.error('Error fetching inventory value data:', err);
         setError('재고 가치 데이터를 불러오는 중 오류가 발생했습니다.');
-        
-        // Fallback mock data
-        setData([
-          {
-            category: '의류',
-            totalValue: 125000000,
-            totalQuantity: 2500,
-            avgUnitCost: 50000,
-            turnoverRate: 3.2,
-            valueShare: 45.2,
-            growthRate: 12.5
-          },
-          {
-            category: '신발',
-            totalValue: 85000000,
-            totalQuantity: 1200,
-            avgUnitCost: 70833,
-            turnoverRate: 2.8,
-            valueShare: 30.7,
-            growthRate: 8.3
-          },
-          {
-            category: '액세서리',
-            totalValue: 45000000,
-            totalQuantity: 1800,
-            avgUnitCost: 25000,
-            turnoverRate: 4.1,
-            valueShare: 16.2,
-            growthRate: 15.7
-          },
-          {
-            category: '가방',
-            totalValue: 22000000,
-            totalQuantity: 400,
-            avgUnitCost: 55000,
-            turnoverRate: 2.1,
-            valueShare: 7.9,
-            growthRate: 5.2
-          }
-        ]);
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [filters.from, filters.to]);
+  }, [filters.search, filters.from, filters.to]);
 
   const sortedData = [...data].sort((a, b) => {
     switch (sortBy) {

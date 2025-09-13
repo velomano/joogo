@@ -50,6 +50,16 @@ export default function CategoryPieChart({
           }
         }
         
+        // 데이터가 없으면 빈 차트 표시
+        if (filteredData.length === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+          setLoading(false);
+          return;
+        }
+        
         // 카테고리별 매출 집계
         const categoryMap = new Map<string, number>();
         filteredData.forEach(item => {
@@ -61,22 +71,30 @@ export default function CategoryPieChart({
         const values = Array.from(categoryMap.values());
         const total = values.reduce((sum, val) => sum + val, 0);
         
-        setData({
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: [
-              '#5aa2ff',
-              '#2aa775',
-              '#e0a400',
-              '#e25b5b',
-              '#9aa0a6',
-              '#5aa2ff'
-            ],
-            borderColor: '#1b2533',
-            borderWidth: 1
-          }]
-        });
+        // 매출이 0이면 빈 차트 표시
+        if (total === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+        } else {
+          setData({
+            labels,
+            datasets: [{
+              data: values,
+              backgroundColor: [
+                '#5aa2ff',
+                '#2aa775',
+                '#e0a400',
+                '#e25b5b',
+                '#9aa0a6',
+                '#5aa2ff'
+              ],
+              borderColor: '#1b2533',
+              borderWidth: 1
+            }]
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
       } finally {

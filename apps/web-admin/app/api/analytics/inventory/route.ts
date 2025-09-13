@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../../src/lib/supabase/server';
+import { supaAdmin } from '../../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,46 +9,66 @@ export async function GET(request: NextRequest) {
 
     console.log('Inventory API called with search:', search);
     
-    // 실제 Supabase 판매 데이터에서 재고 정보 추출 (fact_sales 테이블 사용)
-    const { data: salesData, error: salesError } = await supabase
-      .from('fact_sales')
-      .select(`
-        sku,
-        product_name,
-        color,
-        size,
-        qty,
-        revenue
-      `)
+    // public.cafe24_products에서 재고 정보 조회
+    const sb = supaAdmin();
+    const { data: productsData, error: productsError } = await sb
+      .from('cafe24_products')
+      .select('*')
       .eq('tenant_id', tenantId)
-      .order('sku', { ascending: true });
+      .order('product_code', { ascending: true });
+
+    if (productsError) {
+      console.error('Products data error:', productsError);
+      // 데이터가 없으면 빈 배열 반환 (정상적인 상태)
+      console.log('No products data available - returning empty array');
+      return NextResponse.json({
+        success: true,
+        data: [],
+        total: 0
+      });
+    }
+
+    // 판매 데이터에서 일평균 판매량 계산
+    const { data: salesData, error: salesError } = await sb
+      .from('fact_sales')
+      .select('sku, qty, sale_date')
+      .eq('tenant_id', tenantId)
+      .gte('sale_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
     if (salesError) {
       console.error('Sales data error:', salesError);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Supabase 연결 오류: ${salesError.message}`,
-          data: []
-        },
-        { status: 500 }
-      );
     }
 
-    // 판매 데이터를 재고 형식으로 변환 (임시 재고 데이터 생성)
-    const inventoryData = (salesData || []).map(item => ({
-      sku: item.sku,
-      product_name: item.product_name,
-      color: item.color,
-      size: item.size,
-      stock_on_hand: Math.floor(Math.random() * 100) + 10, // 임시 재고 수량
-      avg_daily_7: item.qty || 0,
-      days_of_supply: Math.floor(Math.random() * 30) + 5,
-      lead_time_days: Math.floor(Math.random() * 7) + 3,
-      reorder_gap_days: Math.floor(Math.random() * 5) + 2,
-      unit_cost: Math.floor((item.revenue || 0) / (item.qty || 1)),
-      reorder_point: Math.floor(Math.random() * 20) + 5
-    }));
+    // SKU별 7일 평균 판매량 계산
+    const salesBySku = new Map();
+    salesData?.forEach(sale => {
+      if (!salesBySku.has(sale.sku)) {
+        salesBySku.set(sale.sku, { total: 0, count: 0 });
+      }
+      const skuData = salesBySku.get(sale.sku);
+      skuData.total += sale.qty || 0;
+      skuData.count += 1;
+    });
+
+    // 상품 데이터를 재고 형식으로 변환
+    const inventoryData = (productsData || []).map(product => {
+      const salesInfo = salesBySku.get(product.product_code) || { total: 0, count: 0 };
+      const avgDaily7 = salesInfo.count > 0 ? salesInfo.total / 7 : 0;
+      
+      return {
+        sku: product.product_code,
+        product_name: product.product_name,
+        color: product.color || '기본',
+        size: product.size || 'ONE',
+        stock_on_hand: product.stock_quantity || 0,
+        avg_daily_7: Math.round(avgDaily7 * 100) / 100,
+        days_of_supply: avgDaily7 > 0 ? Math.round((product.stock_quantity || 0) / avgDaily7) : 0,
+        lead_time_days: product.lead_time_days || 7,
+        reorder_gap_days: product.reorder_gap_days || 3,
+        unit_cost: product.unit_cost || 0,
+        reorder_point: product.reorder_point || 10
+      };
+    });
 
     // 검색 필터링
     let filteredData = inventoryData || [];

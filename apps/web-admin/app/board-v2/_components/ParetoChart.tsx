@@ -35,6 +35,17 @@ export default function ParetoChart({
         setLoading(true);
         const chartData = await Adapters.treemapPareto({ from, to }, { region, channel, category, sku });
         
+        // 데이터가 없으면 빈 차트 표시
+        if (chartData.length === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+          setAbcInfo('');
+          setLoading(false);
+          return;
+        }
+        
         // SKU별 매출 정렬
         const sortedData = chartData
           .sort((a, b) => b.revenue - a.revenue)
@@ -45,43 +56,53 @@ export default function ParetoChart({
         
         // 누적 비율 계산
         const total = values.reduce((sum, val) => sum + val, 0);
-        const cumulative: number[] = [];
-        let acc = 0;
-        for (let i = 0; i < values.length; i++) {
-          acc += values[i];
-          cumulative.push((acc / total) * 100);
+        
+        // 매출이 0이면 빈 차트 표시
+        if (total === 0) {
+          setData({
+            labels: [],
+            datasets: []
+          });
+          setAbcInfo('');
+        } else {
+          const cumulative: number[] = [];
+          let acc = 0;
+          for (let i = 0; i < values.length; i++) {
+            acc += values[i];
+            cumulative.push((acc / total) * 100);
+          }
+          
+          // ABC 분석
+          const aCount = cumulative.filter(c => c <= 80).length;
+          const bCount = cumulative.filter(c => c > 80 && c <= 95).length;
+          const cCount = values.length - aCount - bCount;
+          setAbcInfo(`ABC: A=${aCount}개(≈80%), B=${bCount}개(≈15%), C=${cCount}개`);
+          
+          setData({
+            labels,
+            datasets: [
+              {
+                type: 'bar',
+                label: '매출 (백만원)',
+                data: values,
+                backgroundColor: '#5aa2ff',
+                borderColor: '#1b2533',
+                borderWidth: 1,
+                yAxisID: 'y'
+              },
+              {
+                type: 'line',
+                label: '누적 비율 (%)',
+                data: cumulative,
+                borderColor: '#e25b5b',
+                backgroundColor: 'rgba(226, 91, 91, 0.1)',
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1'
+              }
+            ]
+          });
         }
-        
-        // ABC 분석
-        const aCount = cumulative.filter(c => c <= 80).length;
-        const bCount = cumulative.filter(c => c > 80 && c <= 95).length;
-        const cCount = values.length - aCount - bCount;
-        setAbcInfo(`ABC: A=${aCount}개(≈80%), B=${bCount}개(≈15%), C=${cCount}개`);
-        
-        setData({
-          labels,
-          datasets: [
-            {
-              type: 'bar',
-              label: '매출 (백만원)',
-              data: values,
-              backgroundColor: '#5aa2ff',
-              borderColor: '#1b2533',
-              borderWidth: 1,
-              yAxisID: 'y'
-            },
-            {
-              type: 'line',
-              label: '누적 비율 (%)',
-              data: cumulative,
-              borderColor: '#e25b5b',
-              backgroundColor: 'rgba(226, 91, 91, 0.1)',
-              fill: false,
-              tension: 0.4,
-              yAxisID: 'y1'
-            }
-          ]
-        });
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
       } finally {

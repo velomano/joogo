@@ -25,31 +25,17 @@ export default function RankResponseChart({
       try {
         setLoading(true);
         
-        // Mock 데이터로 순위별 판매량 생성
-        const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        const salesByRank = ranks.map(rank => {
-          // 순위가 낮을수록 판매량이 높아지는 패턴
-          const baseSales = 50 - (rank - 1) * 3;
-          const variation = Math.random() * 10 - 5; // ±5 변동
-          return Math.max(5, baseSales + variation);
-        });
-        
+        // 데이터가 없으면 빈 차트 표시
         setData({
-          labels: ranks.map(r => `순위 ${r}`),
-          datasets: [{
-            label: '평균 일판매량 (개)',
-            data: salesByRank,
-            backgroundColor: ranks.map(rank => {
-              // 순위가 낮을수록 더 진한 파란색
-              const intensity = (11 - rank) / 10;
-              return `rgba(90, 162, 255, ${0.3 + intensity * 0.7})`;
-            }),
-            borderColor: '#5aa2ff',
-            borderWidth: 1
-          }]
+          labels: [],
+          datasets: []
         });
       } catch (error) {
         console.error('Failed to fetch rank data:', error);
+        setData({
+          labels: [],
+          datasets: []
+        });
       } finally {
         setLoading(false);
       }
