@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import SalesKpiCards from '../../../src/components/sales/SalesKpiCards';
+import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
 import DailyTrendChart from '../../../src/components/sales/DailyTrendChart';
 import MonthlyComparison from '../../../src/components/sales/MonthlyComparison';
 import TimeGranularity from '../../../src/components/sales/TimeGranularity';
@@ -127,8 +127,8 @@ export default function SalesAnalysisPage() {
       <main className="main">
         <section className="panel">
           <div style={{ display: 'grid', gap: '20px' }}>
-            {/* 판매 KPI 개별 카드들 */}
-            <SalesKpiCards 
+            {/* 판매 KPI 오버뷰 */}
+            <SalesKpiOverview 
               key={`kpi-${refreshTrigger}-${Date.now()}`}
               filters={filters} 
               refreshTrigger={refreshTrigger} 
