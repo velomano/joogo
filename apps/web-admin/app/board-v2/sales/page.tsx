@@ -44,42 +44,93 @@ export default function SalesAnalysisPage() {
 
   return (
     <div className="wrap">
+      <aside className="aside">
+        <div className="panel">
+          <h2>판매 분석 페이지</h2>
+          
+          <hr className="line" />
+          <label className="muted">기간</label>
+          <div className="row" style={{ margin: '8px 0' }}>
+            <input
+              type="date"
+              value={filters.from}
+              onChange={(e) => setFilters(prev => ({ ...prev, from: e.target.value }))}
+              className="input"
+            />
+            <input
+              type="date"
+              value={filters.to}
+              onChange={(e) => setFilters(prev => ({ ...prev, to: e.target.value }))}
+              className="input"
+            />
+          </div>
+
+          <hr className="line" />
+          <label className="muted">지역</label>
+          <div className="row" style={{ margin: '8px 0' }}>
+            <select className="input" multiple>
+              <option>전체</option>
+              <option>서울</option>
+              <option>경기</option>
+              <option>인천</option>
+              <option>부산</option>
+            </select>
+          </div>
+
+          <hr className="line" />
+          <label className="muted">채널</label>
+          <div className="row" style={{ margin: '8px 0' }}>
+            <select className="input" multiple>
+              <option>전체</option>
+              <option>온라인</option>
+              <option>오프라인</option>
+              <option>모바일</option>
+            </select>
+          </div>
+
+          <hr className="line" />
+          <label className="muted">카테고리</label>
+          <div className="row" style={{ margin: '8px 0' }}>
+            <select className="input" multiple>
+              <option>전체</option>
+              <option>의류</option>
+              <option>신발</option>
+              <option>액세서리</option>
+            </select>
+          </div>
+
+          <hr className="line" />
+          <label className="muted">SKU</label>
+          <div className="row" style={{ margin: '8px 0' }}>
+            <select className="input" multiple>
+              <option>전체</option>
+              <option>SKU-001</option>
+              <option>SKU-002</option>
+              <option>SKU-003</option>
+            </select>
+          </div>
+
+          <hr className="line" />
+          <div className="row" style={{ margin: '8px 0' }}>
+            <button onClick={handleRefresh} className="btn">
+              새로고침
+            </button>
+            <button onClick={resetFilters} className="btn">
+              초기화
+            </button>
+          </div>
+        </div>
+      </aside>
+
       <main className="main">
         <section className="panel">
           <div style={{ display: 'grid', gap: '20px' }}>
-            <h1>판매 분석 페이지</h1>
-            
             {/* 판매 KPI 오버뷰 */}
             <SalesKpiOverview 
               key={`kpi-${refreshTrigger}-${Date.now()}`}
               filters={filters} 
               refreshTrigger={refreshTrigger} 
             />
-
-            {/* 간단한 필터 섹션 */}
-            <div className="chart-container">
-              <h3>필터</h3>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                <input
-                  type="date"
-                  value={filters.from}
-                  onChange={(e) => setFilters(prev => ({ ...prev, from: e.target.value }))}
-                  className="input"
-                />
-                <input
-                  type="date"
-                  value={filters.to}
-                  onChange={(e) => setFilters(prev => ({ ...prev, to: e.target.value }))}
-                  className="input"
-                />
-                <button onClick={handleRefresh} className="btn">
-                  새로고침
-                </button>
-                <button onClick={resetFilters} className="btn">
-                  초기화
-                </button>
-              </div>
-            </div>
 
             {/* 일별 추이 + 시즌성 */}
             <DailyTrendChart 
