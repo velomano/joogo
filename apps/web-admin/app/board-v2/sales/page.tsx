@@ -11,7 +11,6 @@ import CustomerSegmentChart from '../../../src/components/analytics/CustomerSegm
 import TimelineChart from '../../../src/components/analytics/TimelineChart';
 import RegionalAnalysisChart from '../../../src/components/analytics/RegionalAnalysisChart';
 import PriceRangeChart from '../../../src/components/analytics/PriceRangeChart';
-import InventoryStatusChart from '../../../src/components/analytics/InventoryStatusChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -202,11 +201,6 @@ export default function SalesAnalysisPage() {
 
         {/* 가격대별 분석 */}
         <PriceRangeChart 
-          filters={filters} 
-        />
-
-        {/* 재고 현황 */}
-        <InventoryStatusChart 
           filters={filters} 
         />
       </main>
