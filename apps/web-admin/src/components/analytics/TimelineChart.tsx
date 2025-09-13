@@ -156,10 +156,11 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
           onChange={(e) => setSelectedGranularity(e.target.value as any)}
           style={{
             padding: '8px 12px',
-            border: '1px solid #d1d5db',
+            border: '1px solid #374151',
             borderRadius: '6px',
             fontSize: '14px',
-            backgroundColor: '#ffffff'
+            backgroundColor: '#1f2937',
+            color: '#ffffff'
           }}
         >
           {granularityOptions.map(option => (
@@ -242,13 +243,13 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
 
       {/* 차트 영역 */}
       <div style={{ 
-        backgroundColor: '#ffffff', 
-        border: '1px solid #e5e7eb', 
+        backgroundColor: '#1f2937', 
+        border: '1px solid #374151', 
         borderRadius: '12px', 
         padding: '20px',
         marginBottom: '20px'
       }}>
-        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0', color: '#ffffff' }}>
           {selectedGranularity === 'hour' ? '시간별' : 
            selectedGranularity === 'day' ? '일별' : 
            selectedGranularity === 'week' ? '주별' : '월별'} 매출 트렌드
@@ -297,14 +298,14 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
 
       {/* 상세 데이터 테이블 */}
       <div style={{ 
-        backgroundColor: '#ffffff', 
-        border: '1px solid #e5e7eb', 
+        backgroundColor: '#1f2937', 
+        border: '1px solid #374151', 
         borderRadius: '12px', 
         padding: '20px',
         maxHeight: '300px',
         overflowY: 'auto'
       }}>
-        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0' }}>상세 데이터</h4>
+        <h4 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0', color: '#ffffff' }}>상세 데이터</h4>
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: selectedGranularity === 'hour' ? 

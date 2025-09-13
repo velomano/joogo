@@ -276,53 +276,53 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
               fontSize: '14px'
             }}>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>판매량</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(product.quantity)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>판매량</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatNumber(product.quantity)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>주문</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(product.orders)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>주문</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatNumber(product.orders)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>평균 가격</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatCurrency(product.avgPrice)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>평균 가격</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatCurrency(product.avgPrice)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>이익</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>이익</div>
                 <div style={{ fontWeight: 'bold', color: '#10b981' }}>
                   {formatCurrency(product.profit)}
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>마진율</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>마진율</div>
                 <div style={{ fontWeight: 'bold', color: '#10b981' }}>
                   {product.profitMargin}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>재고</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(product.stock)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>재고</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatNumber(product.stock)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>전환율</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>전환율</div>
                 <div style={{ fontWeight: 'bold', color: '#3b82f6' }}>
                   {product.conversionRate.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>반품율</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>반품율</div>
                 <div style={{ fontWeight: 'bold', color: '#ef4444' }}>
                   {product.returnRate.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>재고회전율</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>재고회전율</div>
                 <div style={{ fontWeight: 'bold', color: '#f59e0b' }}>
                   {product.inventoryTurnover}회
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>성과점수</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>성과점수</div>
                 <div style={{ fontWeight: 'bold', color: '#8b5cf6' }}>
                   {product.performanceScore}
                 </div>

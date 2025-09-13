@@ -227,33 +227,33 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
               fontSize: '14px'
             }}>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>주문</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(channel.orders)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>주문</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatNumber(channel.orders)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>방문자</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(channel.visitors)}</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>방문자</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>{formatNumber(channel.visitors)}</div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>전환율</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>전환율</div>
                 <div style={{ fontWeight: 'bold', color: '#10b981' }}>
                   {channel.conversionRate.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>ROAS</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>ROAS</div>
                 <div style={{ fontWeight: 'bold', color: '#3b82f6' }}>
                   {channel.roas.toFixed(1)}
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>평균 주문가</div>
-                <div style={{ fontWeight: 'bold', color: '#111827' }}>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>평균 주문가</div>
+                <div style={{ fontWeight: 'bold', color: '#ffffff' }}>
                   {formatCurrency(channel.avgOrderValue)}
                 </div>
               </div>
               <div>
-                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>효율성</div>
+                <div style={{ color: '#d1d5db', marginBottom: '2px', fontWeight: '500' }}>효율성</div>
                 <div style={{ fontWeight: 'bold', color: '#f59e0b' }}>
                   {channel.efficiency}
                 </div>
