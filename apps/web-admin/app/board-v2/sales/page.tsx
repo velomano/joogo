@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
+import SalesKpiCards from '../../../src/components/sales/SalesKpiCards';
 import DailyTrendChart from '../../../src/components/sales/DailyTrendChart';
+import MonthlyComparison from '../../../src/components/sales/MonthlyComparison';
+import TimeGranularity from '../../../src/components/sales/TimeGranularity';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -125,9 +127,21 @@ export default function SalesAnalysisPage() {
       <main className="main">
         <section className="panel">
           <div style={{ display: 'grid', gap: '20px' }}>
-            {/* 판매 KPI 오버뷰 */}
-            <SalesKpiOverview 
+            {/* 판매 KPI 개별 카드들 */}
+            <SalesKpiCards 
               key={`kpi-${refreshTrigger}-${Date.now()}`}
+              filters={filters} 
+              refreshTrigger={refreshTrigger} 
+            />
+
+            {/* 전월/이달 비교 */}
+            <MonthlyComparison 
+              filters={filters} 
+              refreshTrigger={refreshTrigger} 
+            />
+
+            {/* 시간별 세분화 분석 */}
+            <TimeGranularity 
               filters={filters} 
               refreshTrigger={refreshTrigger} 
             />
