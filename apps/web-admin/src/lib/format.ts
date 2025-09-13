@@ -9,6 +9,9 @@
  * @returns 포맷팅된 문자열
  */
 export function formatNumber(value: number, decimals: number = 0): string {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0';
+  }
   return value.toLocaleString('ko-KR', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
@@ -22,6 +25,9 @@ export function formatNumber(value: number, decimals: number = 0): string {
  * @returns ₩포맷팅된 문자열
  */
 export function formatCurrency(value: number, decimals: number = 0): string {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '₩0';
+  }
   return `₩${formatNumber(value, decimals)}`;
 }
 
@@ -32,6 +38,9 @@ export function formatCurrency(value: number, decimals: number = 0): string {
  * @returns %포맷팅된 문자열
  */
 export function formatPercentage(value: number, decimals: number = 1): string {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0%';
+  }
   return `${formatNumber(value, decimals)}%`;
 }
 
@@ -42,6 +51,9 @@ export function formatPercentage(value: number, decimals: number = 1): string {
  * @returns 단위가 포함된 문자열
  */
 export function formatCompact(value: number, decimals: number = 1): string {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0';
+  }
   if (value >= 1e9) {
     return `${(value / 1e9).toFixed(decimals)}B`;
   } else if (value >= 1e6) {
@@ -60,5 +72,8 @@ export function formatCompact(value: number, decimals: number = 1): string {
  * @returns ₩포맷팅된 문자열
  */
 export function formatCurrencyCompact(value: number, decimals: number = 1): string {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '₩0';
+  }
   return `₩${formatCompact(value, decimals)}`;
 }
