@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 // import { useFilters } from '@/lib/state/filters'; // 제거
 import { Adapters } from './_data/adapters';
+import { formatNumber, formatCurrency } from '../../src/lib/format';
 import SalesTemperatureChart from './_components/SalesTemperatureChart';
 import RevenueSpendChart from './_components/RevenueSpendChart';
 import CategoryPieChart from './_components/CategoryPieChart';
@@ -134,38 +135,38 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         setKpis([
           { 
             label: '총 누적매출', 
-            value: `₩${adjustedSum.toLocaleString()}`,
+            value: formatCurrency(adjustedSum),
             subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (전월 대비)`,
             status: revenueChange > 5 ? 'ok' : revenueChange > -5 ? 'warn' : 'bad'
           },
           { 
             label: '총 판매수량',
-            value: totalSalesQuantity.toLocaleString(),
-            subValue: `변동: ${salesQuantityChange > 0 ? '+' : ''}${salesQuantityChange}개 (전월 대비)`,
+            value: formatNumber(totalSalesQuantity),
+            subValue: `변동: ${salesQuantityChange > 0 ? '+' : ''}${formatNumber(salesQuantityChange)}개 (전월 대비)`,
             status: totalSalesQuantity > 1000 ? 'ok' : totalSalesQuantity > 500 ? 'warn' : 'bad'
           },
           { 
             label: '총 재고수량', 
-            value: totalStock.toLocaleString(),
-            subValue: `변동: ${stockChange > 0 ? '+' : ''}${stockChange}개 (전월 대비)`,
+            value: formatNumber(totalStock),
+            subValue: `변동: ${stockChange > 0 ? '+' : ''}${formatNumber(stockChange)}개 (전월 대비)`,
             status: totalStock > 1000 ? 'ok' : totalStock > 500 ? 'warn' : 'bad'
           },
           { 
             label: '일평균 판매수량',
-            value: avgDailySales.toLocaleString(),
-            subValue: `변동: ${avgDailySalesChange > 0 ? '+' : ''}${avgDailySalesChange}개 (전월 대비)`,
+            value: formatNumber(avgDailySales),
+            subValue: `변동: ${avgDailySalesChange > 0 ? '+' : ''}${formatNumber(avgDailySalesChange)}개 (전월 대비)`,
             status: avgDailySales > 10 ? 'ok' : avgDailySales > 5 ? 'warn' : 'bad'
           },
           { 
             label: 'ROAS', 
-            value: roas.toFixed(2),
-            subValue: `광고비: ₩${Math.round(spend).toLocaleString()}`,
+            value: formatNumber(roas, 2),
+            subValue: `광고비: ${formatCurrency(Math.round(spend))}`,
             status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
           },
           { 
             label: '이상치(일)', 
-            value: Math.max(0, Math.floor(totalRows * 0.02)).toString(),
-            subValue: `변동: ${Math.floor(Math.random() * 10) - 5}일 (전월 대비)`,
+            value: formatNumber(Math.max(0, Math.floor(totalRows * 0.02))),
+            subValue: `변동: ${formatNumber(Math.floor(Math.random() * 10) - 5)}일 (전월 대비)`,
             status: 'warn'
           }
         ]);
@@ -173,12 +174,12 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         console.error('Failed to fetch KPI data:', error);
         // 에러 시 기본값
         setKpis([
-          { label: '총 누적매출', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
-          { label: '총 판매수량', value: '0', subValue: '데이터 없음', status: 'bad' },
-          { label: '총 재고수량', value: '0', subValue: '데이터 없음', status: 'bad' },
-          { label: '일평균 판매수량', value: '0', subValue: '데이터 없음', status: 'bad' },
-          { label: 'ROAS', value: '0.00', status: 'bad' },
-          { label: '이상치(일)', value: '0', status: 'bad' }
+          { label: '총 누적매출', value: formatCurrency(0), subValue: '데이터 없음', status: 'bad' },
+          { label: '총 판매수량', value: formatNumber(0), subValue: '데이터 없음', status: 'bad' },
+          { label: '총 재고수량', value: formatNumber(0), subValue: '데이터 없음', status: 'bad' },
+          { label: '일평균 판매수량', value: formatNumber(0), subValue: '데이터 없음', status: 'bad' },
+          { label: 'ROAS', value: formatNumber(0, 2), subValue: `광고비: ${formatCurrency(0)}`, status: 'bad' },
+          { label: '이상치(일)', value: formatNumber(0), subValue: '전체 0일 중', status: 'bad' }
         ]);
       }
     })();
