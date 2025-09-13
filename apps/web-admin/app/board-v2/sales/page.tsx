@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
+import DailyTrendChart from '../../../src/components/sales/DailyTrendChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -80,13 +81,11 @@ export default function SalesAnalysisPage() {
               </div>
             </div>
 
-            {/* 플레이스홀더 섹션들 */}
-            <div className="chart-container">
-              <h3>📈 일별 추이 + 시즌성</h3>
-              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-                일별 매출/주문 추이, 이동평균, 드래그 줌 (구현 예정)
-              </div>
-            </div>
+            {/* 일별 추이 + 시즌성 */}
+            <DailyTrendChart 
+              filters={filters} 
+              refreshTrigger={refreshTrigger} 
+            />
 
             <div className="chart-container">
               <h3>📺 채널 성과/ROAS</h3>
