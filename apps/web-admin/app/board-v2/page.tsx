@@ -50,11 +50,21 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
   useEffect(() => {
     (async () => {
       try {
-      const data = await Adapters.calendarHeatmap({ from: from as string, to: to as string }, {});
-      const sum = data.reduce((a, b) => a + b.revenue, 0);
-        const spend = data.reduce((a, b) => a + (b.spend || 0), 0);
+        // 데이터 생성일부터 오늘까지의 전체 데이터 가져오기
+        const today = new Date().toISOString().split('T')[0];
+        const dataStartDate = '2024-01-01'; // 데이터 생성 시작일
+        
+        const data = await Adapters.calendarHeatmap({ from: dataStartDate, to: today }, {});
+        const sum = data.reduce((a, b) => a + b.revenue, 0);
+        
+        // 광고비 데이터도 전체 기간으로 가져오기
+        const adsData = await Adapters.ads({ from: dataStartDate, to: today }, {});
+        const spend = adsData.reduce((a, b) => a + (b.cost || b.spend || 0), 0);
         const roas = spend ? sum / spend : 0;
-        const orders = Math.round(sum / 50000);
+        
+        // 총 판매수량 계산 (매출 기반 추정)
+        const avgOrderValue = 50000; // 평균 주문 금액
+        const totalSalesQuantity = Math.round(sum / avgOrderValue);
         
         // 실제 데이터 기반 계산
         const totalRows = data.length;
@@ -80,18 +90,31 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         const costRatio = 0.6 + (Math.random() - 0.5) * 0.1; // 55-65% 사이
         const totalCost = Math.round(adjustedSum * costRatio);
         
-        // 데이터 품질 계산 (실제 데이터 기반)
-        const validRows = data.filter(d => d.revenue > 0 && d.date).length;
-        const matchRate = totalRows > 0 ? Math.round((validRows / totalRows) * 100) : 0;
-        const missingRows = totalRows - validRows;
-        const missingRate = totalRows > 0 ? Math.round((missingRows / totalRows) * 100) : 0;
-        
         // 변동률 계산
         const revenueChange = Math.round((totalVariation - 1) * 100);
         const costChange = Math.round((costRatio - 0.6) * 100);
         const stockChange = Math.round(stockTimeVariation + stockRandomFactor);
         
+        // 판매수량 변동 계산
+        const salesQuantityChange = Math.round(totalSalesQuantity * (totalVariation - 1));
+        
+        // 일평균 판매수량 계산
+        const avgDailySales = totalRows > 0 ? Math.round(totalSalesQuantity / totalRows) : 0;
+        const avgDailySalesChange = Math.round(avgDailySales * (totalVariation - 1));
+        
         setKpis([
+          { 
+            label: '총 누적매출', 
+            value: `₩${(adjustedSum / 1000000000).toFixed(1)}B`,
+            subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (${totalRows}일)`,
+            status: revenueChange > 5 ? 'ok' : revenueChange > -5 ? 'warn' : 'bad'
+          },
+          { 
+            label: '총 판매수량',
+            value: totalSalesQuantity.toLocaleString(),
+            subValue: `변동: ${salesQuantityChange > 0 ? '+' : ''}${salesQuantityChange}개`,
+            status: totalSalesQuantity > 1000 ? 'ok' : totalSalesQuantity > 500 ? 'warn' : 'bad'
+          },
           { 
             label: '총 재고수량', 
             value: totalStock.toLocaleString(),
@@ -99,28 +122,16 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
             status: totalStock > 1000 ? 'ok' : totalStock > 500 ? 'warn' : 'bad'
           },
           { 
-            label: '총 매출', 
-            value: `₩${(adjustedSum / 1000000000).toFixed(1)}B`,
-            subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (${totalRows}일)`,
-            status: revenueChange > 5 ? 'ok' : revenueChange > -5 ? 'warn' : 'bad'
-          },
-          { 
-            label: '총 원가', 
-            value: `₩${(totalCost / 1000000000).toFixed(1)}B`,
-            subValue: `비율: ${(costRatio * 100).toFixed(1)}% (${costChange > 0 ? '+' : ''}${costChange}%)`,
-            status: costRatio < 0.7 ? 'ok' : costRatio < 0.8 ? 'warn' : 'bad'
+            label: '일평균 판매수량',
+            value: avgDailySales.toLocaleString(),
+            subValue: `변동: ${avgDailySalesChange > 0 ? '+' : ''}${avgDailySalesChange}개`,
+            status: avgDailySales > 10 ? 'ok' : avgDailySales > 5 ? 'warn' : 'bad'
           },
           { 
             label: 'ROAS', 
             value: roas.toFixed(2),
             subValue: `광고비: ₩${(spend / 1000000).toFixed(1)}M`,
             status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
-          },
-          { 
-            label: '데이터 품질', 
-            value: `매칭률: ${matchRate}%`,
-            subValue: `누락: ${missingRate}% (${missingRows}행)`,
-            status: matchRate >= 95 ? 'ok' : matchRate >= 85 ? 'warn' : 'bad'
           },
           { 
             label: '이상치(일)', 
@@ -132,12 +143,12 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
       } catch (error) {
         console.error('Failed to fetch KPI data:', error);
         // 에러 시 기본값
-      setKpis([
+        setKpis([
+          { label: '총 누적매출', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
+          { label: '총 판매수량', value: '0', subValue: '데이터 없음', status: 'bad' },
           { label: '총 재고수량', value: '0', subValue: '데이터 없음', status: 'bad' },
-          { label: '총 매출', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
-          { label: '총 원가', value: '₩0.0B', subValue: '데이터 없음', status: 'bad' },
+          { label: '일평균 판매수량', value: '0', subValue: '데이터 없음', status: 'bad' },
           { label: 'ROAS', value: '0.00', status: 'bad' },
-          { label: '데이터 품질', value: '매칭률: 0%', subValue: '데이터 없음', status: 'bad' },
           { label: '이상치(일)', value: '0', status: 'bad' }
         ]);
       }
@@ -205,9 +216,13 @@ export default function BoardV2Page() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tenantId, setTenantId] = useState<string>('00000000-0000-0000-0000-000000000001');
   
-  // 필터 상태 직접 관리
-  const [from, setFrom] = useState('2025-01-01');
-  const [to, setTo] = useState('2025-12-31');
+  // 필터 상태 직접 관리 - 기본 기간을 1개월로 설정
+  const today = new Date();
+  const oneMonthAgo = new Date(today);
+  oneMonthAgo.setMonth(today.getMonth() - 1);
+  
+  const [from, setFrom] = useState(oneMonthAgo.toISOString().split('T')[0]);
+  const [to, setTo] = useState(today.toISOString().split('T')[0]);
   const [region, setRegion] = useState<string[]>([]);
   const [channel, setChannel] = useState<string[]>([]);
   const [category, setCategory] = useState<string[]>([]);
@@ -277,11 +292,15 @@ export default function BoardV2Page() {
     setTo(newTo);
   }, []);
   
-  // 리셋 함수 구현
+  // 리셋 함수 구현 - 기본 기간을 1개월로 설정
   const resetFilters = useCallback(() => {
     console.log('리셋 버튼 클릭됨');
-    setFrom('2025-01-01');
-    setTo('2025-12-31');
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    
+    setFrom(oneMonthAgo.toISOString().split('T')[0]);
+    setTo(today.toISOString().split('T')[0]);
     setRegion([]);
     setChannel([]);
     setCategory([]);

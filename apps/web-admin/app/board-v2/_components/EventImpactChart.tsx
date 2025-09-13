@@ -24,18 +24,22 @@ export default function EventImpactChart({
         // Mock 이벤트 임팩트 데이터 생성
         const calendarData = await Adapters.calendarHeatmap({ from, to }, {});
         
-        console.log('Calendar data sample:', calendarData.slice(0, 5)); // 디버깅용
-        console.log('Total calendar data:', calendarData.length); // 디버깅용
+        // 미래 데이터 필터링 - 현재 날짜까지만 표시
+        const today = new Date().toISOString().slice(0, 10);
+        const filteredCalendarData = calendarData.filter(d => d.date <= today);
+        
+        console.log('Calendar data sample:', filteredCalendarData.slice(0, 5)); // 디버깅용
+        console.log('Total calendar data:', filteredCalendarData.length); // 디버깅용
         
         // Mock API의 is_event 필드 사용 (이미 설정되어 있음)
-        const eventDates = calendarData.filter(d => d.is_event).map(d => d.date);
+        const eventDates = filteredCalendarData.filter(d => d.is_event).map(d => d.date);
         
         console.log('Event dates found:', eventDates); // 디버깅용
         console.log('Event count:', eventDates.length); // 디버깅용
         
         if (eventDates.length > 0) {
           // 실제 데이터를 기반으로 통계 계산
-          const revenues = calendarData.map(d => d.revenue);
+          const revenues = filteredCalendarData.map(d => d.revenue);
           const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
           
           // 이벤트 전후 평균 계산 (Mock)
@@ -60,7 +64,7 @@ export default function EventImpactChart({
           });
         } else {
           // 이벤트가 없는 경우 - Mock 데이터로 강제 생성
-          const revenues = calendarData.map(d => d.revenue);
+          const revenues = filteredCalendarData.map(d => d.revenue);
           const avgRevenue = revenues.reduce((sum, val) => sum + val, 0) / revenues.length;
           
           const preEvent = avgRevenue * 0.85;

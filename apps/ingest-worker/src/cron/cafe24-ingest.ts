@@ -15,26 +15,23 @@ async function fetchWeatherData(date: string) {
   const targetDate = new Date(date);
   const daysDiff = Math.ceil((today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // 최근 3일 이내가 아니면 Mock 데이터 사용
-  if (daysDiff > 3) {
+  // 기상청 API는 최근 10일만 실제 데이터, 나머지는 Mock 데이터 사용
+  if (daysDiff > 10) {
     return generateMockWeatherData(date);
   }
   
   console.log(`🌤️  기상청 API 호출: ${date}`);
   
   try {
-    // 기상청 단기예보 API 호출
+    // 기상청 기상자료개방포털 과거 데이터 API 호출
     const baseDate = date.replace(/-/g, '');
-    const baseTime = '0500'; // 5시 기준
-    const nx = '55'; // 서울시 강남구 좌표
-    const ny = '127';
-    
     const apiKey = process.env.KMA_SERVICE_KEY;
     if (!apiKey) {
       throw new Error('KMA_SERVICE_KEY 환경변수가 설정되지 않았습니다');
     }
     
-    const url = `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${apiKey}&numOfRows=1000&pageNo=1&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}&dataType=JSON`;
+    // 기상청 기상자료개방포털 - 기상관측 정보 API
+    const url = `https://apis.data.go.kr/1360000/AsosDalyInfoService/getWthrDataList?serviceKey=${apiKey}&numOfRows=10&pageNo=1&dataType=JSON&dataCd=ASOS&dateCd=DAY&startDt=${baseDate}&endDt=${baseDate}&stnIds=108`; // 108: 서울
     
     console.log(`API URL: ${url.substring(0, 100)}...`);
     
@@ -50,22 +47,22 @@ async function fetchWeatherData(date: string) {
       throw new Error(`기상청 API 응답 오류: ${data.response?.header?.resultMsg}`);
     }
     
-    // 기상청 데이터 파싱
+    // 기상청 기상관측 데이터 파싱
     const items = data.response?.body?.items?.item || [];
     let tavg = 20.0; // 기본값
     let humidity = 60; // 기본값
     let precipitation = 0; // 기본값
     
-    // TMP (기온), REH (습도), PCP (강수량) 데이터 추출
+    // 기상관측 데이터에서 평균기온, 습도, 강수량 추출
     for (const item of items) {
-      if (item.category === 'TMP' && item.fcstTime === '0600') {
-        tavg = parseFloat(item.fcstValue) || tavg;
+      if (item.ta) { // 평균기온
+        tavg = parseFloat(item.ta) || tavg;
       }
-      if (item.category === 'REH' && item.fcstTime === '0600') {
-        humidity = parseInt(item.fcstValue) || humidity;
+      if (item.hm) { // 습도
+        humidity = parseInt(item.hm) || humidity;
       }
-      if (item.category === 'PCP' && item.fcstTime === '0600') {
-        precipitation = parseFloat(item.fcstValue) || precipitation;
+      if (item.rn) { // 강수량
+        precipitation = parseFloat(item.rn) || precipitation;
       }
     }
     
@@ -74,7 +71,7 @@ async function fetchWeatherData(date: string) {
     return {
       date,
       region: 'SEOUL',
-      temperature: tavg,
+      temperature: tavg, // tavg 대신 temperature 사용 (DB 스키마에 맞춤)
       humidity,
       precipitation,
       description: precipitation > 0 ? '비' : '맑음'
@@ -95,7 +92,7 @@ async function fetchWeatherData(date: string) {
     return {
       date,
       region: 'SEOUL',
-      temperature: tavg,
+      temperature: tavg, // tavg 대신 temperature 사용 (DB 스키마에 맞춤)
       humidity: Math.round(50 + Math.random() * 30),
       precipitation: Math.round(Math.random() * 5),
       description: '맑음 (Fallback)'
@@ -126,11 +123,11 @@ function generateMockWeatherData(date: string) {
   return {
     date,
     region: 'SEOUL',
-    temperature: tavg,
+    temperature: tavg, // tavg 대신 temperature 사용 (DB 스키마에 맞춤)
     humidity: clampedHumidity,
     precipitation: Math.round(precipitation * 10) / 10,
-    description: tavg > 25 ? '맑음' : tavg > 15 ? '구름많음' : '흐림',
-    source: 'mock'
+    description: tavg > 25 ? '맑음' : tavg > 15 ? '구름많음' : '흐림'
+    // source 컬럼 제거 (DB 스키마에 없음)
   };
 }
 
@@ -479,23 +476,36 @@ export async function runCafe24Ingest() {
   try {
     console.log(`🚀 Starting ${jobName} at ${startedAt.toISOString()}`);
     
-    // 어제 데이터 수집 (실제 운영에서는 실시간 데이터)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const dateStr = yesterday.toISOString().split('T')[0];
+  // 2025년 1월 1일부터 오늘까지 모든 날짜에 대해 데이터 수집
+  const startDate = new Date('2025-01-01');
+  const endDate = new Date();
+  const allDates = [];
+  
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    allDates.push(d.toISOString().split('T')[0]);
+  }
+  
+  console.log(`📊 Processing ${allDates.length} days (2025-01-01 to today)`);
+  
+  // 이미 저장된 데이터 건너뛰기
+  console.log('⏭️ Skipping weather and sales data (already saved)');
+  const weatherCount = 0;
+  const salesCount = 0;
     
-    console.log(`📊 Fetching data for ${dateStr}`);
+  // Ads Mock 데이터 생성 및 저장
+  console.log('📢 Generating ads mock data...');
+  const allAdsData = [];
+  for (const dateStr of allDates) {
+    const adsData = await fetchAdsData(dateStr);
+    if (Array.isArray(adsData)) {
+      allAdsData.push(...adsData);
+    } else {
+      allAdsData.push(adsData);
+    }
+  }
+  const adsCount = await saveToDatabase(allAdsData, 'ads_data');
     
-    // 기상청 데이터만 실제 API 호출하여 DB에 저장
-    console.log('🌤️ Fetching weather data from KMA API...');
-    const weatherData = await fetchWeatherData(dateStr);
-    
-    // 데이터베이스에 저장
-    console.log('💾 Saving weather data to database...');
-    
-    const weatherCount = await saveToDatabase([weatherData], 'weather_data');
-    
-    totalRecords = weatherCount;
+    totalRecords = weatherCount + salesCount + adsCount;
     
     const completedAt = new Date();
     const duration = completedAt.getTime() - startedAt.getTime();

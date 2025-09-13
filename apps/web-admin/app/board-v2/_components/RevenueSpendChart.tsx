@@ -33,6 +33,8 @@ export default function RevenueSpendChart({
       try {
         setLoading(true);
         
+        console.log('💰 RevenueSpendChart: 실제 DB 데이터 조회 시작');
+        
         // 판매 데이터와 광고비 데이터를 병렬로 가져오기
         const [originalChartData, adsData] = await Promise.all([
           Adapters.calendarHeatmap(
@@ -45,43 +47,63 @@ export default function RevenueSpendChart({
           )
         ]);
         
-        // 오늘 데이터만 표시하도록 필터링
+        console.log('💰 RevenueSpendChart: DB 데이터 조회 완료', { 
+          calendar: originalChartData.length, 
+          ads: adsData.length 
+        });
+        
+        // 광고비 데이터 구조 확인
+        console.log('💰 RevenueSpendChart: 광고비 데이터 샘플', adsData.slice(0, 3));
+        console.log('💰 RevenueSpendChart: 캘린더 데이터 샘플', originalChartData.slice(0, 3));
+        
+        // 미래 데이터 필터링 - 현재 날짜까지만 표시
         const today = new Date().toISOString().slice(0, 10);
-        let chartData = originalChartData;
-        if (from === today && to === today) {
-          // 오늘 데이터만 필터링
-          const todayData = originalChartData.filter(d => d.date === today);
-          if (todayData.length === 0) {
-            // 오늘 데이터가 없으면 빈 차트 표시
-            setData({
-              labels: [],
-              datasets: []
-            });
-            setLoading(false);
-            return;
-          }
-          chartData = todayData;
+        const chartData = originalChartData.filter(d => d.date <= today);
+        
+        if (chartData.length === 0) {
+          // 데이터가 없으면 빈 차트 표시
+          setData({
+            labels: [],
+            datasets: []
+          });
+          setLoading(false);
+          return;
         }
         
         // 데이터 가공 - 날짜 범위에 따라 포맷 조정
         const dateRange = new Date(to).getTime() - new Date(from).getTime();
-        const daysDiff = Math.ceil(dateRange / (1000 * 60 * 60 * 24));
+        const daysDiff = Math.max(1, Math.ceil(dateRange / (1000 * 60 * 60 * 24))); // 최소 1일로 설정
         
         console.log('RevenueSpendChart 날짜 범위:', { from, to, daysDiff, dataLength: chartData.length });
         console.log('광고비 데이터:', adsData.length, '개');
         
         // 광고비 데이터를 날짜별로 그룹화
         const adsByDate = new Map();
+        console.log('💰 RevenueSpendChart: 광고비 데이터 첫 번째 항목 구조:', adsData[0]);
+        
         adsData.forEach((ad: any) => {
-          const date = ad.ts.split('T')[0];
+          // 날짜 필드 확인 (ts, date, created_at 등 가능)
+          const date = ad.ts ? ad.ts.split('T')[0] : 
+                      ad.date ? ad.date.split('T')[0] : 
+                      ad.created_at ? ad.created_at.split('T')[0] : 
+                      ad.timestamp ? ad.timestamp.split('T')[0] : null;
+          
+          if (!date) {
+            console.log('💰 RevenueSpendChart: 날짜 필드를 찾을 수 없음:', ad);
+            return;
+          }
+          
           if (!adsByDate.has(date)) {
             adsByDate.set(date, { cost: 0, impressions: 0, clicks: 0 });
           }
           const dayData = adsByDate.get(date);
-          dayData.cost += ad.cost;
-          dayData.impressions += ad.impressions;
-          dayData.clicks += ad.clicks;
+          dayData.cost += ad.cost || ad.spend || 0;
+          dayData.impressions += ad.impressions || 0;
+          dayData.clicks += ad.clicks || 0;
         });
+        
+        console.log('💰 RevenueSpendChart: 광고비 날짜별 그룹화 완료', adsByDate.size, '개 날짜');
+        console.log('💰 RevenueSpendChart: 광고비 날짜별 샘플', Array.from(adsByDate.entries()).slice(0, 3));
         
         let labels, revenueData, spendData, roasData;
         

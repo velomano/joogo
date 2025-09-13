@@ -24,23 +24,36 @@ export default function TemperatureBucketChart({
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('🌡️ TemperatureBucketChart: 실제 DB 데이터 조회 시작');
         
         const [calendarData, weatherData] = await Promise.all([
           Adapters.calendarHeatmap({ from, to }, {}),
-          Adapters.weather({ from, to }, { region: ['SEOUL'] }) // 서울 기준
+          Adapters.weatherData({ from, to }, 'SEOUL') // 서울 기준
         ]);
         
-        // 날짜별로 매칭하여 온도와 매출 데이터 결합
-        const weatherMap = new Map(weatherData.map(w => [w.date, w.tavg]));
+        console.log('🌡️ TemperatureBucketChart: DB 데이터 조회 완료', { 
+          calendar: calendarData.length, 
+          weather: weatherData.length 
+        });
         
-        const tempData = calendarData
+        // 날짜별로 매칭하여 온도와 매출 데이터 결합
+        const weatherMap = new Map(weatherData.map(w => [w.date, w.temperature || w.tavg])); // temperature 또는 tavg 사용
+        
+        // 미래 데이터 필터링 - 현재 날짜까지만 표시
+        const today = new Date().toISOString().slice(0, 10);
+        const filteredCalendarData = calendarData.filter(d => d.date <= today);
+        
+        const tempData = filteredCalendarData
           .map(d => {
             const tavg = weatherMap.get(d.date);
             return { temp: tavg, sales: d.revenue, date: d.date };
           })
           .filter(d => d.temp !== null && d.temp !== undefined && d.temp > -10 && d.temp < 40);
         
+        console.log('🌡️ TemperatureBucketChart: 버킷 데이터 생성 완료', tempData.length, '개');
+        
         if (tempData.length === 0) {
+          console.log('🌡️ TemperatureBucketChart: 버킷 데이터가 없습니다');
           setData(null);
           return;
         }

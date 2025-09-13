@@ -90,35 +90,16 @@ export async function GET(req: NextRequest) {
     // Mock-ads 서버에서 데이터 조회 (환경 변수 기반)
     const mockServerUrl = process.env.MOCK_ADS_URL || process.env.ADS_BASE_URL;
     
-    // Mock 서버 URL이 설정되지 않은 경우 Supabase에서 직접 조회
+    // Mock 서버 URL이 설정되지 않은 경우 Fallback 데이터 생성
     if (!mockServerUrl) {
-      console.log('Mock 서버 URL이 설정되지 않음. Supabase에서 직접 조회');
+      console.log('Mock 서버 URL이 설정되지 않음. Fallback 데이터 생성');
       
-      const { data: adsData, error } = await supaAdmin()
-        .from('ads_analysis')
-        .select('*')
-        .gte('date', from)
-        .lte('date', to)
-        .order('date', { ascending: true });
+      const fallbackData = generateFallbackData(from, to, channel);
+      console.log(`Fallback으로 생성된 광고 데이터 개수: ${fallbackData.length}`);
 
-      if (error) {
-        console.error('Supabase 조회 오류:', error);
-        throw new Error(`Supabase 오류: ${error.message}`);
-      }
-
-      const formattedData = adsData?.map(item => ({
-        date: item.date,
-        channel: item.channel || 'unknown',
-        spend: item.spend || 0,
-        impressions: item.impressions || 0,
-        clicks: item.clicks || 0
-      })) || [];
-
-      console.log(`Supabase에서 가져온 광고 데이터 개수: ${formattedData.length}`);
-
-      const apiResponse = NextResponse.json(formattedData);
+      const apiResponse = NextResponse.json(fallbackData);
       apiResponse.headers.set('X-API-Status', 'success');
-      apiResponse.headers.set('X-Data-Source', 'supabase');
+      apiResponse.headers.set('X-Data-Source', 'fallback');
       
       return apiResponse;
     }

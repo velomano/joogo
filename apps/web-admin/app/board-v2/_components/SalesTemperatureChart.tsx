@@ -39,20 +39,9 @@ export default function SalesTemperatureChart({
         );
         console.log('SalesTemperatureChart 받은 데이터 개수:', chartData.length); // 디버깅용
         
-        // 필터에 맞게 데이터 필터링
-        let filteredData = chartData;
-        
-        // 날짜 범위 필터링 (이미 API에서 처리되지만 이중 체크)
-        filteredData = filteredData.filter(d => {
-          const date = new Date(d.date);
-          return date >= new Date(from) && date <= new Date(to);
-        });
-        
-        // 오늘 데이터만 표시하도록 필터링
+        // 미래 데이터 필터링 - 현재 날짜까지만 표시
         const today = new Date().toISOString().slice(0, 10);
-        if (from === today && to === today) {
-          filteredData = filteredData.filter(d => d.date === today);
-        }
+        const filteredData = chartData.filter(d => d.date <= today);
         
         console.log('필터링 후 데이터 개수:', filteredData.length); // 디버깅용
         

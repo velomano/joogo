@@ -25,16 +25,32 @@ export default function TemperatureScatterChart({
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('🌡️ TemperatureScatterChart: 실제 DB 데이터 조회 시작');
         
         const [calendarData, weatherData] = await Promise.all([
           Adapters.calendarHeatmap({ from, to }, {}),
-          Adapters.weather({ from, to }, { region: ['SEOUL'] }) // 서울 기준
+          Adapters.weatherData({ from, to }, 'SEOUL') // 서울 기준
         ]);
         
-        // 날짜별로 매칭하여 온도와 매출 데이터 결합
-        const weatherMap = new Map(weatherData.map(w => [w.date, w.tavg]));
+        console.log('🌡️ TemperatureScatterChart: DB 데이터 조회 완료', { 
+          calendar: calendarData.length, 
+          weather: weatherData.length 
+        });
         
-        const scatterData = calendarData
+        console.log('🌡️ TemperatureScatterChart: 날씨 데이터 샘플', weatherData.slice(0, 3));
+        console.log('🌡️ TemperatureScatterChart: 캘린더 데이터 샘플', calendarData.slice(0, 3));
+        
+        // 날짜별로 매칭하여 온도와 매출 데이터 결합
+        const weatherMap = new Map(weatherData.map(w => [w.date, w.temperature || w.tavg])); // temperature 또는 tavg 사용
+        
+        console.log('🌡️ TemperatureScatterChart: 날씨 맵 생성 완료', weatherMap.size, '개');
+        console.log('🌡️ TemperatureScatterChart: 날씨 맵 샘플', Array.from(weatherMap.entries()).slice(0, 3));
+        
+        // 미래 데이터 필터링 - 현재 날짜까지만 표시
+        const today = new Date().toISOString().slice(0, 10);
+        const filteredCalendarData = calendarData.filter(d => d.date <= today);
+        
+        const scatterData = filteredCalendarData
           .map(d => {
             const tavg = weatherMap.get(d.date);
             return {
@@ -45,9 +61,11 @@ export default function TemperatureScatterChart({
           })
           .filter(d => d.x !== null && d.x !== undefined && d.x > -10 && d.x < 40);
         
-        console.log('Temperature scatter data:', scatterData.slice(0, 5)); // 디버깅용
+        console.log('🌡️ TemperatureScatterChart: 산점도 데이터 생성 완료', scatterData.length, '개');
+        console.log('🌡️ TemperatureScatterChart: 산점도 데이터 샘플', scatterData.slice(0, 3));
         
         if (scatterData.length === 0) {
+          console.log('🌡️ TemperatureScatterChart: 산점도 데이터가 없습니다');
           setData(null);
           return;
         }
