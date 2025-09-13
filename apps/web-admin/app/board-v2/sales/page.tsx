@@ -1,58 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-
-// 지연 로딩을 위한 컴포넌트들 - ssr: false로 클라이언트에서만 로드
-const RevenueSpendChart = dynamic(() => import('../_components/RevenueSpendChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>매출/광고비 차트 로딩 중...</div>
-});
-
-const SalesTemperatureChart = dynamic(() => import('../_components/SalesTemperatureChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>판매량/기온 차트 로딩 중...</div>
-});
-
-const CategoryPieChart = dynamic(() => import('../_components/CategoryPieChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>카테고리 차트 로딩 중...</div>
-});
-
-const RegionBarChart = dynamic(() => import('../_components/RegionBarChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>지역별 차트 로딩 중...</div>
-});
-
-const ParetoChart = dynamic(() => import('../_components/ParetoChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>파레토 차트 로딩 중...</div>
-});
-
-const SkuDetailChart = dynamic(() => import('../_components/SkuDetailChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>SKU 상세 차트 로딩 중...</div>
-});
-
-const RankResponseChart = dynamic(() => import('../_components/RankResponseChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>순위 반응 차트 로딩 중...</div>
-});
-
-const EventImpactChart = dynamic(() => import('../_components/EventImpactChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>이벤트 임팩트 차트 로딩 중...</div>
-});
-
-const ToggleCompareChart = dynamic(() => import('../_components/ToggleCompareChart'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>토글 비교 차트 로딩 중...</div>
-});
-
-const InsightCards = dynamic(() => import('../_components/InsightCards'), {
-  ssr: false,
-  loading: () => <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>인사이트 카드 로딩 중...</div>
-});
+import React, { useState } from 'react';
 
 export default function SalesAnalysisPage() {
   const [filters, setFilters] = useState({
@@ -209,82 +157,132 @@ export default function SalesAnalysisPage() {
 
       <main className="main">
         <section className="panel">
-          {/* 인사이트 카드 */}
-          <div className="chart-container">
-            <InsightCards />
-          </div>
-
-          {/* 차트 그리드 - 지연 로딩 */}
-          <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: '1fr 1fr' }}>
-            {/* 매출 × 광고비 × ROAS */}
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {/* 판매 KPI 오버뷰 */}
             <div className="chart-container">
-              <h3>매출 × 광고비 × ROAS</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <RevenueSpendChart />
+              <h3>📊 판매 KPI 오버뷰</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                매출, 주문수, AOV, 전환율, ROAS, 총이익률 등 핵심 판매 지표 (구현 예정)
               </div>
             </div>
 
-            {/* 판매량 × 평균기온 */}
+            {/* 일별 추이 + 시즌성 */}
             <div className="chart-container">
-              <h3>판매량 × 평균기온</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SalesTemperatureChart />
+              <h3>📈 일별 추이 + 시즌성</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                매출/주문/광고비 일별 추이 + 7일/28일 이동평균, 구간 드래그줌 (구현 예정)
               </div>
             </div>
 
-            {/* 카테고리 매출 비중 */}
+            {/* 캘린더 히트맵 */}
             <div className="chart-container">
-              <h3>카테고리 매출 비중</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CategoryPieChart />
+              <h3>📅 캘린더 히트맵</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                일매출 히트맵 + 이벤트/공휴일 오버레이, 주간 드릴다운 (구현 예정)
               </div>
             </div>
 
-            {/* 지역별 매출 */}
+            {/* 요일/시간대 패턴 */}
             <div className="chart-container">
-              <h3>지역별 매출</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <RegionBarChart />
+              <h3>⏰ 요일/시간대 패턴</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                요일 평균, 시간대 분포(Box/Bar) 분석 (구현 예정)
               </div>
             </div>
 
-            {/* 파레토/ABC */}
+            {/* 채널 성과/ROAS */}
             <div className="chart-container">
-              <h3>파레토/ABC</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ParetoChart />
+              <h3>📺 채널 성과/ROAS</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                Grouped Bar + ROAS 라인, ROAS&lt;1 경고 배지 (구현 예정)
               </div>
             </div>
 
-            {/* 선택 SKU 상세 */}
+            {/* 지역 성과 */}
             <div className="chart-container">
-              <h3>선택 SKU 상세</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SkuDetailChart />
+              <h3>🗺️ 지역 성과</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                지도/Bar, 상위 10개 지역 AOV/주문 비교 (구현 예정)
               </div>
             </div>
 
-            {/* 진열 순위 반응곡선 */}
+            {/* 카테고리·상품 파레토/ABC */}
             <div className="chart-container">
-              <h3>진열 순위 반응곡선</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <RankResponseChart />
+              <h3>📊 카테고리·상품 파레토/ABC</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                Pareto 누적, ABC 등급, 재고 컬럼 연동 (구현 예정)
               </div>
             </div>
 
-            {/* 이벤트 전/후 임팩트 */}
+            {/* 가격 탄력성 */}
             <div className="chart-container">
-              <h3>이벤트 전/후 임팩트</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <EventImpactChart />
+              <h3>💰 가격 탄력성</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                Scatter log(price) vs log(qty), 회귀선, 구간별 탄력성 카드 (구현 예정)
               </div>
             </div>
 
-            {/* 토글 비교 */}
+            {/* 캠페인/프로모션 효과 */}
             <div className="chart-container">
-              <h3>토글 비교</h3>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ToggleCompareChart />
+              <h3>🎯 캠페인/프로모션 효과</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                Before/After + Welch t-test, p-value 배지 (구현 예정)
+              </div>
+            </div>
+
+            {/* 이상치 탐지 */}
+            <div className="chart-container">
+              <h3>⚠️ 이상치 탐지</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                z-score 테이블 및 히스토그램, |z|≥2.5 기본 (구현 예정)
+              </div>
+            </div>
+
+            {/* 트래픽→주문 퍼널 */}
+            <div className="chart-container">
+              <h3>🔄 트래픽→주문 퍼널</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                Funnel 및 디바이스별 라인 (구현 예정)
+              </div>
+            </div>
+
+            {/* 날씨 상관 */}
+            <div className="chart-container">
+              <h3>🌤️ 날씨 상관</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                온도/습도 vs 매출 상관, 버킷 바 (구현 예정)
+              </div>
+            </div>
+
+            {/* 수익성 카드 */}
+            <div className="chart-container">
+              <h3>💎 수익성 카드</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                총이익, 기여이익율, 손익분기 AOV (구현 예정)
+              </div>
+            </div>
+
+            {/* OOS 영향 */}
+            <div className="chart-container">
+              <h3>📦 OOS 영향</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                stockout_days, lost_sales 추정, 재고 딥링크 (구현 예정)
+              </div>
+            </div>
+
+            {/* 알림 카드 */}
+            <div className="chart-container">
+              <h3>🔔 알림 카드</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                ROAS&lt;1, AOV 급락, 탄력성 극단 값 등 규칙 기반 (구현 예정)
+              </div>
+            </div>
+
+            {/* 내보내기/액션큐 */}
+            <div className="chart-container">
+              <h3>📤 내보내기/액션큐</h3>
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                CSV/XLSX, ActionQueue 초안으로 전송 (구현 예정)
               </div>
             </div>
           </div>
