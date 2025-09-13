@@ -159,7 +159,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
           { 
             label: 'ROAS', 
             value: roas.toFixed(2),
-            subValue: `광고비: ₩${(spend / 1000000000).toFixed(1)}B`,
+            subValue: `광고비: ₩${(spend / 1000000).toFixed(0)}M`,
             status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
           },
           { 
