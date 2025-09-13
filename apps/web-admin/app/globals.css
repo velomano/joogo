@@ -456,3 +456,19 @@ canvas {
   background: #374151 !important;
   border-color: #6b7280 !important;
 }
+
+/* Force cache invalidation for KPI grid - v2 */
+.kpi-grid-layout {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  gap: 1.5rem !important;
+}
+
+.kpi-grid-layout > div {
+  min-width: 200px !important;
+  width: 100% !important;
+  padding: 1.5rem !important;
+}

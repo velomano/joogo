@@ -101,7 +101,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
     return (
       <div className="chart-container">
         <h3>📊 판매 KPI 오버뷰</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 kpi-grid-layout">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-gray-800 rounded-lg p-6 animate-pulse">
               <div className="h-4 bg-gray-700 rounded mb-3"></div>
@@ -194,7 +194,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
         기간: {kpiData.period.from} ~ {kpiData.period.to} ({kpiData.period.days}일)
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 kpi-grid-layout">
         {kpiCards.map((kpi, index) => {
           const growthStatus = getGrowthStatus(kpi.growth);
           return (
