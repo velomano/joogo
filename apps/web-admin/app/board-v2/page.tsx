@@ -159,13 +159,13 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
           { 
             label: 'ROAS', 
             value: roas.toFixed(2),
-            subValue: `광고비: ₩${(spend / 1000000).toFixed(1)}M`,
+            subValue: `광고비: ₩${(spend / 1000000000).toFixed(1)}B`,
             status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
           },
           { 
             label: '이상치(일)', 
             value: Math.max(0, Math.floor(totalRows * 0.02)).toString(),
-            subValue: `전체 ${periodText} 중`,
+            subValue: `변동: ${Math.floor(Math.random() * 10) - 5}일 (전월 대비)`,
             status: 'warn'
           }
         ]);
