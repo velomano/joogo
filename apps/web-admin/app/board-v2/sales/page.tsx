@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
+import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverviewV2';
 
 export default function SalesAnalysisPage() {
   // 오늘 기준 한 달 전부터 오늘까지
