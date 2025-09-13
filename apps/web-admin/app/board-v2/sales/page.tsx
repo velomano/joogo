@@ -6,6 +6,7 @@ import DailyTrendChart from '../../../src/components/sales/DailyTrendChart';
 import MonthlyComparison from '../../../src/components/sales/MonthlyComparison';
 import TimeGranularity from '../../../src/components/sales/TimeGranularity';
 import ChannelPerformanceChart from '../../../src/components/analytics/ChannelPerformanceChart';
+import ProductAnalysisChart from '../../../src/components/analytics/ProductAnalysisChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -252,6 +253,11 @@ export default function SalesAnalysisPage() {
 
         {/* 채널별 성과 분석 */}
         <ChannelPerformanceChart 
+          filters={filters} 
+        />
+
+        {/* 상품별 분석 */}
+        <ProductAnalysisChart 
           filters={filters} 
         />
       </main>

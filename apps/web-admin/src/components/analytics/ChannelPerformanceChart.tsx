@@ -135,27 +135,27 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
         gap: '16px', 
         marginBottom: '24px' 
       }}>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>총 매출</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>총 매출</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
             {formatCurrency(data.summary.totalRevenue)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>총 주문</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>총 주문</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
             {formatNumber(data.summary.totalOrders)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>평균 전환율</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>평균 전환율</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
             {data.summary.avgConversionRate}%
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>평균 ROAS</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>평균 ROAS</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
             {data.summary.avgRoas}
           </div>
         </div>
@@ -194,8 +194,8 @@ export default function ChannelPerformanceChart({ filters }: ChannelPerformanceC
 
             <div style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>매출</span>
-                <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>매출</span>
+                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#111827' }}>
                   {formatCurrency(channel.revenue)}
                 </span>
               </div>
