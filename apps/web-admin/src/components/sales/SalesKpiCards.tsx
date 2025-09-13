@@ -109,35 +109,37 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
     growth?: number;
     icon: string;
     color?: string;
-  }) => (
-    <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>{title}</h4>
-        <span style={{ fontSize: '20px' }}>{icon}</span>
-      </div>
-      <div style={{ fontSize: '24px', fontWeight: 'bold', color: color, marginBottom: '8px' }}>
-        {value}
-      </div>
-      {subValue && (
-        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-          {subValue}
+  }) => {
+    return (
+      <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>{title}</h4>
+          <span style={{ fontSize: '20px' }}>{icon}</span>
         </div>
-      )}
-      {growth !== undefined && (
-        <div style={{ 
-          fontSize: '12px', 
-          color: growth >= 0 ? '#10b981' : '#ef4444',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <span>{growth >= 0 ? '↗' : '↘'}</span>
-          <span>{growth >= 0 ? '+' : ''}{growth.toFixed(1)}%</span>
-          <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+        <div style={{ fontSize: '24px', fontWeight: 'bold', color: color, marginBottom: '8px' }}>
+          {value}
         </div>
-      )}
-    </div>
-  );
+        {subValue && (
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            {subValue}
+          </div>
+        )}
+        {growth !== undefined && (
+          <div style={{ 
+            fontSize: '12px', 
+            color: growth >= 0 ? '#10b981' : '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <span>{growth >= 0 ? '↗' : '↘'}</span>
+            <span>{growth >= 0 ? '+' : ''}{growth.toFixed(1)}%</span>
+            <span style={{ color: '#6b7280' }}>(전월 대비)</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
