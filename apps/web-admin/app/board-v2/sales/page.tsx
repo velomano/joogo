@@ -9,6 +9,9 @@ import ChannelPerformanceChart from '../../../src/components/analytics/ChannelPe
 import ProductAnalysisChart from '../../../src/components/analytics/ProductAnalysisChart';
 import CustomerSegmentChart from '../../../src/components/analytics/CustomerSegmentChart';
 import TimelineChart from '../../../src/components/analytics/TimelineChart';
+import RegionalAnalysisChart from '../../../src/components/analytics/RegionalAnalysisChart';
+import PriceRangeChart from '../../../src/components/analytics/PriceRangeChart';
+import InventoryStatusChart from '../../../src/components/analytics/InventoryStatusChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -27,10 +30,6 @@ export default function SalesAnalysisPage() {
 
   const [filters, setFilters] = useState({
     ...getDefaultDateRange(),
-    region: [],
-    channel: [],
-    category: [],
-    sku: [],
   });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -41,10 +40,6 @@ export default function SalesAnalysisPage() {
   const resetFilters = () => {
     setFilters({
       ...getDefaultDateRange(),
-      region: [],
-      channel: [],
-      category: [],
-      sku: [],
     });
   };
 
@@ -152,79 +147,6 @@ export default function SalesAnalysisPage() {
             ))}
           </div>
         </div>
-        <label className="muted" style={{ marginTop: '6px' }}>지역</label>
-        <select 
-          id="regionSel" 
-          title="지역별 필터"
-          value={filters.region.length > 0 ? filters.region[0] : ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilters(prev => ({ ...prev, region: value ? [value] : [] }));
-          }}
-        >
-          <option value="">전체</option>
-          <option>SEOUL</option>
-          <option>BUSAN</option>
-          <option>INCHEON</option>
-          <option>DAEGU</option>
-          <option>GWANGJU</option>
-          <option>DAEJEON</option>
-          <option>ULSAN</option>
-          <option>GYEONGGI</option>
-          <option>GANGWON</option>
-          <option>CHUNGBUK</option>
-          <option>CHUNGNAM</option>
-          <option>JEONBUK</option>
-          <option>JEONNAM</option>
-          <option>GYEONGBUK</option>
-          <option>GYEONGNAM</option>
-          <option>JEJU</option>
-        </select>
-        <label className="muted" style={{ marginTop: '6px' }}>채널</label>
-        <select 
-          id="channelSel" 
-          title="채널 필터"
-          value={filters.channel.length > 0 ? filters.channel[0] : ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilters(prev => ({ ...prev, channel: value ? [value] : [] }));
-          }}
-        >
-          <option value="">전체</option>
-          <option>ONLINE</option>
-          <option>OFFLINE</option>
-          <option>MOBILE</option>
-        </select>
-        <label className="muted" style={{ marginTop: '6px' }}>카테고리</label>
-        <select 
-          id="categorySel" 
-          title="카테고리 필터"
-          value={filters.category.length > 0 ? filters.category[0] : ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilters(prev => ({ ...prev, category: value ? [value] : [] }));
-          }}
-        >
-          <option value="">전체</option>
-          <option>CLOTHING</option>
-          <option>SHOES</option>
-          <option>ACCESSORIES</option>
-        </select>
-        <label className="muted" style={{ marginTop: '6px' }}>SKU</label>
-        <select 
-          id="skuSel" 
-          title="SKU 필터"
-          value={filters.sku.length > 0 ? filters.sku[0] : ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilters(prev => ({ ...prev, sku: value ? [value] : [] }));
-          }}
-        >
-          <option value="">전체</option>
-          <option>SKU-001</option>
-          <option>SKU-002</option>
-          <option>SKU-003</option>
-        </select>
       </aside>
 
       <main className="main">
@@ -270,6 +192,21 @@ export default function SalesAnalysisPage() {
 
         {/* 시간대별 트렌드 분석 */}
         <TimelineChart 
+          filters={filters} 
+        />
+
+        {/* 지역별 매출 분석 */}
+        <RegionalAnalysisChart 
+          filters={filters} 
+        />
+
+        {/* 가격대별 분석 */}
+        <PriceRangeChart 
+          filters={filters} 
+        />
+
+        {/* 재고 현황 */}
+        <InventoryStatusChart 
           filters={filters} 
         />
       </main>
