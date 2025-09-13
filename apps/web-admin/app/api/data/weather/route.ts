@@ -4,6 +4,99 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
+// 지역 코드 매핑
+const REGION_CODES: { [key: string]: string } = {
+  'SEOUL': '1100000000',
+  'BUSAN': '2600000000', 
+  'DAEGU': '2700000000',
+  'INCHEON': '2800000000',
+  'GWANGJU': '2900000000',
+  'DAEJEON': '3000000000',
+  'ULSAN': '3100000000',
+  'GYEONGGI': '4100000000',
+  'GANGWON': '4200000000',
+  'CHUNGBUK': '4300000000',
+  'CHUNGNAM': '4400000000',
+  'JEONBUK': '4500000000',
+  'JEONNAM': '4600000000',
+  'GYEONGBUK': '4700000000',
+  'GYEONGNAM': '4800000000',
+  'JEJU': '5000000000'
+};
+
+// 기상청 API 호출 함수
+async function fetchWeatherData(region: string, from: string, to: string) {
+  const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+  const regionCode = REGION_CODES[region.toUpperCase()] || REGION_CODES['SEOUL'];
+  
+  // 현재 시간 기준으로 기상청 API 호출
+  const now = new Date();
+  const baseDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const baseTime = '0500'; // 5시 기준 (기상청 API 권장)
+  
+  const apiUrl = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${WEATHER_API_KEY}&numOfRows=1000&pageNo=1&base_date=${baseDate}&base_time=${baseTime}&nx=60&ny=127&dataType=JSON`;
+  
+  console.log('기상청 API 호출:', apiUrl);
+  
+  const response = await fetch(apiUrl);
+  const data = await response.json();
+  
+  if (data.response?.header?.resultCode !== '00') {
+    throw new Error(`기상청 API 오류: ${data.response?.header?.resultMsg || 'Unknown error'}`);
+  }
+  
+  const items = data.response?.body?.items?.item || [];
+  console.log(`기상청 API 응답 아이템 수: ${items.length}`);
+  
+  // 기상청 데이터를 우리 형식으로 변환
+  const weatherData = [];
+  const processedDates = new Set();
+  
+  for (const item of items) {
+    const date = item.fcstDate;
+    const time = item.fcstTime;
+    
+    if (processedDates.has(date)) continue;
+    
+    // 온도 데이터 찾기
+    const tempItem = items.find(i => i.fcstDate === date && i.fcstTime === time && i.category === 'TMP');
+    // 습도 데이터 찾기  
+    const humidityItem = items.find(i => i.fcstDate === date && i.fcstTime === time && i.category === 'REH');
+    // 강수량 데이터 찾기
+    const rainItem = items.find(i => i.fcstDate === date && i.fcstTime === time && i.category === 'PCP');
+    // 날씨 상태 데이터 찾기
+    const skyItem = items.find(i => i.fcstDate === date && i.fcstTime === time && i.category === 'SKY');
+    
+    if (tempItem) {
+      const temperature = parseFloat(tempItem.fcstValue);
+      const humidity = humidityItem ? parseInt(humidityItem.fcstValue) : 60;
+      const precipitation = rainItem ? parseFloat(rainItem.fcstValue) : 0;
+      
+      // SKY 코드를 날씨 설명으로 변환
+      let description = '맑음';
+      if (skyItem) {
+        const skyCode = skyItem.fcstValue;
+        if (skyCode === '1') description = '맑음';
+        else if (skyCode === '3') description = '구름많음';
+        else if (skyCode === '4') description = '흐림';
+      }
+      
+      weatherData.push({
+        date: `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`,
+        region: region,
+        temperature: temperature,
+        humidity: humidity,
+        precipitation: precipitation,
+        description: description
+      });
+      
+      processedDates.add(date);
+    }
+  }
+  
+  return weatherData;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -22,7 +115,7 @@ export async function GET(req: NextRequest) {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // DB에서 날씨 데이터 조회
+    // DB에서 실제 기상청 데이터 조회
     const { data, error } = await supabase
       .from('weather_data')
       .select('*')
@@ -36,7 +129,7 @@ export async function GET(req: NextRequest) {
       throw error;
     }
     
-    console.log(`가져온 날씨 데이터 개수: ${data?.length || 0}`);
+    console.log(`DB에서 가져온 실제 날씨 데이터 개수: ${data?.length || 0}`);
     
     // 응답 헤더에 상태 정보 추가
     const response = NextResponse.json(data || []);
@@ -46,9 +139,14 @@ export async function GET(req: NextRequest) {
     return response;
     
   } catch (error) {
-    console.error('Weather DB API 오류:', error);
+    console.error('Weather API 오류:', error);
     
-    // DB 오류 시 Mock 데이터로 fallback - 기온과 판매량 상관관계 반영
+    // API 오류 시 Mock 데이터로 fallback - 기온과 판매량 상관관계 반영
+    const { searchParams } = new URL(req.url);
+    const from = searchParams.get('from') ?? '2025-01-01';
+    const to = searchParams.get('to') ?? '2025-01-07';
+    const region = searchParams.get('region') ?? 'SEOUL';
+    
     const start = new Date(from);
     const end = new Date(to);
     const days = Math.ceil((+end - +start) / 86400000) + 1;
@@ -65,14 +163,22 @@ export async function GET(req: NextRequest) {
       const currentDate = new Date(+start + i * 86400000);
       const dateStr = currentDate.toISOString().split('T')[0];
       
-      // 계절성 반영한 온도 생성
+      // 계절성 반영한 온도 생성 (서울 기준)
       const dayOfYear = Math.floor((currentDate.getTime() - new Date(currentDate.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-      const baseTemp = 15; // 연평균 15도
-      const tempSeasonal = 10 * Math.sin((dayOfYear - 80) * 2 * Math.PI / 365); // 계절 변동
-      const daily = 5 * Math.sin(dayOfYear * 0.1); // 일일 변동
+      const month = currentDate.getMonth(); // 0-11
+      
+      // 현재 실제 월을 기준으로 온도 계산 (2024년 9월 기준)
+      const currentRealMonth = new Date().getMonth(); // 현재 실제 월
+      const monthDiff = month - currentRealMonth;
+      
+      // 월별 평균 온도 (서울 기준)
+      const monthlyTemps = [0, 2, 7, 14, 20, 24, 27, 28, 23, 17, 9, 3]; // 1월~12월
+      const baseTemp = monthlyTemps[currentRealMonth]; // 현재 실제 월의 온도 사용
+      
+      // 일일 변동 (더 현실적으로)
       const rng = seedRand(i * 1000);
-      const random = (rng() - 0.5) * 8; // 랜덤 변동
-      const temperature = +(baseTemp + tempSeasonal + daily + random).toFixed(1);
+      const dailyVariation = (rng() - 0.5) * 6; // ±3도 변동
+      const temperature = +(baseTemp + dailyVariation).toFixed(1);
       
       // 온도에 따른 날씨 설명
       let description = '맑음';

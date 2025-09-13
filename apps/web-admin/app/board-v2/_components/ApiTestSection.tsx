@@ -16,20 +16,18 @@ export default function ApiTestSection() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // 실제 기상청 API에서 날씨 정보 가져오기
+  // 실제 기상청 API에서 실시간 날씨 정보 가져오기
   const fetchWeatherData = useCallback(async () => {
     try {
-      // 기상청 공공데이터포털 API (실제 사용시 API 키 필요)
-      // 현재는 mock 데이터로 대체
-      const response = await fetch('/api/data/weather?from=2025-01-01&to=2025-01-07&region=SEOUL');
+      // 기상청 실시간 날씨 API 호출 (서울: nx=60, ny=127)
+      const response = await fetch('/api/weather/current?nx=60&ny=127');
       if (response.ok) {
         const data = await response.json();
-        if (data.length > 0) {
-          const latest = data[data.length - 1];
+        if (data.ok && data.T1H !== null) {
           setWeatherData({
-            temperature: Math.round(latest.temperature || 20),
-            humidity: Math.round((latest.humidity || 50) * 100),
-            description: getWeatherDescription(latest.temperature || 20),
+            temperature: Math.round(parseFloat(data.T1H)),
+            humidity: Math.round(parseFloat(data.REH || 50)),
+            description: getWeatherDescription(parseFloat(data.T1H)),
             location: '서울',
             lastUpdate: new Date().toLocaleTimeString('ko-KR', { 
               hour: '2-digit', 
@@ -39,7 +37,7 @@ export default function ApiTestSection() {
         }
       }
     } catch (error) {
-      console.error('날씨 데이터 가져오기 실패:', error);
+      console.error('실시간 날씨 데이터 가져오기 실패:', error);
     }
   }, []);
 
@@ -177,7 +175,7 @@ export default function ApiTestSection() {
 
   return (
     <div style={{ marginBottom: '20px' }}>
-      <div className="muted" style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
+      <div className="muted" style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#3b82f6', backgroundColor: '#1e40af20', padding: '4px 8px', borderRadius: '4px' }}>
         🔌 데이터 관리
       </div>
       
