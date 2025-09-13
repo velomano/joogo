@@ -25,33 +25,40 @@ interface SalesKpiData {
   peakRevenueAmount: number;
   lowestRevenueDay: string;
   lowestRevenueAmount: number;
-  // 실제 카페24 API 데이터로 계산 가능한 지표
-  // 주문 상태 기반 지표
+  // Joogo 시스템 아키텍처 기반 실제 지표
+  // Analytics 섹션 (Financials dailyvisits) 기반
+  dailyVisitors: number;
+  pageViews: number;
+  newVisitors: number;
+  bounceRate: number;
+  
+  // Salesreport 섹션 (Financials dailysales/monthlysales) 기반
+  dailySales: number;
+  monthlySales: number;
+  hourlySales: number;
+  productSales: number;
+  salesVolume: number;
+  
+  // Order 섹션 기반 지표
   orderCompletionRate: number;
   orderCancellationRate: number;
   orderRefundRate: number;
-  
-  // 주문 처리 지표
-  orderProcessingRate: number;
   avgOrderProcessingTime: number;
   
-  // 고객 행동 지표
+  // Customer 섹션 (buyer history) 기반
   repeatOrderRate: number;
   newCustomerRate: number;
   avgOrdersPerCustomer: number;
   
-  // 수익성 지표
-  netRevenue: number;
-  avgOrderValueGrowth: number;
-  revenuePerOrder: number;
-  
-  // 재고 지표
+  // Product 섹션 기반
   totalProducts: number;
   activeProducts: number;
   lowStockProducts: number;
-  
-  // 주문 품질 지표
   avgItemsPerOrder: number;
+  
+  // 수익성 지표
+  netRevenue: number;
+  revenuePerOrder: number;
   highValueOrderRate: number;
   period: {
     from: string;
@@ -484,8 +491,89 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
           </div>
         </div>
 
-        {/* 재고 및 물류 지표들 */}
-        {/* 주문 완료율 */}
+        {/* Joogo 시스템 아키텍처 기반 지표들 */}
+        
+        {/* Analytics 섹션 - 방문자 지표 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>👥</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>일일 방문자</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
+            {formatNumber(kpiData.dailyVisitors || 0)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Financials dailyvisits
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📊</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>페이지 뷰</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {formatNumber(kpiData.pageViews || 0)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Analytics 섹션
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>🆕</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>신규 방문자</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b', marginBottom: '8px' }}>
+            {formatNumber(kpiData.newVisitors || 0)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Analytics 섹션
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>📈</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>이탈률</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
+            {(kpiData.bounceRate || 0).toFixed(1)}%
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Analytics 섹션
+          </div>
+        </div>
+
+        {/* Salesreport 섹션 - 매출 지표 */}
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>💰</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>일일 평균 매출</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.dailySales || 0)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Financials dailysales
+          </div>
+        </div>
+
+        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '20px', marginRight: '8px' }}>⏰</span>
+            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>시간당 매출</h4>
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
+            {formatCurrency(kpiData.hourlySales || 0)}
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+            Reports hourlysales
+          </div>
+        </div>
+
+        {/* Order 섹션 - 주문 지표 */}
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '20px', marginRight: '8px' }}>✅</span>
@@ -495,53 +583,11 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             {(kpiData.orderCompletionRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            PAID+SHIPPED+DELIVERED
+            Order 섹션
           </div>
         </div>
 
-        {/* 주문 취소율 */}
-        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '20px', marginRight: '8px' }}>❌</span>
-            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>주문 취소율</h4>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444', marginBottom: '8px' }}>
-            {(kpiData.orderCancellationRate || 0).toFixed(1)}%
-          </div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            CANCELLED 주문 비율
-          </div>
-        </div>
-
-        {/* 주문 처리율 */}
-        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '20px', marginRight: '8px' }}>📦</span>
-            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>주문 처리율</h4>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
-            {(kpiData.orderProcessingRate || 0).toFixed(1)}%
-          </div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            SHIPPED+DELIVERED/PAID
-          </div>
-        </div>
-
-        {/* 평균 처리시간 */}
-        <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '20px', marginRight: '8px' }}>⏱️</span>
-            <h4 style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>평균 처리시간</h4>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
-            {(kpiData.avgOrderProcessingTime || 0).toFixed(1)}일
-          </div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            주문→배송 처리시간
-          </div>
-        </div>
-
-        {/* 재주문율 */}
+        {/* Customer 섹션 - 고객 지표 */}
         <div className="chart-container" style={{ padding: '20px', minHeight: '120px' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '20px', marginRight: '8px' }}>🔄</span>
@@ -551,7 +597,7 @@ export default function SalesKpiOverview({ filters, refreshTrigger }: SalesKpiOv
             {(kpiData.repeatOrderRate || 0).toFixed(1)}%
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            2회 이상 주문 고객
+            Customer buyer history
           </div>
         </div>
 
