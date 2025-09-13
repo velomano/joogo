@@ -164,6 +164,7 @@ export default function SalesAnalysisPage() {
           <div style={{ display: 'grid', gap: '20px' }}>
             {/* 판매 KPI 오버뷰 */}
             <SalesKpiOverview 
+              key={`kpi-${refreshTrigger}-${Date.now()}`}
               filters={filters} 
               refreshTrigger={refreshTrigger} 
             />
