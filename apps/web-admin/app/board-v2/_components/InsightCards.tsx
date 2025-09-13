@@ -541,7 +541,7 @@ export default function InsightCards({
                       • 총 광고비: <strong style={{ color: '#f59e0b' }}>₩{(roasData.spend / 1000000).toFixed(1)}M</strong>
                     </p>
                     <p style={{ color: '#a0aec0', fontSize: '14px', margin: '4px 0' }}>
-                      • 광고비 100만원당 <strong style={{ color: '#10b981' }}>₩{(roasData.roas * 1000000).toFixed(0)}</strong> 매출 발생
+                      • 광고비 100만원당 <strong style={{ color: '#10b981' }}>₩{(roasData.roas * 1000000).toLocaleString()}</strong> 매출 발생
                     </p>
                   </>
                 ) : (

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import SalesKpiOverview from '../../src/components/sales/SalesKpiOverview';
 
 export default function SalesAnalysisPage() {
   const [filters, setFilters] = useState({
@@ -157,14 +158,12 @@ export default function SalesAnalysisPage() {
 
       <main className="main">
         <section className="panel">
-          <div style={{ display: 'grid', gap: '20px' }}>
-            {/* 판매 KPI 오버뷰 */}
-            <div className="chart-container">
-              <h3>📊 판매 KPI 오버뷰</h3>
-              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-                매출, 주문수, AOV, 전환율, ROAS, 총이익률 등 핵심 판매 지표 (구현 예정)
-              </div>
-            </div>
+                 <div style={{ display: 'grid', gap: '20px' }}>
+                   {/* 판매 KPI 오버뷰 */}
+                   <SalesKpiOverview 
+                     filters={filters} 
+                     refreshTrigger={refreshTrigger} 
+                   />
 
             {/* 일별 추이 + 시즌성 */}
             <div className="chart-container">
