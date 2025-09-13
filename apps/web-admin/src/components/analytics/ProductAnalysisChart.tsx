@@ -172,27 +172,27 @@ export default function ProductAnalysisChart({ filters }: ProductAnalysisChartPr
         gap: '16px', 
         marginBottom: '24px' 
       }}>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>총 매출</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 매출</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatCurrency(data.summary.totalRevenue)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>총 판매량</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 판매량</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatNumber(data.summary.totalQuantity)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>총 이익</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 이익</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatCurrency(data.summary.totalProfit)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '4px', fontWeight: '500' }}>평균 마진율</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>평균 마진율</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {data.summary.totalProfitMargin}%
           </div>
         </div>
