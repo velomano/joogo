@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supaAdmin } from '../../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,23 +13,58 @@ export async function GET(request: NextRequest) {
 
     console.log('Sales KPI API called with params:', { from, to, region, channel, category, sku });
     
-    // 기간에 따른 동적 Mock 데이터 생성
+    const sb = supaAdmin();
+    const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00'; // 기본 tenant ID
+    
+    // Supabase RPC 함수를 사용하여 실제 데이터 조회
+    const [salesData, skuData] = await Promise.all([
+      sb.rpc("board_sales_daily", { 
+        p_tenant_id: tenantId,
+        p_from: from, 
+        p_to: to 
+      }),
+      sb.rpc("board_top_skus", { 
+        p_tenant_id: tenantId, 
+        p_from: from, 
+        p_to: to, 
+        p_limit: 100,
+        p_region: region,
+        p_channel: channel,
+        p_category: category,
+        p_sku: sku
+      })
+    ]);
+
+    if (salesData.error) {
+      console.error('Sales data error:', salesData.error);
+      throw salesData.error;
+    }
+    if (skuData.error) {
+      console.error('SKU data error:', skuData.error);
+      throw skuData.error;
+    }
+
+    const salesArray = salesData.data || [];
+    const skuArray = skuData.data || [];
+    
+    // 실제 데이터에서 계산
+    const totalRevenue = salesArray.reduce((sum: number, row: any) => sum + Number(row.revenue || 0), 0);
+    const totalQuantity = salesArray.reduce((sum: number, row: any) => sum + Number(row.qty || 0), 0);
+    const totalOrders = salesArray.reduce((sum: number, row: any) => sum + Number(row.orders || 0), 0);
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const conversionRate = 3.2; // 기본값 (실제 계산 로직 필요)
+    const roas = 2.8; // 기본값 (실제 계산 로직 필요)
+    const totalSpend = totalRevenue * 0.3; // 추정값
+    
+    // 기간 계산
     const fromDate = new Date(from);
     const toDate = new Date(to);
     const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // 기간별 더 세밀한 데이터 생성 (일별 기준)
-    const dailyRevenue = 65000000; // 일일 기본 매출
-    const dailyQuantity = 1250; // 일일 기본 수량
-    const dailyOrders = 280; // 일일 기본 주문수
-    const dailySpend = 23214285; // 일일 기본 광고비
-    
-    // 기간에 따른 실제 데이터 생성
-    const totalRevenue = Math.round(dailyRevenue * daysDiff);
-    const totalQuantity = Math.round(dailyQuantity * daysDiff);
-    const totalOrders = Math.round(dailyOrders * daysDiff);
-    const avgOrderValue = 232142;
-    const totalSpend = Math.round(dailySpend * daysDiff);
+    // 실제 데이터 기반 계산 (이미 위에서 계산됨)
+    const conversionRate = 3.2; // 기본값 (실제 계산 로직 필요)
+    const roas = 2.8; // 기본값 (실제 계산 로직 필요)
+    const totalSpend = totalRevenue * 0.3; // 추정값
     
     // 기간별 전월대비 성장률 (실제 비즈니스 로직에 맞게)
     let revenueGrowth, quantityGrowth, orderGrowth, aovGrowth, conversionGrowth, roasGrowth;
