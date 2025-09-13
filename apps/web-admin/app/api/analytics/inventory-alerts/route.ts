@@ -32,7 +32,14 @@ export async function GET(request: NextRequest) {
 
     if (inventoryError) {
       console.error('Inventory alerts data error:', inventoryError);
-      throw inventoryError;
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Supabase 연결 오류: ${inventoryError.message}`,
+          data: []
+        },
+        { status: 500 }
+      );
     }
 
     // 실제 데이터를 알림 형식으로 변환
