@@ -175,27 +175,27 @@ export default function TimelineChart({ filters, granularity = 'day' }: Timeline
         gap: '16px', 
         marginBottom: '24px' 
       }}>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>총 매출</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 매출</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatCurrency(data.summary.totalRevenue)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>총 주문</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 주문</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatNumber(data.summary.totalOrders)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>총 방문자</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>총 방문자</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {formatNumber(data.summary.totalVisitors)}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>평균 전환율</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ padding: '16px', backgroundColor: '#1f2937', borderRadius: '8px', border: '1px solid #374151' }}>
+          <div style={{ fontSize: '14px', color: '#d1d5db', marginBottom: '4px', fontWeight: '500' }}>평균 전환율</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffffff' }}>
             {data.summary.avgConversionRate}%
           </div>
         </div>

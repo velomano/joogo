@@ -8,6 +8,7 @@ import TimeGranularity from '../../../src/components/sales/TimeGranularity';
 import ChannelPerformanceChart from '../../../src/components/analytics/ChannelPerformanceChart';
 import ProductAnalysisChart from '../../../src/components/analytics/ProductAnalysisChart';
 import CustomerSegmentChart from '../../../src/components/analytics/CustomerSegmentChart';
+import TimelineChart from '../../../src/components/analytics/TimelineChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -264,6 +265,11 @@ export default function SalesAnalysisPage() {
 
         {/* 고객 세그먼트 분석 */}
         <CustomerSegmentChart 
+          filters={filters} 
+        />
+
+        {/* 시간대별 트렌드 분석 */}
+        <TimelineChart 
           filters={filters} 
         />
       </main>

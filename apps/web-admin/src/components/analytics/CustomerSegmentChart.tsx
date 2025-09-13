@@ -239,7 +239,7 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
                 <h4 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, marginBottom: '4px' }}>
                   {segment.name}
                 </h4>
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>
                   {segment.description}
                 </p>
               </div>
@@ -297,52 +297,52 @@ export default function CustomerSegmentChart({ filters }: CustomerSegmentChartPr
               fontSize: '14px'
             }}>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>고객수</div>
-                <div style={{ fontWeight: 'bold' }}>{formatNumber(segment.customerCount)}</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>고객수</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(segment.customerCount)}</div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>매출</div>
-                <div style={{ fontWeight: 'bold' }}>{formatCurrency(segment.revenue)}</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>매출</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatCurrency(segment.revenue)}</div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>주문</div>
-                <div style={{ fontWeight: 'bold' }}>{formatNumber(segment.orders)}</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>주문</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatNumber(segment.orders)}</div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>평균 주문가</div>
-                <div style={{ fontWeight: 'bold' }}>{formatCurrency(segment.avgOrderValue)}</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>평균 주문가</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>{formatCurrency(segment.avgOrderValue)}</div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>LTV</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>LTV</div>
                 <div style={{ fontWeight: 'bold', color: '#10b981' }}>
                   {formatCurrency(segment.lifetimeValue)}
                 </div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>월 주문수</div>
-                <div style={{ fontWeight: 'bold' }}>{segment.avgOrdersPerMonth}회</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>월 주문수</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>{segment.avgOrdersPerMonth}회</div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>유지율</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>유지율</div>
                 <div style={{ fontWeight: 'bold', color: '#3b82f6' }}>
                   {segment.retentionRate.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>추천율</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>추천율</div>
                 <div style={{ fontWeight: 'bold', color: '#8b5cf6' }}>
                   {segment.referralRate.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>만족도</div>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>만족도</div>
                 <div style={{ fontWeight: 'bold', color: '#f59e0b' }}>
                   {segment.satisfactionScore.toFixed(1)}/5.0
                 </div>
               </div>
               <div>
-                <div style={{ color: '#6b7280', marginBottom: '2px' }}>고객당 매출</div>
-                <div style={{ fontWeight: 'bold' }}>
+                <div style={{ color: '#9ca3af', marginBottom: '2px', fontWeight: '500' }}>고객당 매출</div>
+                <div style={{ fontWeight: 'bold', color: '#111827' }}>
                   {formatCurrency(segment.revenuePerCustomer)}
                 </div>
               </div>
