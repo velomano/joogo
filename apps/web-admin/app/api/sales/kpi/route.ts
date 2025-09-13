@@ -47,6 +47,11 @@ export async function GET(request: NextRequest) {
     const salesArray = salesData.data || [];
     const skuArray = skuData.data || [];
     
+    // 기간 계산 (먼저 계산)
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
     // 실제 데이터에서 계산
     let totalRevenue = salesArray.reduce((sum: number, row: any) => sum + Number(row.revenue || 0), 0);
     let totalQuantity = salesArray.reduce((sum: number, row: any) => sum + Number(row.qty || 0), 0);
@@ -65,11 +70,6 @@ export async function GET(request: NextRequest) {
     const conversionRate = 3.2; // 기본값 (실제 계산 로직 필요)
     const roas = 2.8; // 기본값 (실제 계산 로직 필요)
     const totalSpend = totalRevenue * 0.3; // 추정값
-    
-    // 기간 계산
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     // 실제 데이터 기반 계산 (이미 위에서 계산됨)
     
