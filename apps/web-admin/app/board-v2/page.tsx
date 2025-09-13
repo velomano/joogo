@@ -134,7 +134,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
         setKpis([
           { 
             label: '총 누적매출', 
-            value: `₩${(adjustedSum / 1000000000).toFixed(1)}B`,
+            value: `₩${adjustedSum.toLocaleString()}`,
             subValue: `변동: ${revenueChange > 0 ? '+' : ''}${revenueChange}% (전월 대비)`,
             status: revenueChange > 5 ? 'ok' : revenueChange > -5 ? 'warn' : 'bad'
           },
@@ -159,7 +159,7 @@ function KpiBar({ from, to, refreshTrigger }: { from: string; to: string; refres
           { 
             label: 'ROAS', 
             value: roas.toFixed(2),
-            subValue: `광고비: ₩${(spend / 1000000).toFixed(0)}M`,
+            subValue: `광고비: ₩${Math.round(spend).toLocaleString()}`,
             status: roas > 2 ? 'ok' : roas > 1 ? 'warn' : 'bad'
           },
           { 
