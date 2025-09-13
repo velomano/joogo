@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
+import { GridLayout, GridItem } from '../../../components/dashboard/GridLayout';
 import { useFilters } from '../../../hooks/useFilters';
 
 // Dynamic imports for better performance
@@ -174,42 +175,42 @@ export default function AIAnalysisPage() {
       filters={filtersComponent}
       actions={actionsComponent}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', height: 'calc(100vh - 200px)' }}>
+      <GridLayout page="ai">
         {/* 좌측: AI 쿼리 인터페이스 */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <GridItem id="query">
           <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🤖 AI 질문</h3>
           <AIQueryInterface 
             onQuery={handleAIQuery}
             isLoading={isLoading}
             filters={filters}
           />
-        </div>
+        </GridItem>
 
         {/* 중앙: 결과 표시 */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <GridItem id="results">
           <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📊 분석 결과</h3>
           <AIResultsDisplay 
             results={results}
             isLoading={isLoading}
           />
-        </div>
+        </GridItem>
 
         {/* 우측: 증거 패널 */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <GridItem id="evidence">
           <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🔍 증거</h3>
           <AIEvidencePanel 
             evidence={evidence}
           />
-        </div>
-      </div>
+        </GridItem>
 
-      {/* 하단: 액션 큐 */}
-      <div style={{ marginTop: '20px' }}>
-        <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>⚡ 액션 큐</h3>
-        <AIActionQueue 
-          results={results}
-        />
-      </div>
+        {/* 하단: 액션 큐 */}
+        <GridItem id="actions">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>⚡ 액션 큐</h3>
+          <AIActionQueue 
+            results={results}
+          />
+        </GridItem>
+      </GridLayout>
     </DashboardLayout>
   );
 }

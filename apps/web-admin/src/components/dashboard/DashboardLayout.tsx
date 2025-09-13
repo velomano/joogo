@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { TopNavigation } from '../layout/TopNavigation';
 import { useHotkeys, defaultHotkeys } from '../../hooks/useHotkeys';
 
 interface DashboardLayoutProps {
@@ -23,38 +24,42 @@ export function DashboardLayout({
 
   return (
     <ErrorBoundary>
-      <div className="wrap">
-        <aside className="sidebar panel">
-          <h1>
-            {title} 
-            {subtitle && <span className="muted"> {subtitle}</span>}
-          </h1>
-          
-          {filters && (
-            <>
-              <hr className="line" />
-              {filters}
-            </>
-          )}
-          
-          {actions && (
-            <>
-              <hr className="line" />
-              {actions}
-            </>
-          )}
-          
-          <hr className="line" />
-          <div className="muted info" style={{ fontSize: '11px', color: '#6b7280' }}>
-            💡 단축키: Ctrl+R (새로고침), Ctrl+E (내보내기), Ctrl+F (필터), Ctrl+H (도움말)
-          </div>
-        </aside>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+        <TopNavigation />
+        
+        <div className="wrap" style={{ paddingTop: '0' }}>
+          <aside className="sidebar panel" style={{ backgroundColor: '#1f2937', border: 'none' }}>
+            <h1 style={{ color: '#f9fafb', marginBottom: '16px' }}>
+              {title} 
+              {subtitle && <span className="muted" style={{ color: '#9ca3af' }}> {subtitle}</span>}
+            </h1>
+            
+            {filters && (
+              <>
+                <hr className="line" style={{ borderColor: '#374151' }} />
+                {filters}
+              </>
+            )}
+            
+            {actions && (
+              <>
+                <hr className="line" style={{ borderColor: '#374151' }} />
+                {actions}
+              </>
+            )}
+            
+            <hr className="line" style={{ borderColor: '#374151' }} />
+            <div className="muted info" style={{ fontSize: '11px', color: '#9ca3af' }}>
+              💡 단축키: Ctrl+R (새로고침), Ctrl+E (내보내기), Ctrl+F (필터), Ctrl+H (도움말)
+            </div>
+          </aside>
 
-        <main className="main">
-          <section className="panel">
-            {children}
-          </section>
-        </main>
+          <main className="main" style={{ backgroundColor: '#f9fafb' }}>
+            <section className="panel" style={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}>
+              {children}
+            </section>
+          </main>
+        </div>
       </div>
     </ErrorBoundary>
   );

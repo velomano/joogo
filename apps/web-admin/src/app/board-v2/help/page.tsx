@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
+import { GridLayout, GridItem } from '../../../components/dashboard/GridLayout';
 
 export default function HelpPage() {
   return (
@@ -9,8 +10,9 @@ export default function HelpPage() {
       title="사이트 도움말"
       subtitle="v2 (통합 대시보드)"
     >
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-        <h2 style={{ marginBottom: '24px', color: '#1f2937' }}>📚 사용자 가이드</h2>
+      <GridLayout page="help">
+        <GridItem id="content">
+          <h2 style={{ marginBottom: '24px', color: '#1f2937' }}>📚 사용자 가이드</h2>
         
         <div style={{ marginBottom: '32px' }}>
           <h3 style={{ marginBottom: '16px', color: '#374151' }}>🎯 기능별 사용법</h3>
@@ -139,7 +141,8 @@ export default function HelpPage() {
             </p>
           </div>
         </div>
-      </div>
+        </GridItem>
+      </GridLayout>
     </DashboardLayout>
   );
 }

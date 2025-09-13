@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
+import { GridLayout, GridItem } from '../../../components/dashboard/GridLayout';
 import { useFilters } from '../../../hooks/useFilters';
 
 // Dynamic imports for better performance
@@ -128,79 +129,103 @@ export default function InventoryAnalysisPage() {
       filters={filtersComponent}
       actions={actionsComponent}
     >
-      <div style={{ display: 'grid', gap: '20px' }}>
+      <GridLayout page="inventory">
         {/* 재고 KPI 오버뷰 */}
-        <InventoryKpiOverview 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="kpi">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📊 재고 KPI</h3>
+          <InventoryKpiOverview 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 품절/임박 품절 */}
-        <StockoutRisk 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="stockout">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>⚠️ 품절 위험</h3>
+          <StockoutRisk 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 과잉/저회전 */}
-        <ExcessInventory 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="excess">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📦 과잉 재고</h3>
+          <ExcessInventory 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* ABC 분석 + 파레토 */}
-        <InventoryABC 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="abc">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>📊 ABC 분석</h3>
+          <InventoryABC 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 재고 노화 */}
-        <InventoryAging 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="aging">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>⏰ 재고 노화</h3>
+          <InventoryAging 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 재주문 제안 */}
-        <ReorderSuggestions 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="reorder">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🔄 재주문 제안</h3>
+          <ReorderSuggestions 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 입출고 흐름 */}
-        <WarehouseOps 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
+        <GridItem id="warehouse">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🏭 창고 운영</h3>
+          <WarehouseOps 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
 
         {/* 로케이션 히트맵 */}
-        <LocationHeatmap 
-          from={filters.from}
-          to={filters.to}
-          category={filters.category}
-          sku={filters.sku}
-          refreshTrigger={refreshTrigger}
-        />
-      </div>
+        <GridItem id="location">
+          <h3 style={{ marginBottom: '12px', color: '#1f2937' }}>🗺️ 로케이션</h3>
+          <LocationHeatmap 
+            from={filters.from}
+            to={filters.to}
+            category={filters.category}
+            sku={filters.sku}
+            refreshTrigger={refreshTrigger}
+          />
+        </GridItem>
+      </GridLayout>
     </DashboardLayout>
   );
 }

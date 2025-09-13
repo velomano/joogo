@@ -49,27 +49,48 @@ export default function SalesAnalysisPage() {
 
   const filtersComponent = (
     <div>
-      <label className="muted">기간</label>
+      <label className="muted" style={{ color: '#9ca3af' }}>기간</label>
       <div className="row" style={{ margin: '8px 0' }}>
         <input
           type="date"
           value={filters.from}
           onChange={(e) => setFrom(e.target.value)}
-          style={{ marginRight: '8px' }}
+          style={{ 
+            marginRight: '8px',
+            backgroundColor: '#374151',
+            border: '1px solid #4b5563',
+            color: '#f9fafb',
+            borderRadius: '4px',
+            padding: '4px 8px'
+          }}
         />
         <input
           type="date"
           value={filters.to}
           onChange={(e) => setTo(e.target.value)}
+          style={{
+            backgroundColor: '#374151',
+            border: '1px solid #4b5563',
+            color: '#f9fafb',
+            borderRadius: '4px',
+            padding: '4px 8px'
+          }}
         />
       </div>
 
-      <label className="muted">지역</label>
+      <label className="muted" style={{ color: '#9ca3af' }}>지역</label>
       <select 
         multiple 
         value={filters.region}
         onChange={(e) => setRegion(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ marginBottom: '8px' }}
+        style={{ 
+          marginBottom: '8px',
+          backgroundColor: '#374151',
+          border: '1px solid #4b5563',
+          color: '#f9fafb',
+          borderRadius: '4px',
+          padding: '4px 8px'
+        }}
       >
         <option value="SEOUL">서울</option>
         <option value="BUSAN">부산</option>
@@ -80,12 +101,19 @@ export default function SalesAnalysisPage() {
         <option value="ULSAN">울산</option>
       </select>
 
-      <label className="muted">채널</label>
+      <label className="muted" style={{ color: '#9ca3af' }}>채널</label>
       <select 
         multiple 
         value={filters.channel}
         onChange={(e) => setChannel(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ marginBottom: '8px' }}
+        style={{ 
+          marginBottom: '8px',
+          backgroundColor: '#374151',
+          border: '1px solid #4b5563',
+          color: '#f9fafb',
+          borderRadius: '4px',
+          padding: '4px 8px'
+        }}
       >
         <option value="naver">네이버</option>
         <option value="coupang">쿠팡</option>
@@ -93,12 +121,19 @@ export default function SalesAnalysisPage() {
         <option value="meta">메타</option>
       </select>
 
-      <label className="muted">카테고리</label>
+      <label className="muted" style={{ color: '#9ca3af' }}>카테고리</label>
       <select 
         multiple 
         value={filters.category}
         onChange={(e) => setCategory(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ marginBottom: '8px' }}
+        style={{ 
+          marginBottom: '8px',
+          backgroundColor: '#374151',
+          border: '1px solid #4b5563',
+          color: '#f9fafb',
+          borderRadius: '4px',
+          padding: '4px 8px'
+        }}
       >
         <option value="TOPS">상의</option>
         <option value="BOTTOMS">하의</option>
@@ -107,12 +142,19 @@ export default function SalesAnalysisPage() {
         <option value="ACCESSORIES">액세서리</option>
       </select>
 
-      <label className="muted">SKU</label>
+      <label className="muted" style={{ color: '#9ca3af' }}>SKU</label>
       <select 
         multiple 
         value={filters.sku}
         onChange={(e) => setSku(Array.from(e.target.selectedOptions, option => option.value))}
-        style={{ marginBottom: '8px' }}
+        style={{ 
+          marginBottom: '8px',
+          backgroundColor: '#374151',
+          border: '1px solid #4b5563',
+          color: '#f9fafb',
+          borderRadius: '4px',
+          padding: '4px 8px'
+        }}
       >
         <option value="TOPS-001">TOPS-001</option>
         <option value="BOTTOMS-001">BOTTOMS-001</option>
@@ -131,7 +173,11 @@ export default function SalesAnalysisPage() {
           backgroundColor: '#3b82f6', 
           color: 'white',
           width: '100%',
-          marginBottom: '8px'
+          marginBottom: '8px',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '8px 12px',
+          cursor: 'pointer'
         }}
       >
         🔄 데이터 새로고침
@@ -143,7 +189,11 @@ export default function SalesAnalysisPage() {
         style={{ 
           backgroundColor: '#6b7280', 
           color: 'white',
-          width: '100%'
+          width: '100%',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '8px 12px',
+          cursor: 'pointer'
         }}
       >
         초기화

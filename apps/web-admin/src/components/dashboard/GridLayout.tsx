@@ -116,11 +116,11 @@ export function GridItem({ children, id, className, style }: GridItemProps) {
       key={id} 
       className={className}
       style={{
-        backgroundColor: 'white',
+        backgroundColor: '#ffffff',
         borderRadius: '8px',
         border: '1px solid #e5e7eb',
         padding: '16px',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
         ...style
       }}
     >
