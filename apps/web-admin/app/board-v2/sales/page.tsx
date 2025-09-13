@@ -70,6 +70,7 @@ export default function SalesAnalysisPage() {
         <div className="row">
           <input 
             type="date" 
+            id="fromDate" 
             style={{ flex: 1 }} 
             title="시작 날짜" 
             value={filters.from} 
@@ -77,57 +78,149 @@ export default function SalesAnalysisPage() {
           />
           <input 
             type="date" 
+            id="toDate" 
             style={{ flex: 1 }} 
             title="종료 날짜" 
             value={filters.to} 
             onChange={(e) => setFilters(prev => ({ ...prev, to: e.target.value }))}
           />
         </div>
-
-        <hr className="line" />
-        <label className="muted">지역</label>
-        <div className="row">
-          <select style={{ flex: 1 }} multiple>
-            <option>전체</option>
-            <option>서울</option>
-            <option>경기</option>
-            <option>인천</option>
-            <option>부산</option>
-          </select>
+        
+        {/* 기간별 선택 버튼 */}
+        <div style={{ marginBottom: '12px' }}>
+          <div className="muted" style={{ marginBottom: '6px' }}>빠른 선택</div>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            {[
+              { value: 'today', label: '오늘' },
+              { value: '1week', label: '1주일' },
+              { value: '1month', label: '1개월' },
+              { value: '3months', label: '3개월' },
+              { value: '6months', label: '6개월' },
+              { value: '1year', label: '1년' }
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  const today = new Date();
+                  let fromDate = new Date();
+                  
+                  switch(option.value) {
+                    case 'today':
+                      fromDate = new Date(today);
+                      break;
+                    case '1week':
+                      fromDate.setDate(today.getDate() - 7);
+                      break;
+                    case '1month':
+                      fromDate.setMonth(today.getMonth() - 1);
+                      break;
+                    case '3months':
+                      fromDate.setMonth(today.getMonth() - 3);
+                      break;
+                    case '6months':
+                      fromDate.setMonth(today.getMonth() - 6);
+                      break;
+                    case '1year':
+                      fromDate.setFullYear(today.getFullYear() - 1);
+                      break;
+                  }
+                  
+                  setFilters(prev => ({
+                    ...prev,
+                    from: fromDate.toISOString().split('T')[0],
+                    to: today.toISOString().split('T')[0]
+                  }));
+                }}
+                className="btn"
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '4px 8px',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  color: '#374151',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  margin: '2px'
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-
-        <hr className="line" />
-        <label className="muted">채널</label>
-        <div className="row">
-          <select style={{ flex: 1 }} multiple>
-            <option>전체</option>
-            <option>온라인</option>
-            <option>오프라인</option>
-            <option>모바일</option>
-          </select>
-        </div>
-
-        <hr className="line" />
-        <label className="muted">카테고리</label>
-        <div className="row">
-          <select style={{ flex: 1 }} multiple>
-            <option>전체</option>
-            <option>의류</option>
-            <option>신발</option>
-            <option>액세서리</option>
-          </select>
-        </div>
-
-        <hr className="line" />
-        <label className="muted">SKU</label>
-        <div className="row">
-          <select style={{ flex: 1 }} multiple>
-            <option>전체</option>
-            <option>SKU-001</option>
-            <option>SKU-002</option>
-            <option>SKU-003</option>
-          </select>
-        </div>
+        <label className="muted" style={{ marginTop: '6px' }}>지역</label>
+        <select 
+          id="regionSel" 
+          title="지역별 필터"
+          value={filters.region.length > 0 ? filters.region[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFilters(prev => ({ ...prev, region: value ? [value] : [] }));
+          }}
+        >
+          <option value="">전체</option>
+          <option>SEOUL</option>
+          <option>BUSAN</option>
+          <option>INCHEON</option>
+          <option>DAEGU</option>
+          <option>GWANGJU</option>
+          <option>DAEJEON</option>
+          <option>ULSAN</option>
+          <option>GYEONGGI</option>
+          <option>GANGWON</option>
+          <option>CHUNGBUK</option>
+          <option>CHUNGNAM</option>
+          <option>JEONBUK</option>
+          <option>JEONNAM</option>
+          <option>GYEONGBUK</option>
+          <option>GYEONGNAM</option>
+          <option>JEJU</option>
+        </select>
+        <label className="muted" style={{ marginTop: '6px' }}>채널</label>
+        <select 
+          id="channelSel" 
+          title="채널 필터"
+          value={filters.channel.length > 0 ? filters.channel[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFilters(prev => ({ ...prev, channel: value ? [value] : [] }));
+          }}
+        >
+          <option value="">전체</option>
+          <option>ONLINE</option>
+          <option>OFFLINE</option>
+          <option>MOBILE</option>
+        </select>
+        <label className="muted" style={{ marginTop: '6px' }}>카테고리</label>
+        <select 
+          id="categorySel" 
+          title="카테고리 필터"
+          value={filters.category.length > 0 ? filters.category[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFilters(prev => ({ ...prev, category: value ? [value] : [] }));
+          }}
+        >
+          <option value="">전체</option>
+          <option>CLOTHING</option>
+          <option>SHOES</option>
+          <option>ACCESSORIES</option>
+        </select>
+        <label className="muted" style={{ marginTop: '6px' }}>SKU</label>
+        <select 
+          id="skuSel" 
+          title="SKU 필터"
+          value={filters.sku.length > 0 ? filters.sku[0] : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFilters(prev => ({ ...prev, sku: value ? [value] : [] }));
+          }}
+        >
+          <option value="">전체</option>
+          <option>SKU-001</option>
+          <option>SKU-002</option>
+          <option>SKU-003</option>
+        </select>
       </aside>
 
       <main className="main">
