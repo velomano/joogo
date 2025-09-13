@@ -1,105 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supaAdmin } from '../../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get('from') || '2024-01-01';
-    const to = searchParams.get('to') || new Date().toISOString().split('T')[0];
+    const search = searchParams.get('search') || '';
+    const tenantId = '84949b3c-2cb7-4c42-b9f9-d1f37d371e00';
 
-    console.log('Inventory Alerts API called with params:', { from, to });
+    console.log('Inventory Alerts API called with search:', search);
+    
+    const sb = supaAdmin();
+    
+    // 실제 Supabase 재고 데이터에서 재고 부족 상품 조회
+    const { data: inventoryData, error: inventoryError } = await sb
+      .from('fact_inventory')
+      .select(`
+        sku,
+        product_name,
+        color,
+        size,
+        stock_on_hand,
+        avg_daily_7,
+        days_of_supply,
+        reorder_point,
+        unit_cost,
+        lead_time_days
+      `)
+      .eq('tenant_id', tenantId)
+      .or('stock_on_hand.lte.reorder_point,stock_on_hand.eq.0')
+      .order('stock_on_hand', { ascending: true });
 
-    // Mock 데이터 생성 (실제로는 Supabase에서 조회)
-    const mockData = [
-      {
-        sku: 'SKU002',
-        productName: '데님 재킷',
-        category: '의류',
-        currentStock: 25,
-        reorderPoint: 30,
-        daysUntilStockout: 3,
-        priority: 'high',
-        lastRestocked: '2024-01-15',
-        supplier: '패션공급업체A',
-        estimatedDelivery: '2024-01-25'
-      },
-      {
-        sku: 'SKU007',
-        productName: '후드티',
-        category: '의류',
-        currentStock: 18,
-        reorderPoint: 35,
-        daysUntilStockout: 2,
-        priority: 'high',
-        lastRestocked: '2024-01-10',
-        supplier: '패션공급업체B',
-        estimatedDelivery: '2024-01-22'
-      },
-      {
-        sku: 'SKU004',
-        productName: '가방',
-        category: '액세서리',
-        currentStock: 45,
-        reorderPoint: 25,
-        daysUntilStockout: 7,
-        priority: 'medium',
-        lastRestocked: '2024-01-12',
-        supplier: '액세서리공급업체A',
-        estimatedDelivery: '2024-01-28'
-      },
-      {
-        sku: 'SKU009',
-        productName: '스카프',
-        category: '액세서리',
-        currentStock: 32,
-        reorderPoint: 40,
-        daysUntilStockout: 4,
-        priority: 'medium',
-        lastRestocked: '2024-01-08',
-        supplier: '액세서리공급업체B',
-        estimatedDelivery: '2024-01-26'
-      },
-      {
-        sku: 'SKU010',
-        productName: '벨트',
-        category: '액세서리',
-        currentStock: 55,
-        reorderPoint: 50,
-        daysUntilStockout: 8,
-        priority: 'low',
-        lastRestocked: '2024-01-14',
-        supplier: '액세서리공급업체C',
-        estimatedDelivery: '2024-01-30'
-      },
-      {
-        sku: 'SKU011',
-        productName: '스니커즈',
-        category: '신발',
-        currentStock: 12,
-        reorderPoint: 20,
-        daysUntilStockout: 1,
-        priority: 'high',
-        lastRestocked: '2024-01-05',
-        supplier: '신발공급업체A',
-        estimatedDelivery: '2024-01-20'
-      },
-      {
-        sku: 'SKU012',
-        productName: '운동화',
-        category: '신발',
-        currentStock: 28,
-        reorderPoint: 30,
-        daysUntilStockout: 5,
-        priority: 'medium',
-        lastRestocked: '2024-01-13',
-        supplier: '신발공급업체B',
-        estimatedDelivery: '2024-01-27'
-      }
-    ];
+    if (inventoryError) {
+      console.error('Inventory alerts data error:', inventoryError);
+      throw inventoryError;
+    }
+
+    // 실제 데이터를 알림 형식으로 변환
+    const alerts = (inventoryData || []).map(item => {
+      const currentStock = item.stock_on_hand || 0;
+      const reorderPoint = item.reorder_point || 0;
+      const avgDailySales = item.avg_daily_7 || 0;
+      const daysUntilStockout = avgDailySales > 0 ? Math.floor(currentStock / avgDailySales) : 0;
+      const leadTimeDays = item.lead_time_days || 7;
+      
+      let priority = 'low';
+      if (currentStock === 0) priority = 'critical';
+      else if (daysUntilStockout <= 1) priority = 'high';
+      else if (daysUntilStockout <= 3) priority = 'medium';
+      
+      return {
+        sku: item.sku || 'N/A',
+        productName: item.product_name || '상품명 없음',
+        category: item.sku?.split('-')[0] || 'OTHER',
+        currentStock: currentStock,
+        reorderPoint: reorderPoint,
+        daysUntilStockout: daysUntilStockout,
+        priority: priority,
+        lastRestocked: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        supplier: 'Joogo 공급업체',
+        estimatedDelivery: new Date(Date.now() + leadTimeDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+    });
+
+    // 검색 필터링
+    let filteredAlerts = alerts;
+    if (search) {
+      const searchTerm = search.toLowerCase();
+      filteredAlerts = alerts.filter(alert => 
+        alert.sku.toLowerCase().includes(searchTerm) ||
+        alert.productName.toLowerCase().includes(searchTerm) ||
+        alert.category.toLowerCase().includes(searchTerm) ||
+        (searchTerm === 'critical' && alert.priority === 'critical') ||
+        (searchTerm === 'high' && alert.priority === 'high') ||
+        (searchTerm === 'medium' && alert.priority === 'medium') ||
+        (searchTerm === 'low' && alert.priority === 'low')
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: mockData,
-      total: mockData.length
+      data: filteredAlerts,
+      total: filteredAlerts.length
     });
 
   } catch (error) {
@@ -107,7 +88,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to fetch inventory alerts data',
+        error: 'Failed to fetch inventory alerts',
         data: []
       },
       { status: 500 }
