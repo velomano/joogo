@@ -11,22 +11,18 @@ export async function GET(request: NextRequest) {
     
     // 실제 Supabase 재고 데이터에서 재고 부족 상품 조회
     const { data: inventoryData, error: inventoryError } = await supabase
-      .from('fact_inventory')
+      .from('fact_sales')
       .select(`
         sku,
         product_name,
         color,
         size,
-        stock_on_hand,
-        avg_daily_7,
-        days_of_supply,
-        reorder_point,
-        unit_cost,
-        lead_time_days
+        qty,
+        revenue,
+        orders
       `)
       .eq('tenant_id', tenantId)
-      .or('stock_on_hand.lte.reorder_point,stock_on_hand.eq.0')
-      .order('stock_on_hand', { ascending: true });
+      .order('qty', { ascending: true });
 
     if (inventoryError) {
       console.error('Inventory alerts data error:', inventoryError);

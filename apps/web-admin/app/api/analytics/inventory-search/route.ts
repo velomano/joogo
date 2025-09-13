@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     
     // 실제 Supabase 재고 데이터에서 검색
     const { data: inventoryData, error: inventoryError } = await supabase
-      .from('fact_inventory')
+      .from('fact_sales')
       .select(`
         sku,
         product_name,
