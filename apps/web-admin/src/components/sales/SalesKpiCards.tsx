@@ -196,7 +196,7 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
 
       <KpiCard
         title="매출 성장률"
-        value={data.revenueGrowth >= 0 ? '+' : ''}{data.revenueGrowth.toFixed(1) + '%'}
+        value={`${data.revenueGrowth >= 0 ? '+' : ''}${data.revenueGrowth.toFixed(1)}%`}
         subValue="전월 대비"
         icon="📊"
         color={data.revenueGrowth >= 0 ? '#10b981' : '#ef4444'}
@@ -204,7 +204,7 @@ export default function SalesKpiCards({ filters, refreshTrigger }: SalesKpiCards
       
       <KpiCard
         title="주문 성장률"
-        value={data.orderGrowth >= 0 ? '+' : ''}{data.orderGrowth.toFixed(1) + '%'}
+        value={`${data.orderGrowth >= 0 ? '+' : ''}${data.orderGrowth.toFixed(1)}%`}
         subValue="전월 대비"
         icon="📈"
         color={data.orderGrowth >= 0 ? '#10b981' : '#ef4444'}

@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
         color,
         size,
         qty,
-        revenue
+        revenue,
+        stock_on_hand,
+        reorder_point,
+        avg_daily_7
       `)
       .eq('tenant_id', tenantId);
 
