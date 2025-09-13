@@ -5,6 +5,7 @@ import SalesKpiOverview from '../../../src/components/sales/SalesKpiOverview';
 import DailyTrendChart from '../../../src/components/sales/DailyTrendChart';
 import MonthlyComparison from '../../../src/components/sales/MonthlyComparison';
 import TimeGranularity from '../../../src/components/sales/TimeGranularity';
+import ChannelPerformanceChart from '../../../src/components/analytics/ChannelPerformanceChart';
 
 export default function SalesAnalysisPage() {
   console.log('SalesAnalysisPage 렌더링됨');
@@ -249,12 +250,10 @@ export default function SalesAnalysisPage() {
           refreshTrigger={refreshTrigger} 
         />
 
-        <div className="chart-container">
-          <h3>📺 채널 성과/ROAS</h3>
-          <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-            채널별 매출, ROAS, 전환율 비교 (구현 예정)
-          </div>
-        </div>
+        {/* 채널별 성과 분석 */}
+        <ChannelPerformanceChart 
+          filters={filters} 
+        />
       </main>
     </div>
   );
